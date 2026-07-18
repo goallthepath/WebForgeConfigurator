@@ -406,6 +406,21 @@ h3 {
   color: var(--webforge-color-iron);
 }
 
+.tor-slider {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--webforge-color-mist);
+  font-size: 0.85rem;
+  color: var(--webforge-color-iron);
+}
+
+.tor-slider input[type='range'] {
+  flex: 1;
+  accent-color: var(--webforge-color-brass);
+}
+
 .viewer-shell {
   height: 22rem;
   background: #efedea;

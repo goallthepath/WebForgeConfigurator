@@ -4,6 +4,33 @@ Alle nennenswerten Änderungen an der WebForge-Plattform werden hier dokumentier
 
 ## [Unreleased]
 
+### Fenstergitter- und Gartentor-Module (2026-07-18)
+
+- Gemeinsame 3D-Bausteine extrahiert (`viewer/scene-shared.tsx`):
+  ShapeMesh, Muster-/Holztexturen, Ornamente, Masslinien, CameraRig.
+- **Fenstergitter (GRID-001…004):** Innen/Aussen, Fluchtweg-Sicherheits-
+  frage (ja ⇒ ROT + individuelle Anfrage), Montage in Leibung oder vor
+  der Fassade, Leibungs-Lichtmass/Aussenmass mit automatischer
+  Mass-Ableitung (Spiel/Überstand TESTDATEN), symmetrische Stabteilung,
+  Quergurte (1–2), Zierelemente (Ringe/Voluten/Körbe mit Lage),
+  Material-/Profil-/Oberflächenwahl, Wunschmass-Stab, Laschen-Ableitung
+  (2–3 je Seite) — 3D mit Wand, Fensteröffnung, Glas und Laschen inkl.
+  Anker; 2D-Zeichnung; eigener Autosave/Share-Link.
+- **Gartentor (GATE-001…004):** ein-/zweiflügelig, bestehende Mauer oder
+  neue Torpfosten, Öffnungsrichtung, Anschlagseite, lichte Öffnung/Höhe/
+  Bodenfreiheit, Flügelteilung mit Spalten (TESTDATEN), Füllungen
+  Staketen/Blech (voll/loch/laser mit Motiven)/Charakter (Ornamente),
+  Schloss/Riegel/ohne, Antriebs-Vorbereitung als Anfrageoption,
+  Bänder-Ableitung (2–3 je Flügel), Torpfosten-Profil — 3D mit
+  **Öffnungs-Simulation (Slider 0–95°)**, Bändern, Schloss und Drücker;
+  2D-Zeichnung; eigener Autosave/Share-Link.
+- Produktkatalog: Gartentor-Freigaben für Edelstahl-Profile ergänzt.
+- Platzhalter-Modulseiten entfernt; alle drei Routen führen zu echten
+  Konfiguratoren.
+- Tests auf 71 erweitert (je 10 für Fenstergitter und Gartentor:
+  Massableitung, Teilungen, Laschen/Bänder, Fluchtweg-Rot,
+  Flügelgeometrie, Materialauszug).
+
 ### Geländer-Modul: Befestigungsmasse, Auto-Obergurt, Ornament-Design (2026-07-18, fünfter Ausbau)
 
 - Befestigungs-Wunschmasse für JEDE Montageart: Fussplatte (L×B×D),

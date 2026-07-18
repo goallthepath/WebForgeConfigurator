@@ -43,6 +43,10 @@
         {
           "product": "gelaender",
           "role": "pfosten"
+        },
+        {
+          "product": "gartentor",
+          "role": "torpfosten"
         }
       ],
       "approval": "TESTDATEN",
@@ -454,6 +458,10 @@
         {
           "product": "gelaender",
           "role": "pfosten"
+        },
+        {
+          "product": "gartentor",
+          "role": "torpfosten"
         }
       ],
       "approval": "TESTDATEN",
@@ -529,6 +537,10 @@
         {
           "product": "gelaender",
           "role": "fuellstab"
+        },
+        {
+          "product": "gartentor",
+          "role": "torfuellung"
         }
       ],
       "approval": "TESTDATEN",
@@ -548,6 +560,10 @@
         {
           "product": "gelaender",
           "role": "fuellstab"
+        },
+        {
+          "product": "gartentor",
+          "role": "torfuellung"
         }
       ],
       "approval": "TESTDATEN",
@@ -605,6 +621,10 @@
         {
           "product": "gelaender",
           "role": "rahmen"
+        },
+        {
+          "product": "gartentor",
+          "role": "torrahmen"
         }
       ],
       "approval": "TESTDATEN",

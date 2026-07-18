@@ -1,7 +1,8 @@
 import { Link, Route, Routes } from 'react-router-dom';
 import { ProductSelection } from '../components/ProductSelection';
-import { ModulePage } from '../components/ModulePage';
 import { GelaenderConfigurator } from '../products/gelaender/GelaenderConfigurator';
+import { FenstergitterConfigurator } from '../products/fenstergitter/FenstergitterConfigurator';
+import { GartentorConfigurator } from '../products/gartentor/GartentorConfigurator';
 
 export default function App() {
   return (
@@ -13,11 +14,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<ProductSelection />} />
           <Route path="/gelaender/" element={<GelaenderConfigurator />} />
-          <Route path="/gartentor/" element={<ModulePage productId="gartentor" />} />
-          <Route
-            path="/fenstergitter/"
-            element={<ModulePage productId="fenstergitter" />}
-          />
+          <Route path="/gartentor/" element={<GartentorConfigurator />} />
+          <Route path="/fenstergitter/" element={<FenstergitterConfigurator />} />
           <Route
             path="*"
             element={
