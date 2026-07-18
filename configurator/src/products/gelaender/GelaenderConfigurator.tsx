@@ -27,6 +27,9 @@ import {
   BLECHTYPEN,
   HANDLAUF_POSITIONEN,
   LASER_MOTIVE,
+  ORNAMENT_DICHTEN,
+  ORNAMENT_GROESSEN,
+  ORNAMENT_LAGEN,
   ORNAMENT_TYPEN,
   EINBAUORTE,
   EINSATZORTE,
@@ -45,6 +48,8 @@ import {
 } from './options';
 import {
   EMPTY_GELAENDER_INPUTS,
+  OBERGURT_STANDARD_ABSTAND_MM,
+  obergurtAktiv,
   SEGMENTE_PRO_VARIANTE,
   type GelaenderInputs,
 } from './types';
@@ -307,11 +312,6 @@ export function GelaenderConfigurator() {
     window.setTimeout(() => setShareState('idle'), 6000);
   };
 
-  const zeigeUntergurt =
-    inputs.fuellungsart === 'staketen' ||
-    inputs.fuellungsart === 'geschmiedet' ||
-    inputs.fuellungsart === 'blech' ||
-    inputs.fuellungsart === 'gitter';
   const hoeheOderDefault = inputs.hoeheMm ?? 1000;
 
   return (
@@ -412,39 +412,78 @@ export function GelaenderConfigurator() {
               value={inputs.untergrund}
               onChange={(untergrund) => set({ untergrund })}
             />
-            {inputs.montageart === 'boden' && (
+            {inputs.montageart && (
               <fieldset className="option-group">
-                <legend>Fussplatten-Wunschmass</legend>
+                <legend>
+                  {inputs.montageart === 'boden'
+                    ? 'Fussplatten-Wunschmass'
+                    : inputs.montageart === 'seite'
+                      ? 'Schwert-Wunschmass'
+                      : inputs.montageart === 'unten'
+                        ? 'Kragarm-Wunschmass'
+                        : inputs.montageart === 'eingelassen'
+                          ? 'Einbindung'
+                          : 'Wandlaschen-Wunschmass'}
+                </legend>
                 <div className="field-row">
-                  <NumberField
-                    label="Länge"
-                    unit="mm"
-                    value={inputs.fussplatteLaengeMm}
-                    min={GELAENDER_RULES_V0.minFussplatteMm}
-                    max={GELAENDER_RULES_V0.maxFussplatteMm}
-                    onChange={(v) => set({ fussplatteLaengeMm: v ?? 120 })}
-                  />
-                  <NumberField
-                    label="Breite"
-                    unit="mm"
-                    value={inputs.fussplatteBreiteMm}
-                    min={GELAENDER_RULES_V0.minFussplatteMm}
-                    max={GELAENDER_RULES_V0.maxFussplatteMm}
-                    onChange={(v) => set({ fussplatteBreiteMm: v ?? 120 })}
-                  />
-                  <NumberField
-                    label="Dicke"
-                    unit="mm"
-                    step={1}
-                    value={inputs.fussplatteDickeMm}
-                    min={GELAENDER_RULES_V0.minFussplatteDickeMm}
-                    max={GELAENDER_RULES_V0.maxFussplatteDickeMm}
-                    onChange={(v) => set({ fussplatteDickeMm: v ?? 10 })}
-                  />
+                  {inputs.montageart === 'boden' && (
+                    <>
+                      <NumberField label="Länge" unit="mm" value={inputs.fussplatteLaengeMm}
+                        min={GELAENDER_RULES_V0.minFussplatteMm} max={GELAENDER_RULES_V0.maxFussplatteMm}
+                        onChange={(v) => set({ fussplatteLaengeMm: v ?? 120 })} />
+                      <NumberField label="Breite" unit="mm" value={inputs.fussplatteBreiteMm}
+                        min={GELAENDER_RULES_V0.minFussplatteMm} max={GELAENDER_RULES_V0.maxFussplatteMm}
+                        onChange={(v) => set({ fussplatteBreiteMm: v ?? 120 })} />
+                      <NumberField label="Dicke" unit="mm" step={1} value={inputs.fussplatteDickeMm}
+                        min={GELAENDER_RULES_V0.minFussplatteDickeMm} max={GELAENDER_RULES_V0.maxFussplatteDickeMm}
+                        onChange={(v) => set({ fussplatteDickeMm: v ?? 10 })} />
+                    </>
+                  )}
+                  {inputs.montageart === 'seite' && (
+                    <>
+                      <NumberField label="Höhe" unit="mm" value={inputs.schwertHoeheMm}
+                        min={100} max={400}
+                        onChange={(v) => set({ schwertHoeheMm: v ?? 160 })} />
+                      <NumberField label="Breite" unit="mm" value={inputs.schwertBreiteMm}
+                        min={40} max={150}
+                        onChange={(v) => set({ schwertBreiteMm: v ?? 60 })} />
+                      <NumberField label="Dicke" unit="mm" step={1} value={inputs.schwertDickeMm}
+                        min={6} max={25}
+                        onChange={(v) => set({ schwertDickeMm: v ?? 12 })} />
+                    </>
+                  )}
+                  {inputs.montageart === 'unten' && (
+                    <>
+                      <NumberField label="Auskragung" unit="mm" value={inputs.kragarmLaengeMm}
+                        min={150} max={600}
+                        onChange={(v) => set({ kragarmLaengeMm: v ?? 300 })} />
+                      <NumberField label="Profilstärke" unit="mm" step={5} value={inputs.kragarmStaerkeMm}
+                        min={30} max={100}
+                        onChange={(v) => set({ kragarmStaerkeMm: v ?? 50 })} />
+                    </>
+                  )}
+                  {inputs.montageart === 'eingelassen' && (
+                    <NumberField label="Einbindetiefe" unit="mm" step={5} value={inputs.einlassTiefeMm}
+                      min={60} max={250}
+                      onChange={(v) => set({ einlassTiefeMm: v ?? 100 })} />
+                  )}
+                  {inputs.montageart === 'wand' && (
+                    <>
+                      <NumberField label="Höhe" unit="mm" value={inputs.wandlascheHoeheMm}
+                        min={60} max={200}
+                        onChange={(v) => set({ wandlascheHoeheMm: v ?? 100 })} />
+                      <NumberField label="Breite" unit="mm" value={inputs.wandlascheBreiteMm}
+                        min={40} max={120}
+                        onChange={(v) => set({ wandlascheBreiteMm: v ?? 60 })} />
+                      <NumberField label="Dicke" unit="mm" step={1} value={inputs.wandlascheDickeMm}
+                        min={5} max={15}
+                        onChange={(v) => set({ wandlascheDickeMm: v ?? 8 })} />
+                    </>
+                  )}
                 </div>
                 <p className="field-hint">
                   Darstellung inkl. Ankerbild in der 3D-Vorschau. Definitive
-                  Platte, Dübel und Randabstände werden statisch bemessen.
+                  Ausführung, Dübel und Randabstände werden statisch bemessen.
                 </p>
               </fieldset>
             )}
@@ -536,62 +575,96 @@ export function GelaenderConfigurator() {
               />
             )}
             {inputs.fuellungsart === 'geschmiedet' && (
-              <OptionCardGroup
-                legend="Ornament-Grundauswahl (Feinausarbeitung persönlich)"
-                name="ornamentTyp"
-                options={ORNAMENT_TYPEN}
-                value={inputs.ornamentTyp}
-                onChange={(ornamentTyp) => set({ ornamentTyp })}
-              />
+              <>
+                <OptionCardGroup
+                  legend="Ornament-Grundauswahl (Feinausarbeitung persönlich)"
+                  name="ornamentTyp"
+                  options={ORNAMENT_TYPEN}
+                  value={inputs.ornamentTyp}
+                  onChange={(ornamentTyp) => set({ ornamentTyp })}
+                />
+                {inputs.ornamentTyp && (
+                  <>
+                    <OptionCardGroup
+                      legend="Ornament-Grösse"
+                      name="ornamentGroesse"
+                      options={ORNAMENT_GROESSEN}
+                      value={inputs.ornamentGroesse}
+                      onChange={(ornamentGroesse) => set({ ornamentGroesse })}
+                    />
+                    <OptionCardGroup
+                      legend="Ornament-Lage im Feld"
+                      name="ornamentLage"
+                      options={ORNAMENT_LAGEN}
+                      value={inputs.ornamentLage}
+                      onChange={(ornamentLage) => set({ ornamentLage })}
+                    />
+                    <OptionCardGroup
+                      legend="Ornament-Rhythmus"
+                      name="ornamentDichte"
+                      options={ORNAMENT_DICHTEN}
+                      value={inputs.ornamentDichte}
+                      onChange={(ornamentDichte) => set({ ornamentDichte })}
+                    />
+                    <label className="check-row">
+                      <input
+                        type="checkbox"
+                        checked={inputs.ornamentDoppelt}
+                        onChange={(e) => set({ ornamentDoppelt: e.target.checked })}
+                      />
+                      Doppelreihe (zwei Ornamente übereinander)
+                    </label>
+                  </>
+                )}
+              </>
             )}
             <fieldset className="option-group">
-              <legend>Konstruktion (Gurte)</legend>
-              {zeigeUntergurt && (
-                <>
-                  <label className="check-row">
-                    <input
-                      type="checkbox"
-                      checked={inputs.mitUntergurt}
-                      onChange={(e) => set({ mitUntergurt: e.target.checked })}
-                    />
-                    Untergurt (unterer Rahmengurt – konstruktiv üblich)
-                  </label>
-                  {inputs.mitUntergurt && (
-                    <NumberField
-                      label="Untergurt-Höhe über Boden"
-                      unit="mm"
-                      step={5}
-                      value={inputs.untergurtHoeheMm}
-                      min={20}
-                      max={Math.floor(hoeheOderDefault / 2)}
-                      onChange={(v) => set({ untergurtHoeheMm: v ?? 80 })}
-                    />
-                  )}
-                </>
+              <legend>Konstruktion (Gurte und Handlauf-Lage)</legend>
+              {!inputs.ohneHandlauf && (
+                <OptionCardGroup
+                  legend="Handlauf-Position"
+                  name="handlaufPosition"
+                  options={HANDLAUF_POSITIONEN}
+                  value={inputs.handlaufPosition}
+                  onChange={(handlaufPosition) => set({ handlaufPosition })}
+                />
+              )}
+              <p className="field-hint">
+                {obergurtAktiv(inputs)
+                  ? 'Aufgesetzter Handlauf: Der Obergurt entsteht automatisch (Rahmenbauweise).'
+                  : 'Handlauf zwischen den Pfosten: Er übernimmt selbst die Obergurt-Funktion.'}
+              </p>
+              {obergurtAktiv(inputs) && (
+                <NumberField
+                  label="Obergurt-Höhe über Boden"
+                  unit="mm"
+                  value={
+                    inputs.obergurtHoeheMm ??
+                    hoeheOderDefault - OBERGURT_STANDARD_ABSTAND_MM
+                  }
+                  min={200}
+                  max={hoeheOderDefault - 20}
+                  hint="Standard: knapp unter dem Handlauf. Anpassbar für tiefere Rahmen."
+                  onChange={(v) => set({ obergurtHoeheMm: v })}
+                />
               )}
               <label className="check-row">
                 <input
                   type="checkbox"
-                  checked={inputs.mitObergurt}
-                  onChange={(e) =>
-                    set({
-                      mitObergurt: e.target.checked,
-                      obergurtHoeheMm: e.target.checked
-                        ? (inputs.obergurtHoeheMm ?? hoeheOderDefault - 120)
-                        : inputs.obergurtHoeheMm,
-                    })
-                  }
+                  checked={inputs.mitUntergurt}
+                  onChange={(e) => set({ mitUntergurt: e.target.checked })}
                 />
-                Separater Obergurt unter dem Handlauf (Rahmenbauweise)
+                Untergurt (unterer Rahmengurt – konstruktiv üblich)
               </label>
-              {inputs.mitObergurt && (
+              {inputs.mitUntergurt && (
                 <NumberField
-                  label="Obergurt-Höhe über Boden"
+                  label="Untergurt-Höhe über Boden"
                   unit="mm"
-                  value={inputs.obergurtHoeheMm}
-                  min={200}
-                  max={hoeheOderDefault - 20}
-                  onChange={(v) => set({ obergurtHoeheMm: v })}
+                  step={5}
+                  value={inputs.untergurtHoeheMm}
+                  min={20}
+                  max={Math.floor(hoeheOderDefault / 2)}
+                  onChange={(v) => set({ untergurtHoeheMm: v ?? 80 })}
                 />
               )}
               <label className="check-row">
@@ -767,22 +840,13 @@ export function GelaenderConfigurator() {
             done={steps.s9}
           >
             {!inputs.ohneHandlauf && (
-              <>
-                <OptionCardGroup
-                  legend="Handlauf-Position"
-                  name="handlaufPosition"
-                  options={HANDLAUF_POSITIONEN}
-                  value={inputs.handlaufPosition}
-                  onChange={(handlaufPosition) => set({ handlaufPosition })}
-                />
-                <OptionCardGroup
-                  legend="Handlauf-Abschluss"
-                  name="handlaufAbschluss"
-                  options={HANDLAUF_ABSCHLUESSE}
-                  value={inputs.handlaufAbschluss}
-                  onChange={(handlaufAbschluss) => set({ handlaufAbschluss })}
-                />
-              </>
+              <OptionCardGroup
+                legend="Handlauf-Abschluss"
+                name="handlaufAbschluss"
+                options={HANDLAUF_ABSCHLUESSE}
+                value={inputs.handlaufAbschluss}
+                onChange={(handlaufAbschluss) => set({ handlaufAbschluss })}
+              />
             )}
             <OptionCardGroup
               legend="Oberflächenbehandlung"

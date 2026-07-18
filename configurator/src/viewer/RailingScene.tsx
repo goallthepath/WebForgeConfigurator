@@ -6,6 +6,7 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import type {
   GeoDimension,
   GeoPanel,
+  GeoSlab,
   ProfileShape,
   RailingGeometry,
 } from '../products/gelaender/geometry';
@@ -161,6 +162,99 @@ const PATTERN_TILE_M: Record<string, number> = {
   streckmetall: 0.06,
   drahtgitter: 0.04,
 };
+
+function makeWoodTexture(): THREE.Texture {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#a5804f';
+  ctx.fillRect(0, 0, size, size);
+  // Bretter mit Fugen und leichter Maserung
+  for (let y = 0; y < size; y += 32) {
+    ctx.fillStyle = ['#a5804f', '#9a7648', '#af8a57', '#a07b4c'][(y / 32) % 4];
+    ctx.fillRect(0, y, size, 30);
+    ctx.strokeStyle = 'rgba(90,62,30,0.55)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, y + 31);
+    ctx.lineTo(size, y + 31);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(120,90,50,0.35)';
+    ctx.lineWidth = 1;
+    for (let k = 0; k < 3; k++) {
+      const yy = y + 6 + k * 8;
+      ctx.beginPath();
+      ctx.moveTo(0, yy);
+      ctx.bezierCurveTo(size * 0.3, yy + 2, size * 0.7, yy - 2, size, yy + 1);
+      ctx.stroke();
+    }
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
+
+function SlabMesh({ slab, mobile }: { slab: GeoSlab; mobile: boolean }) {
+  const material = useMemo(() => {
+    switch (slab.kind) {
+      case 'holz': {
+        const map = makeWoodTexture();
+        map.repeat.set(slab.sizeM[0] / 0.6, slab.sizeM[2] / 0.6);
+        return <meshStandardMaterial map={map} roughness={0.85} metalness={0} />;
+      }
+      case 'stahl':
+        return (
+          <meshStandardMaterial color="#5a6067" metalness={0.85} roughness={0.35} />
+        );
+      case 'unbekannt':
+        return (
+          <meshStandardMaterial
+            color="#d9d6cf"
+            roughness={0.95}
+            metalness={0}
+            transparent
+            opacity={0.55}
+          />
+        );
+      default:
+        return (
+          <meshStandardMaterial color="#c6c2ba" roughness={0.95} metalness={0} />
+        );
+    }
+  }, [slab.kind, slab.sizeM]);
+
+  // Stahltraeger: als liegender I-Traeger angedeutet (Flansche).
+  if (slab.kind === 'stahl') {
+    const [l, h, b] = slab.sizeM;
+    const flansch = h * 0.18;
+    return (
+      <group position={slab.center} rotation={[0, slab.rotY, 0]}>
+        <mesh position={[0, h / 2 - flansch / 2, 0]} receiveShadow={!mobile}>
+          <boxGeometry args={[l, flansch, b]} />
+          {material}
+        </mesh>
+        <mesh receiveShadow={!mobile}>
+          <boxGeometry args={[l, h - 2 * flansch, b * 0.35]} />
+          {material}
+        </mesh>
+        <mesh position={[0, -h / 2 + flansch / 2, 0]} receiveShadow={!mobile}>
+          <boxGeometry args={[l, flansch, b]} />
+          {material}
+        </mesh>
+      </group>
+    );
+  }
+
+  return (
+    <mesh position={slab.center} rotation={[0, slab.rotY, 0]} receiveShadow={!mobile}>
+      <boxGeometry args={slab.sizeM} />
+      {material}
+    </mesh>
+  );
+}
 
 function PanelMesh({ panel, color }: { panel: GeoPanel; color: string }) {
   const material = useMemo(() => {
@@ -326,17 +420,9 @@ export function RailingScene({
         shadow-mapSize={[1024, 1024]}
       />
 
-      {/* Baukörper-Andeutung (Betonplatte/Mauerkrone) */}
+      {/* Baukörper-Andeutung – Darstellung folgt dem Untergrund */}
       {geometry.slabs.map((slab, i) => (
-        <mesh
-          key={`slab-${i}`}
-          position={slab.center}
-          rotation={[0, slab.rotY, 0]}
-          receiveShadow={!mobile}
-        >
-          <boxGeometry args={slab.sizeM} />
-          <meshStandardMaterial color="#c6c2ba" roughness={0.95} metalness={0} />
-        </mesh>
+        <SlabMesh key={`slab-${i}`} slab={slab} mobile={mobile} />
       ))}
 
       {/* Fussplatten, Schwerter, Kragarme – inkl. Anker-Andeutung */}
@@ -355,7 +441,12 @@ export function RailingScene({
                   [0, h / 2 - 0.03, b / 2],
                   [0, -h / 2 + 0.03, b / 2],
                 ]
-              : [];
+              : plate.kind === 'wandlasche'
+                ? [
+                    [0, h / 2 - 0.025, 0],
+                    [0, -h / 2 + 0.025, 0],
+                  ]
+                : [];
         return (
           <group
             key={`plate-${i}`}
@@ -370,7 +461,13 @@ export function RailingScene({
               <mesh
                 key={bi}
                 position={pos}
-                rotation={plate.kind === 'schwert' ? [Math.PI / 2, 0, 0] : [0, 0, 0]}
+                rotation={
+                  plate.kind === 'schwert'
+                    ? [Math.PI / 2, 0, 0]
+                    : plate.kind === 'wandlasche'
+                      ? [0, 0, Math.PI / 2]
+                      : [0, 0, 0]
+                }
               >
                 <cylinderGeometry args={[0.007, 0.007, 0.016, 12]} />
                 <meshStandardMaterial color="#8d9298" metalness={0.8} roughness={0.3} />
@@ -486,6 +583,20 @@ export function RailingScene({
               <sphereGeometry args={[r * 1.8, 20, 20]} />
               <meshStandardMaterial color={color} {...METAL} roughness={0.35} />
             </mesh>
+          );
+        }
+        if (cap.kind === 'kugel-drittel') {
+          // Gewoelbte Endkappe (Kugelsegment), buendig auf dem Rohrende.
+          const yaw = Math.atan2(cap.dir[0], cap.dir[1]) - Math.PI / 2;
+          return (
+            <group key={`cap-${i}`} position={cap.position} rotation={[0, yaw, 0]}>
+              <mesh rotation={[0, 0, -Math.PI / 2]} scale={[0.45, 1, 1]}>
+                <sphereGeometry
+                  args={[r * 1.05, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2]}
+                />
+                <meshStandardMaterial color={color} {...METAL} side={THREE.DoubleSide} />
+              </mesh>
+            </group>
           );
         }
         if (cap.kind === 'endbogen') {

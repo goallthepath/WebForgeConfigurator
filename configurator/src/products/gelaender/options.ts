@@ -230,6 +230,27 @@ export const ORNAMENT_TYPEN: OptionDef<OrnamentTyp>[] = [
   },
 ];
 
+export const ORNAMENT_GROESSEN: OptionDef<'klein' | 'mittel' | 'gross'>[] = [
+  { id: 'klein', label: 'Dezent', description: 'Kleine Elemente – zurückhaltend.' },
+  { id: 'mittel', label: 'Ausgewogen', description: 'Mittlere Grösse – der Klassiker.' },
+  { id: 'gross', label: 'Markant', description: 'Grosse Elemente – kräftige Wirkung.' },
+];
+
+export const ORNAMENT_LAGEN: OptionDef<'oben' | 'mitte' | 'unten'>[] = [
+  { id: 'oben', label: 'Oben (Fries)', description: 'Als Zierband unter dem Obergurt.' },
+  { id: 'mitte', label: 'Mittig', description: 'Zentriert im Füllfeld.' },
+  { id: 'unten', label: 'Unten (Sockel)', description: 'Als Band über dem Untergurt.' },
+];
+
+export const ORNAMENT_DICHTEN: OptionDef<'alle' | 'jedes-zweite'>[] = [
+  { id: 'alle', label: 'Jedes Feld', description: 'Durchgehende Ornamentreihe.' },
+  {
+    id: 'jedes-zweite',
+    label: 'Jedes zweite Feld',
+    description: 'Rhythmischer Wechsel – luftiger und günstiger.',
+  },
+];
+
 export const HANDLAUF_POSITIONEN: OptionDef<HandlaufPosition>[] = [
   {
     id: 'aufgesetzt',
@@ -280,6 +301,12 @@ export const GITTERTYPEN: OptionDef<GitterTyp>[] = [
 ];
 
 export const HANDLAUF_ABSCHLUESSE: OptionDef<HandlaufAbschluss>[] = [
+  {
+    id: 'kugel-drittel',
+    label: '1/3-Kugel (Standard)',
+    description: 'Gewölbte Endkappe – der klassische Schlosserei-Abschluss.',
+    icon: '<line x1="8" y1="24" x2="38" y2="24"/><path d="M38 18 A7 7 0 0 1 38 30"/>',
+  },
   {
     id: 'gerade',
     label: 'Gerade Kappe',

@@ -1,4 +1,7 @@
-import type { GelaenderInputs } from '../products/gelaender/types';
+import {
+  obergurtHoeheEff,
+  type GelaenderInputs,
+} from '../products/gelaender/types';
 import type { Profile, ValidationResult } from '../products/types';
 import { isProductionReady } from './profiles';
 
@@ -124,7 +127,7 @@ export function validateGelaender(
 
   // Konstruktive Höhenordnung: Untergurt < Knieleiste < Obergurt < Oberkante.
   if (inputs.hoeheMm) {
-    const ober = inputs.mitObergurt ? inputs.obergurtHoeheMm : null;
+    const ober = obergurtHoeheEff(inputs);
     const knie = inputs.mitKnieleiste ? inputs.knieleisteHoeheMm : null;
     if (inputs.mitUntergurt && inputs.untergurtHoeheMm >= inputs.hoeheMm / 2) {
       errors.push('Der Untergurt liegt unplausibel hoch – bitte Höhe prüfen.');
@@ -147,20 +150,35 @@ export function validateGelaender(
     }
   }
 
-  // Fussplatten-Wunschmasse (nur bei aufgesetzter Montage relevant).
-  if (inputs.montageart === 'boden') {
-    const { fussplatteLaengeMm: fl, fussplatteBreiteMm: fb, fussplatteDickeMm: fd } = inputs;
-    if (
-      fl < params.minFussplatteMm || fl > params.maxFussplatteMm ||
-      fb < params.minFussplatteMm || fb > params.maxFussplatteMm ||
-      fd < params.minFussplatteDickeMm || fd > params.maxFussplatteDickeMm
-    ) {
-      errors.push(
-        `Fussplatten-Masse ausserhalb des Vorschaubereichs (${params.minFussplatteMm}–${params.maxFussplatteMm} mm, Dicke ${params.minFussplatteDickeMm}–${params.maxFussplatteDickeMm} mm).`
-      );
+  // Befestigungs-Wunschmasse je Montageart (Vorschaubereiche TESTDATEN).
+  if (inputs.montageart) {
+    const pruefe = (wert: number, min: number, max: number, name: string) => {
+      if (wert < min || wert > max) {
+        errors.push(
+          `${name} ${wert} mm liegt ausserhalb des Vorschaubereichs (${min}–${max} mm).`
+        );
+      }
+    };
+    if (inputs.montageart === 'boden') {
+      pruefe(inputs.fussplatteLaengeMm, params.minFussplatteMm, params.maxFussplatteMm, 'Fussplatten-Länge');
+      pruefe(inputs.fussplatteBreiteMm, params.minFussplatteMm, params.maxFussplatteMm, 'Fussplatten-Breite');
+      pruefe(inputs.fussplatteDickeMm, params.minFussplatteDickeMm, params.maxFussplatteDickeMm, 'Fussplatten-Dicke');
+    } else if (inputs.montageart === 'seite') {
+      pruefe(inputs.schwertHoeheMm, 100, 400, 'Schwert-Höhe');
+      pruefe(inputs.schwertBreiteMm, 40, 150, 'Schwert-Breite');
+      pruefe(inputs.schwertDickeMm, 6, 25, 'Schwert-Dicke');
+    } else if (inputs.montageart === 'unten') {
+      pruefe(inputs.kragarmLaengeMm, 150, 600, 'Kragarm-Länge');
+      pruefe(inputs.kragarmStaerkeMm, 30, 100, 'Kragarm-Stärke');
+    } else if (inputs.montageart === 'eingelassen') {
+      pruefe(inputs.einlassTiefeMm, 60, 250, 'Einbindetiefe');
+    } else if (inputs.montageart === 'wand') {
+      pruefe(inputs.wandlascheHoeheMm, 60, 200, 'Wandlaschen-Höhe');
+      pruefe(inputs.wandlascheBreiteMm, 40, 120, 'Wandlaschen-Breite');
+      pruefe(inputs.wandlascheDickeMm, 5, 15, 'Wandlaschen-Dicke');
     }
     warnings.push(
-      'Fussplatte und Verankerung (Dübel, Randabstände) werden statisch bemessen – Ihre Masse gelten als Wunsch.'
+      'Befestigung und Verankerung (Platten, Dübel, Randabstände) werden statisch bemessen – Ihre Masse gelten als Wunsch.'
     );
   }
 

@@ -1,6 +1,7 @@
 import type { GelaenderDerived, GelaenderInputs } from './types';
 import type { Profile } from '../types';
 import { GELAENDER_RULES_V0 } from '../../rules/gelaender-rules';
+import { obergurtHoeheEff } from './types';
 
 /**
  * Geometriemodell des Geländers.
@@ -79,7 +80,7 @@ export interface GeoPlate {
   sizeM: [number, number, number];
   rotY: number;
   /** Steuert die Anker-Darstellung in der Szene. */
-  kind: 'fussplatte' | 'schwert' | 'kragarm';
+  kind: 'fussplatte' | 'schwert' | 'kragarm' | 'wandlasche';
 }
 
 /** Schmiedeornament (Grundauswahl der Charakter-Familie). */
@@ -92,14 +93,15 @@ export interface GeoOrnament {
   sizeM: number;
 }
 
-/** Baukörper-Andeutung (Betonplatte/Mauerkrone) je Lauf. */
+/** Baukörper-Andeutung je Lauf – Darstellung folgt dem Untergrund. */
 export interface GeoSlab {
   center: [number, number, number];
   sizeM: [number, number, number];
   rotY: number;
+  kind: 'beton' | 'holz' | 'stahl' | 'unbekannt';
 }
 
-export type EndCap = 'gerade' | 'kugel' | 'endbogen';
+export type EndCap = 'gerade' | 'kugel-drittel' | 'kugel' | 'endbogen';
 
 export interface GeoEndCap {
   position: [number, number, number];
@@ -232,9 +234,11 @@ export function buildRailingGeometry(
       ? heightM - railThickness / 2
       : heightM + railThickness / 2;
   /** Oberkante der Füllzone. */
-  const obergurtM = derived.obergurtLaengenMm.length
-    ? (inputs.obergurtHoeheMm ?? 0) / 1000
-    : null;
+  const obergurtEffMm = obergurtHoeheEff(inputs);
+  const obergurtM =
+    derived.obergurtLaengenMm.length && obergurtEffMm !== null
+      ? obergurtEffMm / 1000
+      : null;
   const fillTopM =
     obergurtM !== null
       ? obergurtM - gurtDicke / 2
@@ -245,11 +249,11 @@ export function buildRailingGeometry(
   // Pfostenverlängerung/Sockel je Befestigungsart (rein darstellend).
   const postBaseM =
     inputs.montageart === 'seite'
-      ? -0.16
+      ? -(inputs.schwertHoeheMm / 1000) * 0.85
       : inputs.montageart === 'unten'
-        ? -0.24
+        ? -0.22 - inputs.kragarmStaerkeMm / 1000
         : inputs.montageart === 'eingelassen'
-          ? -0.1
+          ? -(inputs.einlassTiefeMm / 1000)
           : 0;
 
   const posts: GeoPost[] = [];
@@ -314,34 +318,76 @@ export function buildRailingGeometry(
           kind: 'fussplatte',
         });
       } else if (inputs.montageart === 'seite') {
+        const swH = inputs.schwertHoeheMm / 1000;
+        const swB = inputs.schwertBreiteMm / 1000;
+        const swD = inputs.schwertDickeMm / 1000;
         plates.push({
-          center: [x - n[0] * (postW / 2 + 0.007), -0.08, z - n[1] * (postW / 2 + 0.007)],
-          sizeM: [0.06, 0.16, 0.012],
+          center: [
+            x - n[0] * (postW / 2 + swD / 2 + 0.001),
+            -swH / 2,
+            z - n[1] * (postW / 2 + swD / 2 + 0.001),
+          ],
+          sizeM: [swB, swH, swD],
           rotY,
           kind: 'schwert',
         });
       } else if (inputs.montageart === 'unten') {
         // Kragarm: horizontaler Arm unter der Platte nach innen.
+        const kaL = inputs.kragarmLaengeMm / 1000;
+        const kaS = inputs.kragarmStaerkeMm / 1000;
         plates.push({
-          center: [x + n[0] * 0.15, -0.245, z + n[1] * 0.15],
-          sizeM: [0.05, 0.05, 0.3],
+          center: [x + n[0] * (kaL / 2), -0.22 - kaS / 2, z + n[1] * (kaL / 2)],
+          sizeM: [kaS, kaS, kaL],
           rotY,
           kind: 'kragarm',
         });
       }
     }
 
-    // Baukörper-Andeutung (nicht bei Wandmontage).
+    // Wandmontage: Laschen an beiden freien Enden (Handlauf/Untergurt).
+    if (inputs.montageart === 'wand') {
+      const wlH = inputs.wandlascheHoeheMm / 1000;
+      const wlB = inputs.wandlascheBreiteMm / 1000;
+      const wlD = inputs.wandlascheDickeMm / 1000;
+      const hoehen = [mitHandlauf ? railAxisM : heightM - 0.02];
+      if (mitUntergurt) hoehen.push(bottomM);
+      const lascheAn = (px: number, pz: number) => {
+        for (const py of hoehen) {
+          plates.push({
+            center: [px, py, pz],
+            sizeM: [wlD, wlH, wlB],
+            rotY,
+            kind: 'wandlasche',
+          });
+        }
+      };
+      if (runIndex === 0) {
+        const [px, pz] = at(-0.001);
+        lascheAn(px, pz);
+      }
+      if (runIndex === runDefs.length - 1) {
+        const [px, pz] = at(run.lengthM + 0.001);
+        lascheAn(px, pz);
+      }
+    }
+
+    // Baukörper-Andeutung (nicht bei Wandmontage), Art folgt Untergrund.
     if (inputs.montageart && inputs.montageart !== 'wand') {
+      const kind = inputs.untergrund ?? 'beton';
+      const dicke = kind === 'stahl' ? 0.12 : kind === 'holz' ? 0.16 : 0.22;
+      const breite = kind === 'stahl' ? 0.18 : 0.8;
       const [mx, mz] = at(run.lengthM / 2);
       const innenOffset =
         inputs.montageart === 'seite' || inputs.montageart === 'unten'
-          ? 0.4 + postW / 2
-          : 0.32;
+          ? breite / 2 + postW / 2
+          : kind === 'stahl'
+            ? 0
+            : 0.32;
       slabs.push({
-        center: [mx + n[0] * innenOffset, -0.11, mz + n[1] * innenOffset],
-        sizeM: [run.lengthM + 0.4, 0.22, 0.8],
+        center: [mx + n[0] * innenOffset, -dicke / 2, mz + n[1] * innenOffset],
+        sizeM: [run.lengthM + 0.4, dicke, breite],
         rotY,
+        kind,
       });
     }
 
@@ -386,18 +432,41 @@ export function buildRailingGeometry(
           });
         }
 
-        // Charakter-Familie: ein Ornament-Grundelement je Feld.
-        if (inputs.fuellungsart === 'geschmiedet' && inputs.ornamentTyp) {
+        // Charakter-Familie: Ornamente gemäss Grundeinstellungen.
+        if (
+          inputs.fuellungsart === 'geschmiedet' &&
+          inputs.ornamentTyp &&
+          (inputs.ornamentDichte === 'alle' || f % 2 === 0)
+        ) {
           const tMid = (f + 0.5) * spacing;
           const [ox, oz] = at(tMid);
           const gapM = spacing / (staebeProFeld + 1);
-          ornaments.push({
-            kind: inputs.ornamentTyp,
-            center: [ox, fillBottomM + (fillTopM - fillBottomM) / 2, oz],
-            tM: baseT + tMid,
-            rotY,
-            sizeM: Math.min(gapM * 1.9, (fillTopM - fillBottomM) * 0.5),
-          });
+          const zone = fillTopM - fillBottomM;
+          const groesseFaktor =
+            inputs.ornamentGroesse === 'klein'
+              ? 0.32
+              : inputs.ornamentGroesse === 'gross'
+                ? 0.72
+                : 0.5;
+          const sizeM = Math.min(gapM * 2.2, zone * groesseFaktor);
+          const lageY =
+            inputs.ornamentLage === 'oben'
+              ? fillTopM - sizeM / 2 - 0.02
+              : inputs.ornamentLage === 'unten'
+                ? fillBottomM + sizeM / 2 + 0.02
+                : fillBottomM + zone / 2;
+          const yOffsets = inputs.ornamentDoppelt
+            ? [lageY - sizeM * 0.55, lageY + sizeM * 0.55]
+            : [lageY];
+          for (const y of yOffsets) {
+            ornaments.push({
+              kind: inputs.ornamentTyp,
+              center: [ox, y, oz],
+              tM: baseT + tMid,
+              rotY,
+              sizeM,
+            });
+          }
         }
       }
     }

@@ -1,4 +1,9 @@
-import type { GelaenderDerived, GelaenderInputs } from './types';
+import {
+  obergurtAktiv,
+  obergurtHoeheEff,
+  type GelaenderDerived,
+  type GelaenderInputs,
+} from './types';
 import {
   GELAENDER_RULES_V0,
   type GelaenderRuleParams,
@@ -85,13 +90,13 @@ export function deriveGelaender(
       : segmente.map(() => 0);
 
   const hoehe = inputs.hoeheMm ?? 0;
+  const untenMm = inputs.mitUntergurt
+    ? inputs.untergurtHoeheMm
+    : params.bodenfreiheitMm;
+  const obenMm = obergurtHoeheEff(inputs) ?? hoehe;
   const lagen =
     inputs.fuellungsart === 'querstab' && hoehe > 0
-      ? querstabLagen(
-          hoehe - params.bodenfreiheitMm,
-          stabBreiteMm,
-          params.maxQuerstabAbstandMm
-        )
+      ? querstabLagen(obenMm - untenMm, stabBreiteMm, params.maxQuerstabAbstandMm)
       : 0;
 
   const flaechenFuellung =
@@ -102,13 +107,8 @@ export function deriveGelaender(
     ? felderProSegment.reduce((sum, n) => sum + n, 0)
     : 0;
 
-  // Untergurt konstruktiv bei Stab- und Flächenfüllungen (nicht bei Glas
-  // zwischen Pfosten und nicht bei Reling – dort übernimmt die unterste Lage).
-  const mitUntergurt =
-    inputs.mitUntergurt &&
-    (mitStaeben ||
-      inputs.fuellungsart === 'blech' ||
-      inputs.fuellungsart === 'gitter');
+  // Untergurt ist bei allen Füllungsarten wählbar (konstruktiv üblich).
+  const mitUntergurt = inputs.mitUntergurt && inputs.fuellungsart !== null;
 
   return {
     pfostenProSegment,
@@ -120,8 +120,7 @@ export function deriveGelaender(
     gesamtlaengeMm: segmente.reduce((sum, l) => sum + l, 0),
     handlaufLaengenMm: inputs.ohneHandlauf ? [] : segmente,
     untergurtLaengenMm: mitUntergurt ? segmente : [],
-    obergurtLaengenMm:
-      inputs.mitObergurt && inputs.obergurtHoeheMm ? segmente : [],
+    obergurtLaengenMm: obergurtAktiv(inputs) ? segmente : [],
     knieleisteLaengenMm:
       inputs.mitKnieleiste && inputs.knieleisteHoeheMm ? segmente : [],
   };
@@ -194,12 +193,38 @@ export function materialAuszug(
       });
     });
   }
-  if (inputs.montageart === 'boden' && derived.pfostenTotal > 0) {
-    positionen.push({
-      bezeichnung: `Fussplatten ${inputs.fussplatteLaengeMm}×${inputs.fussplatteBreiteMm}×${inputs.fussplatteDickeMm} mm (Wunschmass)`,
-      anzahl: derived.pfostenTotal,
-      laengeMm: null,
-    });
+  if (derived.pfostenTotal > 0) {
+    if (inputs.montageart === 'boden') {
+      positionen.push({
+        bezeichnung: `Fussplatten ${inputs.fussplatteLaengeMm}×${inputs.fussplatteBreiteMm}×${inputs.fussplatteDickeMm} mm (Wunschmass)`,
+        anzahl: derived.pfostenTotal,
+        laengeMm: null,
+      });
+    } else if (inputs.montageart === 'seite') {
+      positionen.push({
+        bezeichnung: `Schwerter ${inputs.schwertHoeheMm}×${inputs.schwertBreiteMm}×${inputs.schwertDickeMm} mm (Wunschmass)`,
+        anzahl: derived.pfostenTotal,
+        laengeMm: null,
+      });
+    } else if (inputs.montageart === 'unten') {
+      positionen.push({
+        bezeichnung: `Kragarme ${inputs.kragarmStaerkeMm} mm stark (Wunschmass)`,
+        anzahl: derived.pfostenTotal,
+        laengeMm: inputs.kragarmLaengeMm,
+      });
+    } else if (inputs.montageart === 'eingelassen') {
+      positionen.push({
+        bezeichnung: `Pfosten-Einbindung ${inputs.einlassTiefeMm} mm (Wunschmass)`,
+        anzahl: derived.pfostenTotal,
+        laengeMm: null,
+      });
+    } else if (inputs.montageart === 'wand') {
+      positionen.push({
+        bezeichnung: `Wandlaschen ${inputs.wandlascheHoeheMm}×${inputs.wandlascheBreiteMm}×${inputs.wandlascheDickeMm} mm (Wunschmass)`,
+        anzahl: 2 * Math.max(1, derived.handlaufLaengenMm.length ? 1 : 1) * (derived.untergurtLaengenMm.length > 0 ? 2 : 1),
+        laengeMm: null,
+      });
+    }
   }
   if (derived.glasfelderTotal > 0) {
     const art =

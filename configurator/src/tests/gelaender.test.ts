@@ -133,8 +133,9 @@ describe('Pfad und Geometriemodell', () => {
     const derived = deriveGelaender(inputs, 12, PARAMS);
     const geo = buildRailingGeometry(inputs, derived, {});
     expect(geo.posts.length).toBe(derived.pfostenTotal);
-    // je Segment ein Handlauf + ein Untergurt (Standard bei Staketen)
-    expect(geo.rails.length).toBe(6);
+    // je Segment Handlauf + Untergurt + automatischer Obergurt
+    // (Standard: Handlauf aufgesetzt ⇒ Rahmenbauweise)
+    expect(geo.rails.length).toBe(9);
     expect(geo.dimensions).toHaveLength(4); // 3 Längen + Höhe
   });
 
@@ -148,7 +149,8 @@ describe('Pfad und Geometriemodell', () => {
     const derived = deriveGelaender(inputs, 16, PARAMS);
     const geo = buildRailingGeometry(inputs, derived, {});
     expect(derived.querstabLagen).toBeGreaterThan(0);
-    expect(geo.rails.length).toBe(1 + derived.querstabLagen);
+    // Handlauf + Untergurt + Auto-Obergurt + Lagen (Gurte für alle Typen).
+    expect(geo.rails.length).toBe(3 + derived.querstabLagen);
     expect(geo.bars).toHaveLength(0);
   });
 
@@ -165,7 +167,8 @@ describe('Pfad und Geometriemodell', () => {
     const geo = buildRailingGeometry(inputs, derived, {});
     expect(geo.panels.length).toBe(derived.glasfelderTotal);
     expect(geo.panels[0].fill).toBe('glas-satiniert');
-    expect(geo.rails).toHaveLength(0); // kein Handlauf, kein Untergurt bei Glas
+    // Kein Handlauf – aber der Untergurt bleibt (Gurte gelten für alle Typen).
+    expect(geo.rails).toHaveLength(1);
     expect(derived.handlaufLaengenMm).toHaveLength(0);
   });
 
@@ -278,7 +281,7 @@ describe('Konstruktionsoptionen', () => {
   it('Obergurt und Knieleiste erzeugen zusätzliche Gurte und Materialpositionen', () => {
     const inputs = {
       ...basis,
-      mitObergurt: true,
+      handlaufPosition: 'aufgesetzt' as const, // Obergurt entsteht automatisch
       obergurtHoeheMm: 880,
       mitKnieleiste: true,
       knieleisteHoeheMm: 500,
@@ -351,7 +354,6 @@ describe('Konstruktionsoptionen', () => {
     const result = validateGelaender(
       {
         ...basis,
-        mitObergurt: true,
         obergurtHoeheMm: 700,
         mitKnieleiste: true,
         knieleisteHoeheMm: 800,
@@ -359,6 +361,95 @@ describe('Konstruktionsoptionen', () => {
       []
     );
     expect(result.level).toBe('red');
+  });
+
+  it('Obergurt-Automatik: aufgesetzt erzeugt Obergurt, zwischen nicht', () => {
+    const auf = deriveGelaender(
+      { ...basis, handlaufPosition: 'aufgesetzt' },
+      12,
+      PARAMS
+    );
+    const zwischen = deriveGelaender(
+      { ...basis, handlaufPosition: 'zwischen' },
+      12,
+      PARAMS
+    );
+    expect(auf.obergurtLaengenMm).toEqual([2000]);
+    expect(zwischen.obergurtLaengenMm).toEqual([]);
+  });
+
+  it('Befestigungs-Wunschmasse: Schwert und Kragarm fliessen in die Geometrie', () => {
+    const derived = deriveGelaender(basis, 12, PARAMS);
+    const seite = buildRailingGeometry(
+      { ...basis, montageart: 'seite', schwertHoeheMm: 200, schwertBreiteMm: 80 },
+      derived,
+      {}
+    );
+    const schwert = seite.plates.find((pl) => pl.kind === 'schwert')!;
+    expect(schwert.sizeM[1]).toBeCloseTo(0.2);
+    expect(schwert.sizeM[0]).toBeCloseTo(0.08);
+
+    const unten = buildRailingGeometry(
+      { ...basis, montageart: 'unten', kragarmLaengeMm: 400 },
+      derived,
+      {}
+    );
+    const arm = unten.plates.find((pl) => pl.kind === 'kragarm')!;
+    expect(arm.sizeM[2]).toBeCloseTo(0.4);
+
+    const wand = buildRailingGeometry(
+      { ...basis, montageart: 'wand' },
+      derived,
+      {}
+    );
+    expect(wand.plates.filter((pl) => pl.kind === 'wandlasche').length).toBe(4);
+    expect(wand.slabs.length).toBe(0);
+  });
+
+  it('Untergrund steuert die Baukörper-Darstellung', () => {
+    const derived = deriveGelaender(basis, 12, PARAMS);
+    for (const untergrund of ['beton', 'holz', 'stahl', 'unbekannt'] as const) {
+      const geo = buildRailingGeometry(
+        { ...basis, montageart: 'boden', untergrund },
+        derived,
+        {}
+      );
+      expect(geo.slabs[0].kind).toBe(untergrund);
+    }
+  });
+
+  it('Ornament-Einstellungen: Dichte, Lage und Doppelreihe wirken', () => {
+    const basisOrn = inputsWith({
+      variante: 'i',
+      fuellungsart: 'geschmiedet',
+      ornamentTyp: 'ringe',
+      segmentLaengenMm: [4400],
+      hoeheMm: 1000,
+    });
+    const derived = deriveGelaender(basisOrn, 14, PARAMS);
+    const alle = buildRailingGeometry(basisOrn, derived, {});
+    const halb = buildRailingGeometry(
+      { ...basisOrn, ornamentDichte: 'jedes-zweite' },
+      derived,
+      {}
+    );
+    expect(halb.ornaments.length).toBeLessThan(alle.ornaments.length);
+
+    const doppelt = buildRailingGeometry(
+      { ...basisOrn, ornamentDoppelt: true },
+      derived,
+      {}
+    );
+    expect(doppelt.ornaments.length).toBe(alle.ornaments.length * 2);
+
+    const oben = buildRailingGeometry(
+      { ...basisOrn, ornamentLage: 'oben' },
+      derived,
+      {}
+    );
+    expect(oben.ornaments[0].center[1]).toBeGreaterThan(
+      alle.ornaments[0].center[1]
+    );
   });
 
   it('Charakter-Familie: Ornamente je Feld mit Manufaktur-Hinweis', () => {

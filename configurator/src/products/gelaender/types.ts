@@ -52,7 +52,10 @@ export type GitterTyp = 'streckmetall' | 'drahtgitter';
  * Die definitive handwerkliche Ausarbeitung bleibt individuelle Planung.
  */
 export type OrnamentTyp = 'ringe' | 'voluten' | 'koerbe';
-export type HandlaufAbschluss = 'gerade' | 'kugel' | 'endbogen';
+export type OrnamentGroesse = 'klein' | 'mittel' | 'gross';
+export type OrnamentLage = 'oben' | 'mitte' | 'unten';
+export type OrnamentDichte = 'alle' | 'jedes-zweite';
+export type HandlaufAbschluss = 'gerade' | 'kugel-drittel' | 'kugel' | 'endbogen';
 /** Handlauf aufgesetzt auf die Pfosten oder zwischen den Pfosten bündig. */
 export type HandlaufPosition = 'aufgesetzt' | 'zwischen';
 export type GlasTyp = 'klar' | 'satiniert';
@@ -72,12 +75,22 @@ export interface GelaenderInputs {
   montageart: Montageart | null;
   untergrund: Untergrund | null;
   /**
-   * Fussplatten-Wunschmasse in mm (Vorschau/Anfrage; die definitive
-   * Platte und Verankerung werden statisch bemessen).
+   * Befestigungs-Wunschmasse in mm je Montageart (Vorschau/Anfrage;
+   * die definitive Ausführung und Verankerung werden statisch bemessen).
    */
   fussplatteLaengeMm: number;
   fussplatteBreiteMm: number;
   fussplatteDickeMm: number;
+  schwertHoeheMm: number;
+  schwertBreiteMm: number;
+  schwertDickeMm: number;
+  kragarmLaengeMm: number;
+  kragarmStaerkeMm: number;
+  /** Einbindetiefe bei eingelassener Montage. */
+  einlassTiefeMm: number;
+  wandlascheHoeheMm: number;
+  wandlascheBreiteMm: number;
+  wandlascheDickeMm: number;
   /** Segmentlängen in mm gemäss SEGMENTE_PRO_VARIANTE. */
   segmentLaengenMm: number[];
   hoeheMm: number | null;
@@ -92,13 +105,21 @@ export interface GelaenderInputs {
   gitterTyp: GitterTyp | null;
   /** Nur bei Füllungsart 'geschmiedet' (Charakter-Familie). */
   ornamentTyp: OrnamentTyp | null;
+  ornamentGroesse: OrnamentGroesse;
+  ornamentLage: OrnamentLage;
+  ornamentDichte: OrnamentDichte;
+  /** Zwei Ornamente übereinander je Feld. */
+  ornamentDoppelt: boolean;
   /** Unterer Rahmengurt (konstruktiv üblich bei Stab-/Flächenfüllungen). */
   mitUntergurt: boolean;
   /** Höhe der Untergurt-Achse über Boden in mm. */
   untergurtHoeheMm: number;
-  /** Separater Obergurt unterhalb des Handlaufs (Rahmenbauweise). */
-  mitObergurt: boolean;
-  /** Höhe der Obergurt-Achse über Boden in mm (nur mit Obergurt). */
+  /**
+   * Höhe der Obergurt-Achse über Boden in mm. Der Obergurt existiert
+   * automatisch bei aufgesetztem Handlauf (Rahmenbauweise); ist der
+   * Handlauf «zwischen» den Pfosten, IST er der Obergurt.
+   * null = automatischer Standardabstand unter dem Handlauf.
+   */
   obergurtHoeheMm: number | null;
   /** Knieleiste (mittlerer Gurt). */
   mitKnieleiste: boolean;
@@ -129,6 +150,24 @@ export interface GelaenderInputs {
   /** RAL-Kennung, 'verzinkt-natur' oder 'individuell'. */
   farbe: string | null;
   montageService: MontageService | null;
+}
+
+/**
+ * Obergurt-Logik (konstruktiv): Bei aufgesetztem Handlauf existiert
+ * automatisch ein Obergurt (Rahmenbauweise). Ist der Handlauf «zwischen»
+ * den Pfosten, übernimmt er selbst die Obergurt-Funktion.
+ */
+export function obergurtAktiv(inputs: GelaenderInputs): boolean {
+  return !inputs.ohneHandlauf && inputs.handlaufPosition === 'aufgesetzt';
+}
+
+/** Standardabstand der Obergurt-Achse unter der Geländeroberkante (mm, visuell). */
+export const OBERGURT_STANDARD_ABSTAND_MM = 60;
+
+export function obergurtHoeheEff(inputs: GelaenderInputs): number | null {
+  if (!obergurtAktiv(inputs)) return null;
+  const hoehe = inputs.hoeheMm ?? 1000;
+  return inputs.obergurtHoeheMm ?? hoehe - OBERGURT_STANDARD_ABSTAND_MM;
 }
 
 export interface GelaenderDerived {
@@ -164,6 +203,15 @@ export const EMPTY_GELAENDER_INPUTS: GelaenderInputs = {
   fussplatteLaengeMm: 120,
   fussplatteBreiteMm: 120,
   fussplatteDickeMm: 10,
+  schwertHoeheMm: 160,
+  schwertBreiteMm: 60,
+  schwertDickeMm: 12,
+  kragarmLaengeMm: 300,
+  kragarmStaerkeMm: 50,
+  einlassTiefeMm: 100,
+  wandlascheHoeheMm: 100,
+  wandlascheBreiteMm: 60,
+  wandlascheDickeMm: 8,
   segmentLaengenMm: [],
   hoeheMm: null,
   masseUngefaehr: false,
@@ -172,9 +220,12 @@ export const EMPTY_GELAENDER_INPUTS: GelaenderInputs = {
   laserMotiv: null,
   gitterTyp: null,
   ornamentTyp: null,
+  ornamentGroesse: 'mittel',
+  ornamentLage: 'mitte',
+  ornamentDichte: 'alle',
+  ornamentDoppelt: false,
   mitUntergurt: true,
   untergurtHoeheMm: 80,
-  mitObergurt: false,
   obergurtHoeheMm: null,
   mitKnieleiste: false,
   knieleisteHoeheMm: null,

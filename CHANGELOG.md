@@ -4,6 +4,29 @@ Alle nennenswerten Änderungen an der WebForge-Plattform werden hier dokumentier
 
 ## [Unreleased]
 
+### Geländer-Modul: Befestigungsmasse, Auto-Obergurt, Ornament-Design (2026-07-18, fünfter Ausbau)
+
+- Befestigungs-Wunschmasse für JEDE Montageart: Fussplatte (L×B×D),
+  Schwert (H×B×D), Kragarm (Auskragung×Stärke), Einbindetiefe
+  (eingelassen) und Wandlaschen (H×B×D) — mit TESTDATEN-Vorschau-
+  bereichen, Ankerbild in 3D und Position im Materialauszug.
+- Obergurt-Logik konstruktiv korrekt: aufgesetzter Handlauf erzeugt
+  AUTOMATISCH einen Obergurt (Rahmenbauweise, Höhe einstellbar);
+  Handlauf «zwischen» den Pfosten übernimmt selbst die Obergurt-
+  Funktion. Handlauf-Position dafür in den Konstruktions-Block verschoben.
+- Unter-/Knieleisten-Gurte für ALLE Füllungsarten (auch Reling/Glas);
+  Querstab-Lagen rechnen zwischen Unter- und Obergurt.
+- Neuer Standard-Abschluss «1/3-Kugel» (gewölbte Kappe, Kugelsegment).
+- Ornament-Design der Charakter-Familie: Grösse (dezent/ausgewogen/
+  markant), Lage im Feld (Fries oben/mittig/Sockel unten), Rhythmus
+  (jedes Feld/jedes zweite) und Doppelreihe.
+- Untergrund-abhängige 3D-Darstellung des Baukörpers: Beton (Platte),
+  Holz (Bretter-Textur mit Maserung), Stahl (I-Träger-Andeutung),
+  unbekannt (transparent angedeutet).
+- Wandmontage zeigt Wandlaschen an den freien Enden.
+- Tests auf 51 erweitert (Auto-Obergurt, Befestigungsmasse in Geometrie,
+  Untergrund-Arten, Ornament-Einstellungen).
+
 ### Geländer-Modul: Konstruktionsoptionen (2026-07-18, vierter Ausbau)
 
 - Konstruktion (Gurte): Untergurt mit einstellbarer Höhe, separater
