@@ -6,7 +6,7 @@
  * → Preisberechnung → Geometriemodell → 3D-Darstellung.
  */
 
-export type ProductId = 'gelaender' | 'gartentor' | 'fenstergitter';
+export type ProductId = 'gelaender' | 'gartentor' | 'fenstergitter' | 'treppe';
 
 export type ValidationLevel = 'green' | 'yellow' | 'red';
 
@@ -47,6 +47,7 @@ export type ProfileRole =
   | 'fuellstab'
   | 'querstab'
   | 'rahmen'
+  | 'wange'
   | 'torrahmen'
   | 'torpfosten'
   | 'torfuellung'

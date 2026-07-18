@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom';
 import { PRODUCT_MODULES } from '../products/catalog';
 
 /**
- * Startseite des Konfigurators: genau drei Karten
- * (Geländer, Gartentor, Fenstergitter). Keine "Demnächst"-Module.
+ * Startseite des Konfigurators. Karten kommen aus PRODUCT_MODULES
+ * (Geländer, Gartentor, Fenstergitter, Treppe) – keine "Demnächst"-Module.
  */
 export function ProductSelection() {
   return (
@@ -12,7 +12,7 @@ export function ProductSelection() {
       <p>
         Stellen Sie Ihr Wunschprodukt zusammen und erhalten Sie eine
         unverbindliche Offertanfrage. Für alle übrigen Arbeiten –
-        Treppen, Vordächer, Reparaturen, Spezialanfertigungen – nutzen Sie
+        Vordächer, Reparaturen, Spezialanfertigungen – nutzen Sie
         bitte die <a href="/projekt-starten/">persönliche Projektanfrage</a>.
       </p>
       <div className="product-grid">

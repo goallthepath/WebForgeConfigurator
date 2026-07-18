@@ -338,10 +338,9 @@ export function GelaenderConfigurator() {
               onChange={(einsatzort) => set({ einsatzort })}
             />
             <p className="escape-hatch">
-              <strong>Treppengeländer?</strong> Dafür entsteht ein eigener
-              Konfigurator (Stufenverlauf, Podeste, Handlaufführung) – bis
-              dahin: <a href="/projekt-starten/">Anfrage für Treppengeländer</a>.
-              Ebenfalls persönlich geplant:{' '}
+              <strong>Treppengeländer?</strong> Dafür gibt es den eigenen{' '}
+              <Link to="/treppe/">Treppen-Konfigurator</Link> (Treppe,
+              Geländer oder kombiniert). Persönlich geplant werden:{' '}
               <a href="/projekt-starten/">Industriegeländer</a> (Suva-Regelwerk)
               und <a href="/projekt-starten/">Bestandssanierung/Erhöhung</a>.
             </p>

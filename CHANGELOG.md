@@ -4,6 +4,34 @@ Alle nennenswerten Änderungen an der WebForge-Plattform werden hier dokumentier
 
 ## [Unreleased]
 
+### Treppen-Modul: Treppe & Treppengeländer kombiniert (2026-07-18)
+
+- Viertes Produktmodul auf Kundenwunsch: `/konfigurator/treppe/` mit drei
+  Modi — **nur Treppe**, **nur Treppengeländer** (Bestandstreppe wird
+  grau-transparent dargestellt) oder **kombiniert**.
+- Steigungsrechnung nach Schrittmassregel (2×Steigung + Auftritt ≈ 630 mm):
+  automatische Steigungszahl aus der Geschosshöhe, Live-Anzeige von
+  Steigung/Auftritt/Schrittmass/Lauflänge/Neigung, manuelle
+  Stufenzahl-Übersteuerung; Grenzwerte TESTDATEN, ROT bei Steigung
+  ausserhalb, Podest-Hinweis über der Maximalhöhe (→ individuelle Anfrage
+  für gewendelte/mehrläufige Treppen).
+- Treppe: Wangenkonstruktion (neue Katalogrolle `wange`, Flachstahl-
+  Profile inkl. Edelstahl), Stufentypen Gitterrost (durchsichtige
+  Rost-Textur), Tränenblech, Glattblech (aussen mit Rutsch-Hinweis).
+- Treppengeländer: Seite links/rechts/beidseitig, Höhe mit
+  BFU-Richtwert ≥900 mm im Lauf (ROT darunter), Füllungen
+  Staketen/Querstab (schräg mitlaufend)/Charakter mit Ornamenten,
+  Profile aus dem Katalog (Treppen-Freigaben gespiegelt),
+  Handlauf-Abschlüsse; Handlauf und Gurte laufen der Schrägen entlang
+  (frei geneigte 3D-Stäbe).
+- 2D-**Treppenschnitt** (Seitenansicht mit Stufenlinie, Wange, Geländer
+  und Massketten) als Fallback und PDF-Basis.
+- Katalog 0.0.4-TESTDATEN (33 Profile); Schema um Produkt `treppe` und
+  Rolle `wange` erweitert; Geländer-Modul verlinkt Treppengeländer neu
+  direkt auf das Treppen-Modul.
+- Tests auf 83 erweitert (Schrittmassregel, Modi, Schräggeometrie,
+  BFU-Treppenlauf, Podest-/Steigungsgrenzen).
+
 ### Fenstergitter- und Gartentor-Module (2026-07-18)
 
 - Gemeinsame 3D-Bausteine extrahiert (`viewer/scene-shared.tsx`):

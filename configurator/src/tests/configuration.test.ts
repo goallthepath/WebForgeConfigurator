@@ -37,11 +37,12 @@ describe('Konfigurationsentwurf', () => {
 });
 
 describe('Produktkatalog', () => {
-  it('enthält genau die drei verbindlichen Module', () => {
+  it('enthält die vier freigegebenen Module (Treppe seit 2026-07-18 beauftragt)', () => {
     expect(PRODUCT_MODULES.map((m) => m.id)).toEqual([
       'gelaender',
       'gartentor',
       'fenstergitter',
+      'treppe',
     ]);
   });
 });

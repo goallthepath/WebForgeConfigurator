@@ -10,7 +10,7 @@
   ],
   "properties": {
     "configurationId": { "type": "string", "pattern": "^WFC-\\d{4}-\\d{6}$" },
-    "product": { "enum": ["gelaender", "gartentor", "fenstergitter"] },
+    "product": { "enum": ["gelaender", "gartentor", "fenstergitter", "treppe"] },
     "productVersion": { "type": "string" },
     "ruleVersion": { "type": "string" },
     "priceVersion": {

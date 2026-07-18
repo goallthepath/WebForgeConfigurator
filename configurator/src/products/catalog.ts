@@ -1,8 +1,9 @@
 import type { ProductId } from './types';
 
 /**
- * Die genau drei freigegebenen Produktmodule (verbindlicher Umfang).
- * Keine weiteren Karten, keine "Demnächst"-Module.
+ * Die freigegebenen Produktmodule. Ursprünglich drei; das Treppen-Modul
+ * wurde vom Auftraggeber am 2026-07-18 zusätzlich beauftragt
+ * (Treppe, Treppengeländer oder kombiniert).
  */
 export interface ProductModule {
   id: ProductId;
@@ -42,6 +43,16 @@ export const PRODUCT_MODULES: readonly ProductModule[] = [
     title: 'Fenstergitter konfigurieren',
     description:
       'Fest montiertes Fenstergitter mit definiertem Rahmen, Stabanordnung, Oberfläche und Befestigung.',
+    productVersion: '0.0.1',
+    ruleVersion: '0.0.1',
+    priceVersion: null,
+  },
+  {
+    id: 'treppe',
+    route: '/treppe/',
+    title: 'Treppe & Treppengeländer',
+    description:
+      'Gerade Stahltreppe, Treppengeländer für bestehende Läufe – oder beides kombiniert.',
     productVersion: '0.0.1',
     ruleVersion: '0.0.1',
     priceVersion: null,

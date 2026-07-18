@@ -3,6 +3,7 @@ import { ProductSelection } from '../components/ProductSelection';
 import { GelaenderConfigurator } from '../products/gelaender/GelaenderConfigurator';
 import { FenstergitterConfigurator } from '../products/fenstergitter/FenstergitterConfigurator';
 import { GartentorConfigurator } from '../products/gartentor/GartentorConfigurator';
+import { TreppeConfigurator } from '../products/treppe/TreppeConfigurator';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
           <Route path="/gelaender/" element={<GelaenderConfigurator />} />
           <Route path="/gartentor/" element={<GartentorConfigurator />} />
           <Route path="/fenstergitter/" element={<FenstergitterConfigurator />} />
+          <Route path="/treppe/" element={<TreppeConfigurator />} />
           <Route
             path="*"
             element={

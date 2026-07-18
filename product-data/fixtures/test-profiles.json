@@ -1,6 +1,6 @@
 {
   "$meta": {
-    "catalogVersion": "0.0.3-TESTDATEN",
+    "catalogVersion": "0.0.4-TESTDATEN",
     "status": "TESTDATEN – ausschliesslich für lokale Entwicklung und Tests. Enthält KEINE freigegebenen Masse. Produktivnutzung ist gesperrt (approval != freigegeben).",
     "source": "Vom Build Agent zusammengestellte, marktübliche Platzhalterformen ohne fachliche Gültigkeit. Der reale Profilkatalog benötigt die Freigabe an Gate C (docs/assumptions.md A-002)."
   },
@@ -24,6 +24,10 @@
         {
           "product": "gartentor",
           "role": "torpfosten"
+        },
+        {
+          "product": "treppe",
+          "role": "pfosten"
         }
       ],
       "approval": "TESTDATEN",
@@ -47,6 +51,10 @@
         {
           "product": "gartentor",
           "role": "torpfosten"
+        },
+        {
+          "product": "treppe",
+          "role": "pfosten"
         }
       ],
       "approval": "TESTDATEN",
@@ -67,6 +75,10 @@
         {
           "product": "gelaender",
           "role": "pfosten"
+        },
+        {
+          "product": "treppe",
+          "role": "pfosten"
         }
       ],
       "approval": "TESTDATEN",
@@ -85,6 +97,10 @@
       "allowedUses": [
         {
           "product": "gelaender",
+          "role": "pfosten"
+        },
+        {
+          "product": "treppe",
           "role": "pfosten"
         }
       ],
@@ -105,6 +121,10 @@
         {
           "product": "gelaender",
           "role": "handlauf"
+        },
+        {
+          "product": "treppe",
+          "role": "handlauf"
         }
       ],
       "approval": "TESTDATEN",
@@ -123,6 +143,10 @@
       "allowedUses": [
         {
           "product": "gelaender",
+          "role": "handlauf"
+        },
+        {
+          "product": "treppe",
           "role": "handlauf"
         }
       ],
@@ -144,6 +168,10 @@
         {
           "product": "gelaender",
           "role": "handlauf"
+        },
+        {
+          "product": "treppe",
+          "role": "handlauf"
         }
       ],
       "approval": "TESTDATEN",
@@ -162,6 +190,10 @@
       "allowedUses": [
         {
           "product": "gelaender",
+          "role": "handlauf"
+        },
+        {
+          "product": "treppe",
           "role": "handlauf"
         }
       ],
@@ -189,6 +221,10 @@
         {
           "product": "gartentor",
           "role": "torfuellung"
+        },
+        {
+          "product": "treppe",
+          "role": "fuellstab"
         }
       ],
       "approval": "TESTDATEN",
@@ -216,6 +252,10 @@
         {
           "product": "gartentor",
           "role": "torfuellung"
+        },
+        {
+          "product": "treppe",
+          "role": "fuellstab"
         }
       ],
       "approval": "TESTDATEN",
@@ -239,6 +279,10 @@
         {
           "product": "fenstergitter",
           "role": "gitterstab"
+        },
+        {
+          "product": "treppe",
+          "role": "fuellstab"
         }
       ],
       "approval": "TESTDATEN",
@@ -259,6 +303,10 @@
         {
           "product": "gelaender",
           "role": "fuellstab"
+        },
+        {
+          "product": "treppe",
+          "role": "fuellstab"
         }
       ],
       "approval": "TESTDATEN",
@@ -278,6 +326,10 @@
         {
           "product": "gelaender",
           "role": "querstab"
+        },
+        {
+          "product": "treppe",
+          "role": "querstab"
         }
       ],
       "approval": "TESTDATEN",
@@ -295,6 +347,10 @@
       "allowedUses": [
         {
           "product": "gelaender",
+          "role": "querstab"
+        },
+        {
+          "product": "treppe",
           "role": "querstab"
         }
       ],
@@ -314,6 +370,10 @@
       "allowedUses": [
         {
           "product": "gelaender",
+          "role": "querstab"
+        },
+        {
+          "product": "treppe",
           "role": "querstab"
         }
       ],
@@ -382,6 +442,10 @@
         {
           "product": "gelaender",
           "role": "pfosten"
+        },
+        {
+          "product": "treppe",
+          "role": "pfosten"
         }
       ],
       "approval": "TESTDATEN",
@@ -399,6 +463,10 @@
       "allowedUses": [
         {
           "product": "gelaender",
+          "role": "fuellstab"
+        },
+        {
+          "product": "treppe",
           "role": "fuellstab"
         }
       ],
@@ -418,6 +486,10 @@
       "allowedUses": [
         {
           "product": "gelaender",
+          "role": "fuellstab"
+        },
+        {
+          "product": "treppe",
           "role": "fuellstab"
         }
       ],
@@ -462,6 +534,10 @@
         {
           "product": "gartentor",
           "role": "torpfosten"
+        },
+        {
+          "product": "treppe",
+          "role": "pfosten"
         }
       ],
       "approval": "TESTDATEN",
@@ -480,6 +556,10 @@
       "allowedUses": [
         {
           "product": "gelaender",
+          "role": "pfosten"
+        },
+        {
+          "product": "treppe",
           "role": "pfosten"
         }
       ],
@@ -500,6 +580,10 @@
         {
           "product": "gelaender",
           "role": "handlauf"
+        },
+        {
+          "product": "treppe",
+          "role": "handlauf"
         }
       ],
       "approval": "TESTDATEN",
@@ -518,6 +602,10 @@
       "allowedUses": [
         {
           "product": "gelaender",
+          "role": "handlauf"
+        },
+        {
+          "product": "treppe",
           "role": "handlauf"
         }
       ],
@@ -541,6 +629,10 @@
         {
           "product": "gartentor",
           "role": "torfuellung"
+        },
+        {
+          "product": "treppe",
+          "role": "fuellstab"
         }
       ],
       "approval": "TESTDATEN",
@@ -564,6 +656,10 @@
         {
           "product": "gartentor",
           "role": "torfuellung"
+        },
+        {
+          "product": "treppe",
+          "role": "fuellstab"
         }
       ],
       "approval": "TESTDATEN",
@@ -581,6 +677,10 @@
       "allowedUses": [
         {
           "product": "gelaender",
+          "role": "querstab"
+        },
+        {
+          "product": "treppe",
           "role": "querstab"
         }
       ],
@@ -600,6 +700,10 @@
       "allowedUses": [
         {
           "product": "gelaender",
+          "role": "querstab"
+        },
+        {
+          "product": "treppe",
           "role": "querstab"
         }
       ],
@@ -625,6 +729,63 @@
         {
           "product": "gartentor",
           "role": "torrahmen"
+        }
+      ],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-wange-flachstahl-200",
+      "name": "TESTDATEN Wange Flachstahl 200×10",
+      "crossSection": {
+        "shape": "flat-bar",
+        "widthMm": 200,
+        "heightMm": 10
+      },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [
+        {
+          "product": "treppe",
+          "role": "wange"
+        }
+      ],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-wange-flachstahl-250",
+      "name": "TESTDATEN Wange Flachstahl 250×12 (kräftig)",
+      "crossSection": {
+        "shape": "flat-bar",
+        "widthMm": 250,
+        "heightMm": 12
+      },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [
+        {
+          "product": "treppe",
+          "role": "wange"
+        }
+      ],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-es-wange-flachstahl-200",
+      "name": "TESTDATEN Edelstahl-Wange Flachstahl 200×10",
+      "crossSection": {
+        "shape": "flat-bar",
+        "widthMm": 200,
+        "heightMm": 10
+      },
+      "material": "test-edelstahl",
+      "weightKgPerM": null,
+      "allowedUses": [
+        {
+          "product": "treppe",
+          "role": "wange"
         }
       ],
       "approval": "TESTDATEN",
