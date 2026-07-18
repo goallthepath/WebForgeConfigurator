@@ -1,13 +1,15 @@
 {
   "$meta": {
-    "catalogVersion": "0.0.1-TESTDATEN",
+    "catalogVersion": "0.0.2-TESTDATEN",
     "status": "TESTDATEN – zulässige Material-Oberflächen-Kombinationen und Innen-/Ausseneignung benötigen fachliche Freigabe (Gate C)."
   },
   "finishes": [
     {
       "finishId": "test-pulverbeschichtet",
       "name": "Pulverbeschichtet (TESTDATEN)",
-      "allowedMaterials": ["test-stahl"],
+      "allowedMaterials": [
+        "test-stahl"
+      ],
       "outdoorSuitable": null,
       "approval": "fachliche Freigabe erforderlich",
       "active": true
@@ -15,7 +17,29 @@
     {
       "finishId": "test-verzinkt",
       "name": "Feuerverzinkt (TESTDATEN)",
-      "allowedMaterials": ["test-stahl"],
+      "allowedMaterials": [
+        "test-stahl"
+      ],
+      "outdoorSuitable": null,
+      "approval": "fachliche Freigabe erforderlich",
+      "active": true
+    },
+    {
+      "finishId": "test-es-geschliffen",
+      "name": "Geschliffen (Edelstahl, TESTDATEN)",
+      "allowedMaterials": [
+        "test-edelstahl"
+      ],
+      "outdoorSuitable": null,
+      "approval": "fachliche Freigabe erforderlich",
+      "active": true
+    },
+    {
+      "finishId": "test-es-gebuerstet",
+      "name": "Gebürstet (Edelstahl, TESTDATEN)",
+      "allowedMaterials": [
+        "test-edelstahl"
+      ],
       "outdoorSuitable": null,
       "approval": "fachliche Freigabe erforderlich",
       "active": true

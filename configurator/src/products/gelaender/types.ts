@@ -1,5 +1,5 @@
 /**
- * Geländer-Modul: Eingaben und abgeleitete Werte.
+ * Zentrale Typen des Geländer-Moduls.
  * Reine Datentypen – keine Regel-, Preis- oder 3D-Logik (Ebenentrennung).
  */
 
@@ -41,10 +41,20 @@ export type Fuellungsart =
   | 'querstab'
   | 'blech'
   | 'gitter'
-  | 'glas';
+  | 'glas'
+  | 'geschmiedet';
 export type BlechTyp = 'voll' | 'loch' | 'laser';
+/** Vordefinierte Laserschnitt-Motive (Grundauswahl). */
+export type LaserMotiv = 'schlitze' | 'kreise' | 'quadrate' | 'floral';
 export type GitterTyp = 'streckmetall' | 'drahtgitter';
+/**
+ * Ornament-Grundauswahl der Charakter-Familie (geschmiedet).
+ * Die definitive handwerkliche Ausarbeitung bleibt individuelle Planung.
+ */
+export type OrnamentTyp = 'ringe' | 'voluten' | 'koerbe';
 export type HandlaufAbschluss = 'gerade' | 'kugel' | 'endbogen';
+/** Handlauf aufgesetzt auf die Pfosten oder zwischen den Pfosten bündig. */
+export type HandlaufPosition = 'aufgesetzt' | 'zwischen';
 export type GlasTyp = 'klar' | 'satiniert';
 export type Einbauort = 'innen' | 'aussen';
 export type Montageart = 'boden' | 'seite' | 'unten' | 'eingelassen' | 'wand';
@@ -61,6 +71,13 @@ export interface GelaenderInputs {
   einbauort: Einbauort | null;
   montageart: Montageart | null;
   untergrund: Untergrund | null;
+  /**
+   * Fussplatten-Wunschmasse in mm (Vorschau/Anfrage; die definitive
+   * Platte und Verankerung werden statisch bemessen).
+   */
+  fussplatteLaengeMm: number;
+  fussplatteBreiteMm: number;
+  fussplatteDickeMm: number;
   /** Segmentlängen in mm gemäss SEGMENTE_PRO_VARIANTE. */
   segmentLaengenMm: number[];
   hoeheMm: number | null;
@@ -69,14 +86,37 @@ export interface GelaenderInputs {
   fuellungsart: Fuellungsart | null;
   /** Nur bei Füllungsart 'blech'. */
   blechTyp: BlechTyp | null;
+  /** Nur bei Blechtyp 'laser'. */
+  laserMotiv: LaserMotiv | null;
   /** Nur bei Füllungsart 'gitter'. */
   gitterTyp: GitterTyp | null;
+  /** Nur bei Füllungsart 'geschmiedet' (Charakter-Familie). */
+  ornamentTyp: OrnamentTyp | null;
   /** Unterer Rahmengurt (konstruktiv üblich bei Stab-/Flächenfüllungen). */
   mitUntergurt: boolean;
+  /** Höhe der Untergurt-Achse über Boden in mm. */
+  untergurtHoeheMm: number;
+  /** Separater Obergurt unterhalb des Handlaufs (Rahmenbauweise). */
+  mitObergurt: boolean;
+  /** Höhe der Obergurt-Achse über Boden in mm (nur mit Obergurt). */
+  obergurtHoeheMm: number | null;
+  /** Knieleiste (mittlerer Gurt). */
+  mitKnieleiste: boolean;
+  knieleisteHoeheMm: number | null;
+  /** Werkstoff (Katalogverweis materials/*.json). */
+  materialId: string | null;
   pfostenProfilId: string | null;
   handlaufProfilId: string | null;
-  /** Nur bei Füllungsart 'staketen'. */
+  /**
+   * Sonderwunsch Handlauf: Runddurchmesser in mm statt Katalogprofil.
+   * Immer «fachliche Freigabe erforderlich» (Bauplan: keine freien
+   * Querschnitte produktiv) – dient Vorschau und Anfrage.
+   */
+  handlaufWunschDm: number | null;
+  /** Nur bei Füllungsart 'staketen'/'geschmiedet'. */
   fuellstabProfilId: string | null;
+  /** Sonderwunsch Stakete: Runddurchmesser in mm (prüfpflichtig). */
+  fuellstabWunschDm: number | null;
   /** Nur bei Füllungsart 'querstab' (Reling). */
   querstabProfilId: string | null;
   /** Nur bei Füllungsart 'glas'. */
@@ -84,8 +124,9 @@ export interface GelaenderInputs {
   /** Nur bei Glas wählbar: puristisch ohne Handlauf. */
   ohneHandlauf: boolean;
   handlaufAbschluss: HandlaufAbschluss | null;
+  handlaufPosition: HandlaufPosition;
   finishId: string | null;
-  /** RAL-Kennung oder 'individuell' (führt zu individueller Anfrage). */
+  /** RAL-Kennung, 'verzinkt-natur' oder 'individuell'. */
   farbe: string | null;
   montageService: MontageService | null;
 }
@@ -94,7 +135,7 @@ export interface GelaenderDerived {
   /** Pfosten je Segment (Eckpfosten werden zwischen Segmenten geteilt). */
   pfostenProSegment: number[];
   pfostenTotal: number;
-  /** Vertikale Füllstäbe (nur Staketen). */
+  /** Vertikale Füllstäbe (Staketen/geschmiedet). */
   fuellstaebeProSegment: number[];
   fuellstaebeTotal: number;
   /** Anzahl horizontaler Querstäbe übereinander (nur Reling). */
@@ -106,6 +147,10 @@ export interface GelaenderDerived {
   handlaufLaengenMm: number[];
   /** Zuschnittlängen Untergurt je Segment (mm), leer ohne Untergurt. */
   untergurtLaengenMm: number[];
+  /** Zuschnittlängen Obergurt je Segment (mm), leer ohne Obergurt. */
+  obergurtLaengenMm: number[];
+  /** Zuschnittlängen Knieleiste je Segment (mm), leer ohne Knieleiste. */
+  knieleisteLaengenMm: number[];
 }
 
 export const EMPTY_GELAENDER_INPUTS: GelaenderInputs = {
@@ -116,20 +161,34 @@ export const EMPTY_GELAENDER_INPUTS: GelaenderInputs = {
   einbauort: null,
   montageart: null,
   untergrund: null,
+  fussplatteLaengeMm: 120,
+  fussplatteBreiteMm: 120,
+  fussplatteDickeMm: 10,
   segmentLaengenMm: [],
   hoeheMm: null,
   masseUngefaehr: false,
   fuellungsart: null,
   blechTyp: null,
+  laserMotiv: null,
   gitterTyp: null,
+  ornamentTyp: null,
   mitUntergurt: true,
+  untergurtHoeheMm: 80,
+  mitObergurt: false,
+  obergurtHoeheMm: null,
+  mitKnieleiste: false,
+  knieleisteHoeheMm: null,
+  materialId: null,
   pfostenProfilId: null,
   handlaufProfilId: null,
+  handlaufWunschDm: null,
   fuellstabProfilId: null,
+  fuellstabWunschDm: null,
   querstabProfilId: null,
   glasTyp: null,
   ohneHandlauf: false,
   handlaufAbschluss: null,
+  handlaufPosition: 'aufgesetzt',
   finishId: null,
   farbe: null,
   montageService: null,

@@ -60,7 +60,39 @@ function makePatternTexture(kind: string): THREE.Texture {
   ctx.fillStyle = kind === 'gitter' ? '#000' : '#fff';
   ctx.fillRect(0, 0, size, size);
 
-  if (kind === 'loch') {
+  if (kind === 'laser-kreise') {
+    // Kreise unterschiedlicher Grösse (Tile ≈ 160 mm).
+    ctx.fillStyle = '#000';
+    const c = (x: number, y: number, r: number) => {
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    };
+    c(30, 30, 16); c(88, 20, 9); c(64, 74, 20); c(110, 96, 12); c(22, 100, 10);
+  } else if (kind === 'laser-quadrate') {
+    // Versetztes Quadratraster (Tile ≈ 160 mm).
+    ctx.fillStyle = '#000';
+    ctx.fillRect(14, 14, 26, 26);
+    ctx.fillRect(78, 26, 26, 26);
+    ctx.fillRect(30, 78, 26, 26);
+    ctx.fillRect(92, 90, 26, 26);
+  } else if (kind === 'laser-floral') {
+    // Stilisierte Blätter (Tile ≈ 200 mm).
+    ctx.fillStyle = '#000';
+    const blatt = (x: number, y: number, s: number, rot: number) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, s, s * 0.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
+    blatt(36, 36, 22, 0.7);
+    blatt(92, 60, 18, -0.5);
+    blatt(48, 100, 20, 1.9);
+    blatt(108, 112, 14, 0.3);
+  } else if (kind === 'loch') {
     // Rundlochung, versetzte Reihen (Tile ≈ 80 mm).
     ctx.fillStyle = '#000';
     for (let row = 0; row < 4; row++) {
@@ -123,6 +155,9 @@ function makePatternTexture(kind: string): THREE.Texture {
 const PATTERN_TILE_M: Record<string, number> = {
   loch: 0.08,
   laser: 0.16,
+  'laser-kreise': 0.16,
+  'laser-quadrate': 0.16,
+  'laser-floral': 0.2,
   streckmetall: 0.06,
   drahtgitter: 0.04,
 };
@@ -155,7 +190,10 @@ function PanelMesh({ panel, color }: { panel: GeoPanel; color: string }) {
       case 'blech-voll':
         return <meshStandardMaterial color={color} {...METAL} side={THREE.DoubleSide} />;
       default: {
-        const kind = panel.fill.replace(/^(blech|gitter)-/, '');
+        let kind = panel.fill.replace(/^(blech|gitter)-/, '');
+        if (kind === 'laser' && panel.motiv && panel.motiv !== 'schlitze') {
+          kind = `laser-${panel.motiv}`;
+        }
         const texture = makePatternTexture(kind);
         const tile = PATTERN_TILE_M[kind] ?? 0.08;
         texture.repeat.set(panel.widthM / tile, panel.heightM / tile);
@@ -170,7 +208,7 @@ function PanelMesh({ panel, color }: { panel: GeoPanel; color: string }) {
         );
       }
     }
-  }, [panel.fill, panel.widthM, panel.heightM, color]);
+  }, [panel.fill, panel.motiv, panel.widthM, panel.heightM, color]);
 
   return (
     <mesh position={panel.center} rotation={[0, panel.rotY, 0]}>
@@ -301,18 +339,92 @@ export function RailingScene({
         </mesh>
       ))}
 
-      {/* Fussplatten, Schwerter, Kragarme */}
-      {geometry.plates.map((plate, i) => (
-        <mesh
-          key={`plate-${i}`}
-          position={plate.center}
-          rotation={[0, plate.rotY, 0]}
-          castShadow={!mobile}
-        >
-          <boxGeometry args={plate.sizeM} />
-          <meshStandardMaterial color={color} {...METAL} />
-        </mesh>
-      ))}
+      {/* Fussplatten, Schwerter, Kragarme – inkl. Anker-Andeutung */}
+      {geometry.plates.map((plate, i) => {
+        const [l, h, b] = plate.sizeM;
+        const bolts: [number, number, number][] =
+          plate.kind === 'fussplatte'
+            ? [
+                [-l / 2 + 0.02, h, -b / 2 + 0.02],
+                [l / 2 - 0.02, h, -b / 2 + 0.02],
+                [-l / 2 + 0.02, h, b / 2 - 0.02],
+                [l / 2 - 0.02, h, b / 2 - 0.02],
+              ]
+            : plate.kind === 'schwert'
+              ? [
+                  [0, h / 2 - 0.03, b / 2],
+                  [0, -h / 2 + 0.03, b / 2],
+                ]
+              : [];
+        return (
+          <group
+            key={`plate-${i}`}
+            position={plate.center}
+            rotation={[0, plate.rotY, 0]}
+          >
+            <mesh castShadow={!mobile}>
+              <boxGeometry args={plate.sizeM} />
+              <meshStandardMaterial color={color} {...METAL} />
+            </mesh>
+            {bolts.map((pos, bi) => (
+              <mesh
+                key={bi}
+                position={pos}
+                rotation={plate.kind === 'schwert' ? [Math.PI / 2, 0, 0] : [0, 0, 0]}
+              >
+                <cylinderGeometry args={[0.007, 0.007, 0.016, 12]} />
+                <meshStandardMaterial color="#8d9298" metalness={0.8} roughness={0.3} />
+              </mesh>
+            ))}
+          </group>
+        );
+      })}
+
+      {/* Schmiedeornamente (Grundauswahl Charakter-Familie) */}
+      {geometry.ornaments.map((orn, i) => {
+        const r = orn.sizeM / 2;
+        const tube = 0.006;
+        if (orn.kind === 'ringe') {
+          return (
+            <mesh
+              key={`orn-${i}`}
+              position={orn.center}
+              rotation={[0, orn.rotY, 0]}
+            >
+              <torusGeometry args={[r, tube, 12, 36]} />
+              <meshStandardMaterial color={color} {...METAL} />
+            </mesh>
+          );
+        }
+        if (orn.kind === 'voluten') {
+          // Stilisierte S-Volute aus zwei Halbtori.
+          return (
+            <group key={`orn-${i}`} position={orn.center} rotation={[0, orn.rotY, 0]}>
+              <mesh position={[0, r / 1.6, 0]} rotation={[0, 0, Math.PI / 2]}>
+                <torusGeometry args={[r / 1.6, tube, 12, 24, Math.PI]} />
+                <meshStandardMaterial color={color} {...METAL} />
+              </mesh>
+              <mesh position={[0, -r / 1.6, 0]} rotation={[0, 0, -Math.PI / 2]}>
+                <torusGeometry args={[r / 1.6, tube, 12, 24, Math.PI]} />
+                <meshStandardMaterial color={color} {...METAL} />
+              </mesh>
+            </group>
+          );
+        }
+        // Körbe: gedrungene Kugelform mit Stabansätzen.
+        return (
+          <group key={`orn-${i}`} position={orn.center} rotation={[0, orn.rotY, 0]}>
+            <mesh scale={[1, 1.6, 1]}>
+              <sphereGeometry args={[r / 1.7, 14, 14]} />
+              <meshStandardMaterial color={color} {...METAL} />
+            </mesh>
+            <mesh>
+              <cylinderGeometry args={[tube, tube, orn.sizeM * 1.6, 10]} />
+              <meshStandardMaterial color={color} {...METAL} />
+            </mesh>
+          </group>
+        );
+      })}
 
       {geometry.posts.map((post, i) => (
         <mesh
@@ -377,19 +489,32 @@ export function RailingScene({
           );
         }
         if (cap.kind === 'endbogen') {
-          const bogenL = 0.14;
+          // Echter 90°-Bogen: Viertel-Torus in der vertikalen Ebene des
+          // Laufs, danach kurzer senkrechter Abgang.
+          const bogenR = Math.max(r * 2.2, 0.05);
+          const abgangL = 0.1;
+          const yaw = Math.atan2(cap.dir[0], cap.dir[1]) - Math.PI / 2;
           return (
-            <mesh
+            <group
               key={`cap-${i}`}
-              position={[
-                cap.position[0] + cap.dir[0] * r * 2,
-                cap.position[1] - bogenL / 2,
-                cap.position[2] + cap.dir[1] * r * 2,
-              ]}
+              position={cap.position}
+              rotation={[0, yaw, 0]}
             >
-              <cylinderGeometry args={[r, r, bogenL, 16]} />
-              <meshStandardMaterial color={color} {...METAL} />
-            </mesh>
+              {/* Torus liegt in XZ der Gruppe; um X gekippt in die
+                  vertikale Ebene, Zentrum unterhalb der Handlaufachse. */}
+              <mesh position={[0, -bogenR, 0]} rotation={[0, 0, 0]}>
+                <torusGeometry args={[bogenR, r, 14, 20, Math.PI / 2]} />
+                <meshStandardMaterial color={color} {...METAL} />
+              </mesh>
+              <mesh position={[bogenR, -bogenR - abgangL / 2, 0]}>
+                <cylinderGeometry args={[r, r, abgangL, 16]} />
+                <meshStandardMaterial color={color} {...METAL} />
+              </mesh>
+              <mesh position={[bogenR, -bogenR - abgangL, 0]} rotation={[Math.PI / 2, 0, 0]}>
+                <circleGeometry args={[r, 16]} />
+                <meshStandardMaterial color={color} {...METAL} side={THREE.DoubleSide} />
+              </mesh>
+            </group>
           );
         }
         return null;

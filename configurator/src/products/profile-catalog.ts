@@ -1,5 +1,6 @@
 import fixtures from '../../../product-data/fixtures/test-profiles.json';
 import finishesData from '../../../product-data/finishes/finishes.json';
+import materialsData from '../../../product-data/materials/materials.json';
 import type { Profile } from './types';
 
 /**
@@ -24,6 +25,17 @@ export interface Finish {
 
 export const FINISHES: readonly Finish[] =
   finishesData.finishes as unknown as Finish[];
+
+export interface Material {
+  materialId: string;
+  name: string;
+  outdoorSuitable: boolean | null;
+  approval: string;
+  active: boolean;
+}
+
+export const MATERIALS: readonly Material[] =
+  materialsData.materials as unknown as Material[];
 
 export function getProfile(profileId: string): Profile | undefined {
   return PROFILES.find((p) => p.profileId === profileId);

@@ -8,9 +8,12 @@ import type {
   GitterTyp,
   GlasTyp,
   HandlaufAbschluss,
+  HandlaufPosition,
   Kinderschutz,
+  LaserMotiv,
   Montageart,
   MontageService,
+  OrnamentTyp,
   Untergrund,
 } from './types';
 
@@ -169,6 +172,76 @@ export const FUELLUNGSARTEN: OptionDef<Fuellungsart>[] = [
     description:
       'Sicherheitsglas zwischen Metallpfosten – maximale Transparenz und Windschutz.',
     icon: '<rect x="10" y="10" width="28" height="28"/><line x1="14" y1="34" x2="34" y2="14"/>',
+  },
+  {
+    id: 'geschmiedet',
+    label: 'Charakter (geschmiedet)',
+    description:
+      'Manufaktur-Geländer mit Schmiedeornamenten – Grundauswahl hier, Feinausarbeitung persönlich.',
+    icon: '<line x1="12" y1="10" x2="12" y2="38"/><line x1="36" y1="10" x2="36" y2="38"/><path d="M24 12 C18 16 18 22 24 24 C30 26 30 32 24 36"/><line x1="6" y1="8" x2="42" y2="8"/>',
+  },
+];
+
+export const LASER_MOTIVE: OptionDef<LaserMotiv>[] = [
+  {
+    id: 'schlitze',
+    label: 'Linien / Schlitze',
+    description: 'Vertikale Langlöcher, versetzt – ruhig und modern.',
+    icon: '<rect x="12" y="10" width="4" height="12" rx="2"/><rect x="22" y="18" width="4" height="12" rx="2"/><rect x="32" y="10" width="4" height="12" rx="2"/><rect x="12" y="28" width="4" height="10" rx="2"/><rect x="32" y="28" width="4" height="10" rx="2"/>',
+  },
+  {
+    id: 'kreise',
+    label: 'Kreise',
+    description: 'Unterschiedlich grosse Rundungen – verspielt und leicht.',
+    icon: '<circle cx="16" cy="16" r="5"/><circle cx="32" cy="14" r="3"/><circle cx="24" cy="28" r="6"/><circle cx="36" cy="32" r="4"/><circle cx="12" cy="34" r="3"/>',
+  },
+  {
+    id: 'quadrate',
+    label: 'Quadrate',
+    description: 'Versetztes Quadratraster – grafisch und klar.',
+    icon: '<rect x="10" y="10" width="7" height="7"/><rect x="24" y="14" width="7" height="7"/><rect x="14" y="26" width="7" height="7"/><rect x="30" y="28" width="7" height="7"/>',
+  },
+  {
+    id: 'floral',
+    label: 'Floral',
+    description: 'Blatt- und Rankenmotiv – die organische Handschrift.',
+    icon: '<path d="M24 38 C24 26 18 22 12 20 C20 18 24 14 24 8 C24 14 28 18 36 20 C30 22 24 26 24 38"/>',
+  },
+];
+
+export const ORNAMENT_TYPEN: OptionDef<OrnamentTyp>[] = [
+  {
+    id: 'ringe',
+    label: 'Ringe',
+    description: 'Geschmiedete Ringe zwischen den Staketen – klassisch schlicht.',
+    icon: '<line x1="14" y1="8" x2="14" y2="40"/><line x1="34" y1="8" x2="34" y2="40"/><circle cx="24" cy="24" r="7"/>',
+  },
+  {
+    id: 'voluten',
+    label: 'Voluten (Schnörkel)',
+    description: 'C- und S-Schnörkel – die barocke Handschrift der Schmiede.',
+    icon: '<line x1="12" y1="8" x2="12" y2="40"/><line x1="36" y1="8" x2="36" y2="40"/><path d="M24 12 C17 15 17 21 24 23 C31 25 31 31 24 34"/>',
+  },
+  {
+    id: 'koerbe',
+    label: 'Körbe',
+    description: 'Gedrehte Korb-Elemente in den Staketen – kunstvoll und markant.',
+    icon: '<line x1="24" y1="6" x2="24" y2="14"/><path d="M24 14 C17 18 17 30 24 34 C31 30 31 18 24 14"/><line x1="24" y1="34" x2="24" y2="42"/>',
+  },
+];
+
+export const HANDLAUF_POSITIONEN: OptionDef<HandlaufPosition>[] = [
+  {
+    id: 'aufgesetzt',
+    label: 'Handlauf aufgesetzt',
+    description: 'Handlauf liegt oben auf den Pfosten – klassisch, durchlaufend.',
+    icon: '<line x1="6" y1="12" x2="42" y2="12"/><line x1="14" y1="12" x2="14" y2="40"/><line x1="34" y1="12" x2="34" y2="40"/>',
+  },
+  {
+    id: 'zwischen',
+    label: 'Gurt zwischen Pfosten',
+    description: 'Obergurt bündig zwischen den Pfosten – Pfosten bleiben sichtbar.',
+    icon: '<line x1="14" y1="8" x2="14" y2="40"/><line x1="34" y1="8" x2="34" y2="40"/><line x1="14" y1="14" x2="34" y2="14"/>',
   },
 ];
 

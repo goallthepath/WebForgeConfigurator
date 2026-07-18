@@ -71,8 +71,10 @@ export function deriveGelaender(
     Math.max(1, pfostenProSegment[i] - 1)
   );
 
+  const mitStaeben =
+    inputs.fuellungsart === 'staketen' || inputs.fuellungsart === 'geschmiedet';
   const fuellstaebeProSegment =
-    inputs.fuellungsart === 'staketen'
+    mitStaeben
       ? segmente.map((laenge, i) => {
           const feldLaenge = laenge / felderProSegment[i];
           return (
@@ -104,7 +106,7 @@ export function deriveGelaender(
   // zwischen Pfosten und nicht bei Reling – dort übernimmt die unterste Lage).
   const mitUntergurt =
     inputs.mitUntergurt &&
-    (inputs.fuellungsart === 'staketen' ||
+    (mitStaeben ||
       inputs.fuellungsart === 'blech' ||
       inputs.fuellungsart === 'gitter');
 
@@ -118,6 +120,10 @@ export function deriveGelaender(
     gesamtlaengeMm: segmente.reduce((sum, l) => sum + l, 0),
     handlaufLaengenMm: inputs.ohneHandlauf ? [] : segmente,
     untergurtLaengenMm: mitUntergurt ? segmente : [],
+    obergurtLaengenMm:
+      inputs.mitObergurt && inputs.obergurtHoeheMm ? segmente : [],
+    knieleisteLaengenMm:
+      inputs.mitKnieleiste && inputs.knieleisteHoeheMm ? segmente : [],
   };
 }
 
@@ -174,16 +180,27 @@ export function materialAuszug(
       }
     });
   }
-  derived.untergurtLaengenMm.forEach((laenge, i) => {
-    positionen.push({
-      bezeichnung:
-        derived.untergurtLaengenMm.length > 1
-          ? `Untergurt Segment ${i + 1}`
-          : 'Untergurt',
-      anzahl: 1,
-      laengeMm: laenge,
+  const gurtPositionen: [readonly number[], string][] = [
+    [derived.untergurtLaengenMm, 'Untergurt'],
+    [derived.obergurtLaengenMm, 'Obergurt'],
+    [derived.knieleisteLaengenMm, 'Knieleiste'],
+  ];
+  for (const [laengen, name] of gurtPositionen) {
+    laengen.forEach((laenge, i) => {
+      positionen.push({
+        bezeichnung: laengen.length > 1 ? `${name} Segment ${i + 1}` : name,
+        anzahl: 1,
+        laengeMm: laenge,
+      });
     });
-  });
+  }
+  if (inputs.montageart === 'boden' && derived.pfostenTotal > 0) {
+    positionen.push({
+      bezeichnung: `Fussplatten ${inputs.fussplatteLaengeMm}×${inputs.fussplatteBreiteMm}×${inputs.fussplatteDickeMm} mm (Wunschmass)`,
+      anzahl: derived.pfostenTotal,
+      laengeMm: null,
+    });
+  }
   if (derived.glasfelderTotal > 0) {
     const art =
       inputs.fuellungsart === 'glas'

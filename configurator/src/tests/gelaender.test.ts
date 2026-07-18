@@ -267,6 +267,133 @@ describe('Pfad und Geometriemodell', () => {
   });
 });
 
+describe('Konstruktionsoptionen', () => {
+  const basis = inputsWith({
+    variante: 'i',
+    fuellungsart: 'staketen',
+    segmentLaengenMm: [2000],
+    hoeheMm: 1000,
+  });
+
+  it('Obergurt und Knieleiste erzeugen zusätzliche Gurte und Materialpositionen', () => {
+    const inputs = {
+      ...basis,
+      mitObergurt: true,
+      obergurtHoeheMm: 880,
+      mitKnieleiste: true,
+      knieleisteHoeheMm: 500,
+    };
+    const derived = deriveGelaender(inputs, 12, PARAMS);
+    expect(derived.obergurtLaengenMm).toEqual([2000]);
+    expect(derived.knieleisteLaengenMm).toEqual([2000]);
+    const geo = buildRailingGeometry(inputs, derived, {});
+    // Handlauf + Untergurt + Obergurt + Knieleiste
+    expect(geo.rails.length).toBe(4);
+    // Staketen enden am Obergurt, nicht am Handlauf.
+    const stabTop = geo.bars[0].yM + geo.bars[0].heightM;
+    expect(stabTop).toBeLessThan(0.88);
+    const namen = materialAuszug(inputs, derived).map((m) => m.bezeichnung);
+    expect(namen).toContain('Obergurt');
+    expect(namen).toContain('Knieleiste');
+  });
+
+  it('Handlauf aufgesetzt liegt über der Pfostenoberkante, zwischen darunter', () => {
+    const derived = deriveGelaender(basis, 12, PARAMS);
+    const auf = buildRailingGeometry(
+      { ...basis, handlaufPosition: 'aufgesetzt' },
+      derived,
+      {}
+    );
+    const zwischen = buildRailingGeometry(
+      { ...basis, handlaufPosition: 'zwischen' },
+      derived,
+      {}
+    );
+    expect(auf.rails[0].start[1]).toBeGreaterThan(1.0);
+    expect(zwischen.rails[0].start[1]).toBeLessThan(1.0);
+  });
+
+  it('Untergurt-Höhe ist einstellbar und hebt die Füllung an', () => {
+    const tief = deriveGelaender({ ...basis, untergurtHoeheMm: 50 }, 12, PARAMS);
+    const hoch = deriveGelaender({ ...basis, untergurtHoeheMm: 150 }, 12, PARAMS);
+    const gTief = buildRailingGeometry({ ...basis, untergurtHoeheMm: 50 }, tief, {});
+    const gHoch = buildRailingGeometry({ ...basis, untergurtHoeheMm: 150 }, hoch, {});
+    expect(gHoch.bars[0].yM).toBeGreaterThan(gTief.bars[0].yM);
+  });
+
+  it('Fussplatten übernehmen die Wunschmasse (inkl. Materialposition)', () => {
+    const inputs = {
+      ...basis,
+      montageart: 'boden' as const,
+      fussplatteLaengeMm: 150,
+      fussplatteBreiteMm: 100,
+      fussplatteDickeMm: 12,
+    };
+    const derived = deriveGelaender(inputs, 12, PARAMS);
+    const geo = buildRailingGeometry(inputs, derived, {});
+    expect(geo.plates[0].kind).toBe('fussplatte');
+    expect(geo.plates[0].sizeM[0]).toBeCloseTo(0.15);
+    expect(geo.plates[0].sizeM[2]).toBeCloseTo(0.1);
+    const namen = materialAuszug(inputs, derived).map((m) => m.bezeichnung);
+    expect(namen.some((n) => n.includes('150×100×12'))).toBe(true);
+  });
+
+  it('Wunschmass-Staketen steuern Teilung und Vorschau, bleiben aber prüfpflichtig', () => {
+    const inputs = { ...basis, fuellstabWunschDm: 20, fuellstabProfilId: null };
+    const derived = deriveGelaender(inputs, 20, PARAMS);
+    const geo = buildRailingGeometry(inputs, derived, {});
+    expect(geo.bars[0].shape).toEqual({ kind: 'round', dM: 0.02 });
+    const result = validateGelaender(inputs, []);
+    expect(result.warnings.some((w) => w.includes('Sonderprofil'))).toBe(true);
+  });
+
+  it('Höhenordnung der Gurte wird geprüft (Knieleiste über Obergurt → ROT)', () => {
+    const result = validateGelaender(
+      {
+        ...basis,
+        mitObergurt: true,
+        obergurtHoeheMm: 700,
+        mitKnieleiste: true,
+        knieleisteHoeheMm: 800,
+      },
+      []
+    );
+    expect(result.level).toBe('red');
+  });
+
+  it('Charakter-Familie: Ornamente je Feld mit Manufaktur-Hinweis', () => {
+    const inputs = inputsWith({
+      variante: 'i',
+      fuellungsart: 'geschmiedet',
+      ornamentTyp: 'voluten',
+      segmentLaengenMm: [3000],
+      hoeheMm: 1000,
+    });
+    const derived = deriveGelaender(inputs, 14, PARAMS);
+    const geo = buildRailingGeometry(inputs, derived, {});
+    expect(derived.fuellstaebeTotal).toBeGreaterThan(0); // Staketen-Basis
+    expect(geo.ornaments.length).toBe(derived.pfostenProSegment[0] - 1);
+    expect(geo.ornaments[0].kind).toBe('voluten');
+    const result = validateGelaender(inputs, []);
+    expect(result.warnings.some((w) => w.includes('Manufaktur'))).toBe(true);
+  });
+
+  it('Laser-Motiv wird ins Panel übernommen', () => {
+    const inputs = inputsWith({
+      variante: 'i',
+      fuellungsart: 'blech',
+      blechTyp: 'laser',
+      laserMotiv: 'floral',
+      segmentLaengenMm: [2000],
+      hoeheMm: 1000,
+    });
+    const derived = deriveGelaender(inputs, 12, PARAMS);
+    const geo = buildRailingGeometry(inputs, derived, {});
+    expect(geo.panels[0].fill).toBe('blech-laser');
+    expect(geo.panels[0].motiv).toBe('floral');
+  });
+});
+
 describe('Segmentanzahl je Variante', () => {
   it('deckt alle Varianten ab', () => {
     expect(SEGMENTE_PRO_VARIANTE).toEqual({

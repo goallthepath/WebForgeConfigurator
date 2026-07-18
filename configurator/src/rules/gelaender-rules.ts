@@ -27,6 +27,12 @@ export interface GelaenderRuleParams {
   maxSegmentLaengeMm: number;
   minHoeheMm: number;
   maxHoeheMm: number;
+  minFussplatteMm: number;
+  maxFussplatteMm: number;
+  minFussplatteDickeMm: number;
+  maxFussplatteDickeMm: number;
+  minWunschDmMm: number;
+  maxWunschDmMm: number;
 }
 
 export const GELAENDER_RULES_V0: GelaenderRuleParams = {
@@ -43,6 +49,14 @@ export const GELAENDER_RULES_V0: GelaenderRuleParams = {
   maxSegmentLaengeMm: 6000,
   minHoeheMm: 800,
   maxHoeheMm: 1300,
+  // Fussplatten-Wunschmasse (Vorschau; definitive Platte wird bemessen).
+  minFussplatteMm: 80,
+  maxFussplatteMm: 300,
+  minFussplatteDickeMm: 6,
+  maxFussplatteDickeMm: 25,
+  // Sonderprofil-Wunschmasse (rund), rein für Vorschau/Anfrage.
+  minWunschDmMm: 8,
+  maxWunschDmMm: 76,
 };
 
 /**
@@ -108,6 +122,72 @@ export function validateGelaender(
     }
   }
 
+  // Konstruktive Höhenordnung: Untergurt < Knieleiste < Obergurt < Oberkante.
+  if (inputs.hoeheMm) {
+    const ober = inputs.mitObergurt ? inputs.obergurtHoeheMm : null;
+    const knie = inputs.mitKnieleiste ? inputs.knieleisteHoeheMm : null;
+    if (inputs.mitUntergurt && inputs.untergurtHoeheMm >= inputs.hoeheMm / 2) {
+      errors.push('Der Untergurt liegt unplausibel hoch – bitte Höhe prüfen.');
+    }
+    if (ober !== null && ober !== undefined) {
+      if (ober >= inputs.hoeheMm) {
+        errors.push('Der Obergurt muss unterhalb der Geländeroberkante liegen.');
+      }
+      if (inputs.mitUntergurt && ober <= inputs.untergurtHoeheMm) {
+        errors.push('Der Obergurt muss über dem Untergurt liegen.');
+      }
+    }
+    if (knie !== null && knie !== undefined) {
+      if (knie >= (ober ?? inputs.hoeheMm)) {
+        errors.push('Die Knieleiste muss unterhalb des Ober- bzw. Handlaufgurts liegen.');
+      }
+      if (inputs.mitUntergurt && knie <= inputs.untergurtHoeheMm) {
+        errors.push('Die Knieleiste muss über dem Untergurt liegen.');
+      }
+    }
+  }
+
+  // Fussplatten-Wunschmasse (nur bei aufgesetzter Montage relevant).
+  if (inputs.montageart === 'boden') {
+    const { fussplatteLaengeMm: fl, fussplatteBreiteMm: fb, fussplatteDickeMm: fd } = inputs;
+    if (
+      fl < params.minFussplatteMm || fl > params.maxFussplatteMm ||
+      fb < params.minFussplatteMm || fb > params.maxFussplatteMm ||
+      fd < params.minFussplatteDickeMm || fd > params.maxFussplatteDickeMm
+    ) {
+      errors.push(
+        `Fussplatten-Masse ausserhalb des Vorschaubereichs (${params.minFussplatteMm}–${params.maxFussplatteMm} mm, Dicke ${params.minFussplatteDickeMm}–${params.maxFussplatteDickeMm} mm).`
+      );
+    }
+    warnings.push(
+      'Fussplatte und Verankerung (Dübel, Randabstände) werden statisch bemessen – Ihre Masse gelten als Wunsch.'
+    );
+  }
+
+  // Sonderprofile (Wunschmass) sind immer prüfpflichtig.
+  for (const [wert, teil] of [
+    [inputs.handlaufWunschDm, 'Handlauf'],
+    [inputs.fuellstabWunschDm, 'Staketen'],
+  ] as const) {
+    if (wert !== null) {
+      if (wert < params.minWunschDmMm || wert > params.maxWunschDmMm) {
+        errors.push(
+          `Wunschmass ${teil} Ø ${wert} mm liegt ausserhalb des Vorschaubereichs (${params.minWunschDmMm}–${params.maxWunschDmMm} mm).`
+        );
+      } else {
+        warnings.push(
+          `Sonderprofil ${teil} Ø ${wert} mm: kein Katalogprofil – Machbarkeit und Statik werden fachlich geprüft.`
+        );
+      }
+    }
+  }
+
+  if (inputs.fuellungsart === 'geschmiedet') {
+    warnings.push(
+      'Charakter-Familie: Die gewählten Ornamente sind eine Grundauswahl – Aufteilung und handwerkliche Ausarbeitung plant unser Meister persönlich mit Ihnen (Manufaktur).'
+    );
+  }
+
   if (inputs.absturzhoehe === 'unbekannt') {
     warnings.push(
       'Absturzhöhe unbekannt: Sie wird beim Aufmass gemessen – massgebend ist die begehbare bzw. besteigbare Fläche (BFU).'
@@ -117,7 +197,7 @@ export function validateGelaender(
   // Kinderschutz (BFU): 12-cm-Kugel bis 75 cm, Kletterwirkung.
   const kindersicherPlanen = inputs.kinderschutz !== 'nein';
   if (kindersicherPlanen) {
-    if (inputs.fuellungsart === 'staketen') {
+    if (inputs.fuellungsart === 'staketen' || inputs.fuellungsart === 'geschmiedet') {
       warnings.push(
         `Kinderschutz: Bis ${BFU_RICHTWERTE.kinderschutzZoneMm} mm Höhe darf die ${BFU_RICHTWERTE.kugelDurchmesserMm}-mm-Kugel nicht durch Öffnungen passen – die definitive Stabteilung wird danach geprüft.`
       );

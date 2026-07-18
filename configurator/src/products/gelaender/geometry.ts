@@ -68,14 +68,28 @@ export interface GeoPanel {
   /** Rotation um Y (Laufrichtung). */
   rotY: number;
   fill: PanelFill;
+  /** Laserschnitt-Motiv (nur bei fill 'blech-laser'). */
+  motiv?: 'schlitze' | 'kreise' | 'quadrate' | 'floral';
 }
 
-/** Fussplatte oder seitliches Schwert am Pfosten. */
+/** Fussplatte, seitliches Schwert oder Kragarm am Pfosten. */
 export interface GeoPlate {
   center: [number, number, number];
   /** [entlang Lauf, Höhe, quer zum Lauf] in m. */
   sizeM: [number, number, number];
   rotY: number;
+  /** Steuert die Anker-Darstellung in der Szene. */
+  kind: 'fussplatte' | 'schwert' | 'kragarm';
+}
+
+/** Schmiedeornament (Grundauswahl der Charakter-Familie). */
+export interface GeoOrnament {
+  kind: 'ringe' | 'voluten' | 'koerbe';
+  center: [number, number, number];
+  tM: number;
+  rotY: number;
+  /** Verfügbare Breite/Höhe für das Element in m. */
+  sizeM: number;
 }
 
 /** Baukörper-Andeutung (Betonplatte/Mauerkrone) je Lauf. */
@@ -109,6 +123,7 @@ export interface RailingGeometry {
   endCaps: GeoEndCap[];
   plates: GeoPlate[];
   slabs: GeoSlab[];
+  ornaments: GeoOrnament[];
   dimensions: GeoDimension[];
   /** Für Kamera-Framing. */
   bounds: {
@@ -186,19 +201,46 @@ export function buildRailingGeometry(
 ): RailingGeometry {
   const heightM = (inputs.hoeheMm ?? 1000) / 1000;
   const postShape = shapeFromProfile(profiles.pfosten);
-  const railShape = shapeFromProfile(profiles.handlauf);
-  const barShape = shapeFromProfile(profiles.fuellstab);
+  // Wunschmasse (Sonderprofile, prüfpflichtig) überschreiben die Vorschau.
+  const railShape: ProfileShape = inputs.handlaufWunschDm
+    ? { kind: 'round', dM: inputs.handlaufWunschDm / 1000 }
+    : shapeFromProfile(profiles.handlauf);
+  const barShape: ProfileShape = inputs.fuellstabWunschDm
+    ? { kind: 'round', dM: inputs.fuellstabWunschDm / 1000 }
+    : shapeFromProfile(profiles.fuellstab);
   const crossShape = shapeFromProfile(profiles.querstab ?? profiles.fuellstab);
   const gurtShape: ProfileShape = profiles.untergurt
     ? shapeFromProfile(profiles.untergurt)
     : { kind: 'box', wM: 0.03, hM: 0.008 };
   const railThickness = railShape.dM ?? railShape.hM ?? 0.04;
-  const bottomM = GELAENDER_RULES_V0.bodenfreiheitMm / 1000;
   const mitHandlauf = !inputs.ohneHandlauf;
   const mitUntergurt = derived.untergurtLaengenMm.length > 0;
   const gurtDicke = gurtShape.dM ?? gurtShape.hM ?? 0.02;
+  /** Achshöhe des Untergurts bzw. Bodenfreiheit der Füllung. */
+  const bottomM =
+    (mitUntergurt
+      ? inputs.untergurtHoeheMm
+      : GELAENDER_RULES_V0.bodenfreiheitMm) / 1000;
   /** Unterkante der Füllung (über Untergurt, falls vorhanden). */
-  const fillBottomM = mitUntergurt ? bottomM + gurtDicke : bottomM;
+  const fillBottomM = mitUntergurt ? bottomM + gurtDicke / 2 : bottomM;
+  /**
+   * Handlauf-Achse: aufgesetzt = oberhalb der Pfostenoberkante,
+   * zwischen = bündig unterhalb der Oberkante.
+   */
+  const railAxisM =
+    inputs.handlaufPosition === 'zwischen'
+      ? heightM - railThickness / 2
+      : heightM + railThickness / 2;
+  /** Oberkante der Füllzone. */
+  const obergurtM = derived.obergurtLaengenMm.length
+    ? (inputs.obergurtHoeheMm ?? 0) / 1000
+    : null;
+  const fillTopM =
+    obergurtM !== null
+      ? obergurtM - gurtDicke / 2
+      : mitHandlauf
+        ? railAxisM - railThickness / 2
+        : heightM;
 
   // Pfostenverlängerung/Sockel je Befestigungsart (rein darstellend).
   const postBaseM =
@@ -217,6 +259,7 @@ export function buildRailingGeometry(
   const endCaps: GeoEndCap[] = [];
   const plates: GeoPlate[] = [];
   const slabs: GeoSlab[] = [];
+  const ornaments: GeoOrnament[] = [];
   const dimensions: GeoDimension[] = [];
 
   const panelFill: PanelFill | null =
@@ -259,18 +302,23 @@ export function buildRailingGeometry(
         shape: postShape,
       });
 
-      // Befestigungsdetails am Pfostenfuss (rein darstellend).
+      // Befestigungsdetails am Pfostenfuss (Wunschmasse, prüfpflichtig).
       if (inputs.montageart === 'boden') {
+        const fpL = inputs.fussplatteLaengeMm / 1000;
+        const fpB = inputs.fussplatteBreiteMm / 1000;
+        const fpD = inputs.fussplatteDickeMm / 1000;
         plates.push({
-          center: [x, 0.006, z],
-          sizeM: [0.12, 0.012, 0.12],
+          center: [x, fpD / 2, z],
+          sizeM: [fpL, fpD, fpB],
           rotY,
+          kind: 'fussplatte',
         });
       } else if (inputs.montageart === 'seite') {
         plates.push({
           center: [x - n[0] * (postW / 2 + 0.007), -0.08, z - n[1] * (postW / 2 + 0.007)],
           sizeM: [0.06, 0.16, 0.012],
           rotY,
+          kind: 'schwert',
         });
       } else if (inputs.montageart === 'unten') {
         // Kragarm: horizontaler Arm unter der Platte nach innen.
@@ -278,6 +326,7 @@ export function buildRailingGeometry(
           center: [x + n[0] * 0.15, -0.245, z + n[1] * 0.15],
           sizeM: [0.05, 0.05, 0.3],
           rotY,
+          kind: 'kragarm',
         });
       }
     }
@@ -296,36 +345,33 @@ export function buildRailingGeometry(
       });
     }
 
-    if (mitHandlauf) {
-      const [sx, sz] = at(0);
-      const [ex, ez] = at(run.lengthM);
+    const [sx0, sz0] = at(0);
+    const [ex0, ez0] = at(run.lengthM);
+    const gurt = (yM: number, shape: ProfileShape) =>
       rails.push({
-        start: [sx, heightM, sz],
-        end: [ex, heightM, ez],
+        start: [sx0, yM, sz0],
+        end: [ex0, yM, ez0],
         tRangeM: [baseT, baseT + run.lengthM],
-        shape: railShape,
+        shape,
       });
-    }
 
-    if (mitUntergurt) {
-      const [sx, sz] = at(0);
-      const [ex, ez] = at(run.lengthM);
-      rails.push({
-        start: [sx, bottomM + gurtDicke / 2, sz],
-        end: [ex, bottomM + gurtDicke / 2, ez],
-        tRangeM: [baseT, baseT + run.lengthM],
-        shape: gurtShape,
-      });
+    if (mitHandlauf) gurt(railAxisM, railShape);
+    if (mitUntergurt) gurt(bottomM, gurtShape);
+    if (obergurtM !== null) gurt(obergurtM, gurtShape);
+    if (derived.knieleisteLaengenMm.length && inputs.knieleisteHoeheMm) {
+      gurt(inputs.knieleisteHoeheMm / 1000, gurtShape);
     }
 
     const felder = Math.max(1, nPosts - 1);
 
-    if (inputs.fuellungsart === 'staketen') {
+    const mitStaeben =
+      inputs.fuellungsart === 'staketen' || inputs.fuellungsart === 'geschmiedet';
+
+    if (mitStaeben) {
       const staebeProFeld =
         felder > 0
           ? Math.round((derived.fuellstaebeProSegment[runIndex] ?? 0) / felder)
           : 0;
-      const barTop = mitHandlauf ? heightM - railThickness : heightM;
       for (let f = 0; f < felder; f++) {
         for (let s = 1; s <= staebeProFeld; s++) {
           const t = (f + s / (staebeProFeld + 1)) * spacing;
@@ -335,32 +381,37 @@ export function buildRailingGeometry(
             z,
             tM: baseT + t,
             yM: fillBottomM,
-            heightM: barTop - fillBottomM,
+            heightM: fillTopM - fillBottomM,
             shape: barShape,
+          });
+        }
+
+        // Charakter-Familie: ein Ornament-Grundelement je Feld.
+        if (inputs.fuellungsart === 'geschmiedet' && inputs.ornamentTyp) {
+          const tMid = (f + 0.5) * spacing;
+          const [ox, oz] = at(tMid);
+          const gapM = spacing / (staebeProFeld + 1);
+          ornaments.push({
+            kind: inputs.ornamentTyp,
+            center: [ox, fillBottomM + (fillTopM - fillBottomM) / 2, oz],
+            tM: baseT + tMid,
+            rotY,
+            sizeM: Math.min(gapM * 1.9, (fillTopM - fillBottomM) * 0.5),
           });
         }
       }
     }
 
     if (inputs.fuellungsart === 'querstab' && derived.querstabLagen > 0) {
-      const oben = mitHandlauf ? heightM - railThickness : heightM;
+      const oben = mitHandlauf ? railAxisM - railThickness / 2 : heightM;
       const frei = oben - bottomM;
       for (let lage = 1; lage <= derived.querstabLagen; lage++) {
-        const y = bottomM + (frei * lage) / (derived.querstabLagen + 1);
-        const [sx, sz] = at(0);
-        const [ex, ez] = at(run.lengthM);
-        rails.push({
-          start: [sx, y, sz],
-          end: [ex, y, ez],
-          tRangeM: [baseT, baseT + run.lengthM],
-          shape: crossShape,
-        });
+        gurt(bottomM + (frei * lage) / (derived.querstabLagen + 1), crossShape);
       }
     }
 
     if (panelFill) {
-      const oben = mitHandlauf ? heightM - railThickness : heightM;
-      const panelH = oben - fillBottomM;
+      const panelH = fillTopM - fillBottomM;
       for (let f = 0; f < felder; f++) {
         const tPanel = (f + 0.5) * spacing;
         const [cx, cz] = at(tPanel);
@@ -371,6 +422,10 @@ export function buildRailingGeometry(
           heightM: panelH,
           rotY,
           fill: panelFill,
+          motiv:
+            panelFill === 'blech-laser'
+              ? (inputs.laserMotiv ?? 'schlitze')
+              : undefined,
         });
       }
     }
@@ -381,7 +436,7 @@ export function buildRailingGeometry(
       if (runIndex === 0) {
         const [x, z] = at(0);
         endCaps.push({
-          position: [x, heightM, z],
+          position: [x, railAxisM, z],
           dir: [-run.dir[0], -run.dir[1]],
           kind,
           shape: railShape,
@@ -390,7 +445,7 @@ export function buildRailingGeometry(
       if (runIndex === runDefs.length - 1) {
         const [x, z] = at(run.lengthM);
         endCaps.push({
-          position: [x, heightM, z],
+          position: [x, railAxisM, z],
           dir: [run.dir[0], run.dir[1]],
           kind,
           shape: railShape,
@@ -432,6 +487,7 @@ export function buildRailingGeometry(
     endCaps,
     plates,
     slabs,
+    ornaments,
     dimensions,
     bounds: {
       minX: xs.length ? Math.min(...xs) : 0,

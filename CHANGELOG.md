@@ -4,6 +4,34 @@ Alle nennenswerten Änderungen an der WebForge-Plattform werden hier dokumentier
 
 ## [Unreleased]
 
+### Geländer-Modul: Konstruktionsoptionen (2026-07-18, vierter Ausbau)
+
+- Konstruktion (Gurte): Untergurt mit einstellbarer Höhe, separater
+  Obergurt (Rahmenbauweise) und Knieleiste mit eigenen Höhenfeldern;
+  Höhenordnung wird validiert (ROT bei Widersprüchen); alle Gurte in
+  Materialauszug, 3D und 2D.
+- Handlauf-Position wählbar: aufgesetzt (über den Pfosten) oder als Gurt
+  zwischen den Pfosten; Endkappen folgen der Handlaufachse.
+- Endbogen jetzt konstruktiv echt: 90°-Viertel-Torus mit senkrechtem
+  Abgang und Endscheibe statt Platzhalter-Zylinder.
+- Fussplatten mit Wunschmassen (L×B×Dicke, Grenzen TESTDATEN) inkl.
+  4-Anker-Bild in 3D; Schwerter mit 2 Ankern; Masse erscheinen im
+  Materialauszug («Wunschmass», statische Bemessung vorbehalten).
+- Werkstoffwahl Stahl/Edelstahl: Profil- und Oberflächenlisten werden
+  nach Material gefiltert; Katalog 0.0.3-TESTDATEN mit 30 Profilen
+  (inkl. Edelstahl-Serie, Quadratrohr 30, Gurt-Flachstahl 40×10).
+- Wunschmass-Sonderprofile für Handlauf und Staketen (Ø-Eingabe,
+  Vorschaubereich begrenzt): steuern 3D/Teilung, sind aber immer als
+  «Sonderprofil – fachliche Prüfung» markiert (Bauplan-Regel bleibt:
+  keine freien Querschnitte produktiv).
+- Laserschnitt-Motive als Karten (Schlitze, Kreise, Quadrate, Floral)
+  mit eigenen prozeduralen 3D-Texturen und SVG-Patterns.
+- Charakter-Familie (geschmiedet) als sechste Füllungsart: Staketen-Basis
+  plus Ornament-Grundauswahl Ringe/Voluten/Körbe als stilisierte
+  3D-Elemente je Feld; Manufaktur-Hinweis (Feinausarbeitung persönlich).
+- Tests auf 47 erweitert (Gurte, Handlauf-Position, Fussplattenmasse,
+  Wunschprofile, Ornamente, Laser-Motive).
+
 ### Geländer-Modul: Fachgrundlagen-Ausbau (2026-07-18, dritter Ausbau)
 
 - Fachgrundlage BFU 2.003 / SIA 358/261 / Metaltec als verbindliche

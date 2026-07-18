@@ -15,6 +15,7 @@ import {
   CATALOG_VERSION,
   FINISHES,
   getProfile,
+  MATERIALS,
   PROFILES,
   profilBreiteMm,
 } from '../profile-catalog';
@@ -24,6 +25,9 @@ import { buildRailingGeometry } from './geometry';
 import {
   ABSTURZ_OPTIONEN,
   BLECHTYPEN,
+  HANDLAUF_POSITIONEN,
+  LASER_MOTIVE,
+  ORNAMENT_TYPEN,
   EINBAUORTE,
   EINSATZORTE,
   FARBEN,
@@ -69,8 +73,36 @@ function reducer(state: GelaenderInputs, action: Action): GelaenderInputs {
           next.ohneHandlauf = false;
           next.glasTyp = null;
         }
-        if (action.patch.fuellungsart !== 'blech') next.blechTyp = null;
+        if (action.patch.fuellungsart !== 'blech') {
+          next.blechTyp = null;
+          next.laserMotiv = null;
+        }
         if (action.patch.fuellungsart !== 'gitter') next.gitterTyp = null;
+        if (action.patch.fuellungsart !== 'geschmiedet') next.ornamentTyp = null;
+      }
+      if (action.patch.blechTyp && action.patch.blechTyp !== 'laser') {
+        next.laserMotiv = null;
+      }
+      // Materialwechsel: nicht mehr passende Katalogprofile abwaehlen.
+      if (action.patch.materialId) {
+        for (const key of [
+          'pfostenProfilId',
+          'handlaufProfilId',
+          'fuellstabProfilId',
+          'querstabProfilId',
+        ] as const) {
+          const id = next[key];
+          if (id) {
+            const prof = PROFILES.find((p) => p.profileId === id);
+            if (prof && prof.material !== action.patch.materialId) {
+              next[key] = null;
+            }
+          }
+        }
+        const finish = FINISHES.find((f) => f.finishId === next.finishId);
+        if (finish && !finish.allowedMaterials.includes(action.patch.materialId)) {
+          next.finishId = null;
+        }
       }
       return next;
     }
@@ -103,8 +135,13 @@ function loadInitial(): GelaenderInputs {
 
 const SEGMENT_LABELS = ['Erstes Segment', 'Zweites Segment', 'Drittes Segment'];
 
-function profileOptions(role: ProfileRole): OptionDef<string>[] {
-  return profilesForUse(PROFILES, 'gelaender', role).map((p) => ({
+function profileOptions(
+  role: ProfileRole,
+  materialId: string | null
+): OptionDef<string>[] {
+  return profilesForUse(PROFILES, 'gelaender', role)
+    .filter((p) => !materialId || p.material === materialId)
+    .map((p) => ({
     id: p.profileId,
     label: p.name.replace(/^TESTDATEN\s*/, ''),
     description: crossSectionLabel(p),
@@ -147,7 +184,9 @@ export function GelaenderConfigurator() {
       [
         inputs.pfostenProfilId,
         inputs.ohneHandlauf ? null : inputs.handlaufProfilId,
-        inputs.fuellungsart === 'staketen' ? inputs.fuellstabProfilId : null,
+        inputs.fuellungsart === 'staketen' || inputs.fuellungsart === 'geschmiedet'
+          ? inputs.fuellstabProfilId
+          : null,
         inputs.fuellungsart === 'querstab' ? inputs.querstabProfilId : null,
       ]
         .map((id) => (id ? getProfile(id) : undefined))
@@ -160,7 +199,12 @@ export function GelaenderConfigurator() {
     inputs.fuellungsart === 'querstab'
       ? inputs.querstabProfilId
       : inputs.fuellstabProfilId;
-  const stabBreite = stabProfil ? profilBreiteMm(getProfile(stabProfil)!) : 12;
+  const stabBreite =
+    inputs.fuellungsart !== 'querstab' && inputs.fuellstabWunschDm
+      ? inputs.fuellstabWunschDm
+      : stabProfil
+        ? profilBreiteMm(getProfile(stabProfil)!)
+        : 12;
 
   const derived = useMemo(
     () => deriveGelaender(inputs, stabBreite),
@@ -216,21 +260,25 @@ export function GelaenderConfigurator() {
     inputs.hoeheMm > 0;
   const typOk =
     inputs.fuellungsart === 'blech'
-      ? inputs.blechTyp !== null
+      ? inputs.blechTyp !== null &&
+        (inputs.blechTyp !== 'laser' || inputs.laserMotiv !== null)
       : inputs.fuellungsart === 'gitter'
         ? inputs.gitterTyp !== null
-        : inputs.fuellungsart !== null;
+        : inputs.fuellungsart === 'geschmiedet'
+          ? inputs.ornamentTyp !== null
+          : inputs.fuellungsart !== null;
   const fuellungOk =
-    inputs.fuellungsart === 'staketen'
-      ? Boolean(inputs.fuellstabProfilId)
+    inputs.fuellungsart === 'staketen' || inputs.fuellungsart === 'geschmiedet'
+      ? Boolean(inputs.fuellstabProfilId || inputs.fuellstabWunschDm)
       : inputs.fuellungsart === 'querstab'
         ? Boolean(inputs.querstabProfilId)
         : inputs.fuellungsart === 'glas'
           ? Boolean(inputs.glasTyp)
           : true; // Blech/Gitter brauchen kein zusätzliches Stabprofil
   const profileOk = Boolean(
-    inputs.pfostenProfilId &&
-      (inputs.ohneHandlauf || inputs.handlaufProfilId) &&
+    inputs.materialId &&
+      inputs.pfostenProfilId &&
+      (inputs.ohneHandlauf || inputs.handlaufProfilId || inputs.handlaufWunschDm) &&
       fuellungOk
   );
   const ausfuehrungOk = inputs.ohneHandlauf || inputs.handlaufAbschluss !== null;
@@ -261,8 +309,10 @@ export function GelaenderConfigurator() {
 
   const zeigeUntergurt =
     inputs.fuellungsart === 'staketen' ||
+    inputs.fuellungsart === 'geschmiedet' ||
     inputs.fuellungsart === 'blech' ||
     inputs.fuellungsart === 'gitter';
+  const hoeheOderDefault = inputs.hoeheMm ?? 1000;
 
   return (
     <div className="configurator">
@@ -362,6 +412,42 @@ export function GelaenderConfigurator() {
               value={inputs.untergrund}
               onChange={(untergrund) => set({ untergrund })}
             />
+            {inputs.montageart === 'boden' && (
+              <fieldset className="option-group">
+                <legend>Fussplatten-Wunschmass</legend>
+                <div className="field-row">
+                  <NumberField
+                    label="Länge"
+                    unit="mm"
+                    value={inputs.fussplatteLaengeMm}
+                    min={GELAENDER_RULES_V0.minFussplatteMm}
+                    max={GELAENDER_RULES_V0.maxFussplatteMm}
+                    onChange={(v) => set({ fussplatteLaengeMm: v ?? 120 })}
+                  />
+                  <NumberField
+                    label="Breite"
+                    unit="mm"
+                    value={inputs.fussplatteBreiteMm}
+                    min={GELAENDER_RULES_V0.minFussplatteMm}
+                    max={GELAENDER_RULES_V0.maxFussplatteMm}
+                    onChange={(v) => set({ fussplatteBreiteMm: v ?? 120 })}
+                  />
+                  <NumberField
+                    label="Dicke"
+                    unit="mm"
+                    step={1}
+                    value={inputs.fussplatteDickeMm}
+                    min={GELAENDER_RULES_V0.minFussplatteDickeMm}
+                    max={GELAENDER_RULES_V0.maxFussplatteDickeMm}
+                    onChange={(v) => set({ fussplatteDickeMm: v ?? 10 })}
+                  />
+                </div>
+                <p className="field-hint">
+                  Darstellung inkl. Ankerbild in der 3D-Vorschau. Definitive
+                  Platte, Dübel und Randabstände werden statisch bemessen.
+                </p>
+              </fieldset>
+            )}
           </StepSection>
 
           <StepSection
@@ -431,6 +517,15 @@ export function GelaenderConfigurator() {
                 onChange={(blechTyp) => set({ blechTyp })}
               />
             )}
+            {inputs.blechTyp === 'laser' && (
+              <OptionCardGroup
+                legend="Laserschnitt-Motiv (Grundauswahl)"
+                name="laserMotiv"
+                options={LASER_MOTIVE}
+                value={inputs.laserMotiv}
+                onChange={(laserMotiv) => set({ laserMotiv })}
+              />
+            )}
             {inputs.fuellungsart === 'gitter' && (
               <OptionCardGroup
                 legend="Gitterausführung"
@@ -440,16 +535,96 @@ export function GelaenderConfigurator() {
                 onChange={(gitterTyp) => set({ gitterTyp })}
               />
             )}
-            {zeigeUntergurt && (
+            {inputs.fuellungsart === 'geschmiedet' && (
+              <OptionCardGroup
+                legend="Ornament-Grundauswahl (Feinausarbeitung persönlich)"
+                name="ornamentTyp"
+                options={ORNAMENT_TYPEN}
+                value={inputs.ornamentTyp}
+                onChange={(ornamentTyp) => set({ ornamentTyp })}
+              />
+            )}
+            <fieldset className="option-group">
+              <legend>Konstruktion (Gurte)</legend>
+              {zeigeUntergurt && (
+                <>
+                  <label className="check-row">
+                    <input
+                      type="checkbox"
+                      checked={inputs.mitUntergurt}
+                      onChange={(e) => set({ mitUntergurt: e.target.checked })}
+                    />
+                    Untergurt (unterer Rahmengurt – konstruktiv üblich)
+                  </label>
+                  {inputs.mitUntergurt && (
+                    <NumberField
+                      label="Untergurt-Höhe über Boden"
+                      unit="mm"
+                      step={5}
+                      value={inputs.untergurtHoeheMm}
+                      min={20}
+                      max={Math.floor(hoeheOderDefault / 2)}
+                      onChange={(v) => set({ untergurtHoeheMm: v ?? 80 })}
+                    />
+                  )}
+                </>
+              )}
               <label className="check-row">
                 <input
                   type="checkbox"
-                  checked={inputs.mitUntergurt}
-                  onChange={(e) => set({ mitUntergurt: e.target.checked })}
+                  checked={inputs.mitObergurt}
+                  onChange={(e) =>
+                    set({
+                      mitObergurt: e.target.checked,
+                      obergurtHoeheMm: e.target.checked
+                        ? (inputs.obergurtHoeheMm ?? hoeheOderDefault - 120)
+                        : inputs.obergurtHoeheMm,
+                    })
+                  }
                 />
-                Mit Untergurt (unterer Rahmengurt – konstruktiv üblich)
+                Separater Obergurt unter dem Handlauf (Rahmenbauweise)
               </label>
-            )}
+              {inputs.mitObergurt && (
+                <NumberField
+                  label="Obergurt-Höhe über Boden"
+                  unit="mm"
+                  value={inputs.obergurtHoeheMm}
+                  min={200}
+                  max={hoeheOderDefault - 20}
+                  onChange={(v) => set({ obergurtHoeheMm: v })}
+                />
+              )}
+              <label className="check-row">
+                <input
+                  type="checkbox"
+                  checked={inputs.mitKnieleiste}
+                  onChange={(e) =>
+                    set({
+                      mitKnieleiste: e.target.checked,
+                      knieleisteHoeheMm: e.target.checked
+                        ? (inputs.knieleisteHoeheMm ??
+                          Math.round(hoeheOderDefault / 2))
+                        : inputs.knieleisteHoeheMm,
+                    })
+                  }
+                />
+                Knieleiste (mittlerer Gurt)
+              </label>
+              {inputs.mitKnieleiste && (
+                <NumberField
+                  label="Knieleisten-Höhe über Boden"
+                  unit="mm"
+                  value={inputs.knieleisteHoeheMm}
+                  min={100}
+                  max={hoeheOderDefault - 50}
+                  onChange={(v) => set({ knieleisteHoeheMm: v })}
+                />
+              )}
+              <p className="field-hint">
+                Gurthöhen sind Gestaltungswünsche – Öffnungsmasse und
+                Kletterschutz werden fachlich geprüft (BFU).
+              </p>
+            </fieldset>
             <p className="escape-hatch">
               Schmiedeeiserne Ornamente, Voluten, Rosetten oder historische
               Nachbildungen?{' '}
@@ -466,9 +641,26 @@ export function GelaenderConfigurator() {
             done={steps.s8}
           >
             <OptionCardGroup
+              legend="Werkstoff"
+              name="materialId"
+              options={MATERIALS.filter((m) => m.active).map((m) => ({
+                id: m.materialId,
+                label: m.name.replace(/\s*\(TESTDATEN\)/, ''),
+                description:
+                  m.materialId === 'test-edelstahl'
+                    ? 'Rostfrei - geschliffen oder gebuerstet, ideal aussen.'
+                    : 'Klassischer Schlosserstahl - verzinkt oder beschichtet.',
+              }))}
+              value={inputs.materialId}
+              onChange={(materialId) => set({ materialId })}
+              badge={() => 'TESTDATEN'}
+            />
+            {inputs.materialId && (
+              <>
+            <OptionCardGroup
               legend="Pfosten"
               name="pfostenProfil"
-              options={profileOptions('pfosten')}
+              options={profileOptions('pfosten', inputs.materialId)}
               value={inputs.pfostenProfilId}
               onChange={(pfostenProfilId) => set({ pfostenProfilId })}
               badge={() => 'TESTDATEN'}
@@ -484,30 +676,71 @@ export function GelaenderConfigurator() {
               </label>
             )}
             {!inputs.ohneHandlauf && (
-              <OptionCardGroup
-                legend="Handlauf"
-                name="handlaufProfil"
-                options={profileOptions('handlauf')}
-                value={inputs.handlaufProfilId}
-                onChange={(handlaufProfilId) => set({ handlaufProfilId })}
-                badge={() => 'TESTDATEN'}
-              />
+              <>
+                <OptionCardGroup
+                  legend="Handlauf"
+                  name="handlaufProfil"
+                  options={profileOptions('handlauf', inputs.materialId)}
+                  value={inputs.handlaufProfilId}
+                  onChange={(handlaufProfilId) =>
+                    set({ handlaufProfilId, handlaufWunschDm: null })
+                  }
+                  badge={() => 'TESTDATEN'}
+                />
+                <details
+                  className="material-details"
+                  open={inputs.handlaufWunschDm !== null}
+                >
+                  <summary>Wunschmass Handlauf (Sonderprofil, pruefpflichtig)</summary>
+                  <NumberField
+                    label="Runddurchmesser"
+                    unit="mm"
+                    step={1}
+                    value={inputs.handlaufWunschDm}
+                    min={GELAENDER_RULES_V0.minWunschDmMm}
+                    max={GELAENDER_RULES_V0.maxWunschDmMm}
+                    hint="Kein Katalogprofil - Machbarkeit und Statik werden fachlich geprueft."
+                    onChange={(handlaufWunschDm) => set({ handlaufWunschDm })}
+                  />
+                </details>
+              </>
             )}
-            {inputs.fuellungsart === 'staketen' && (
-              <OptionCardGroup
-                legend="Füllstäbe (Staketen)"
-                name="fuellstabProfil"
-                options={profileOptions('fuellstab')}
-                value={inputs.fuellstabProfilId}
-                onChange={(fuellstabProfilId) => set({ fuellstabProfilId })}
-                badge={() => 'TESTDATEN'}
-              />
+            {(inputs.fuellungsart === 'staketen' ||
+              inputs.fuellungsart === 'geschmiedet') && (
+              <>
+                <OptionCardGroup
+                  legend="Füllstäbe (Staketen)"
+                  name="fuellstabProfil"
+                  options={profileOptions('fuellstab', inputs.materialId)}
+                  value={inputs.fuellstabProfilId}
+                  onChange={(fuellstabProfilId) =>
+                    set({ fuellstabProfilId, fuellstabWunschDm: null })
+                  }
+                  badge={() => 'TESTDATEN'}
+                />
+                <details
+                  className="material-details"
+                  open={inputs.fuellstabWunschDm !== null}
+                >
+                  <summary>Wunschmass Staketen (Sonderprofil, pruefpflichtig)</summary>
+                  <NumberField
+                    label="Runddurchmesser"
+                    unit="mm"
+                    step={1}
+                    value={inputs.fuellstabWunschDm}
+                    min={GELAENDER_RULES_V0.minWunschDmMm}
+                    max={GELAENDER_RULES_V0.maxWunschDmMm}
+                    hint="Kein Katalogprofil - Machbarkeit und Statik werden fachlich geprueft."
+                    onChange={(fuellstabWunschDm) => set({ fuellstabWunschDm })}
+                  />
+                </details>
+              </>
             )}
             {inputs.fuellungsart === 'querstab' && (
               <OptionCardGroup
                 legend="Querstäbe (Reling)"
                 name="querstabProfil"
-                options={profileOptions('querstab')}
+                options={profileOptions('querstab', inputs.materialId)}
                 value={inputs.querstabProfilId}
                 onChange={(querstabProfilId) => set({ querstabProfilId })}
                 badge={() => 'TESTDATEN'}
@@ -523,6 +756,8 @@ export function GelaenderConfigurator() {
                 badge={() => 'TESTDATEN'}
               />
             )}
+              </>
+            )}
           </StepSection>
 
           <StepSection
@@ -532,18 +767,32 @@ export function GelaenderConfigurator() {
             done={steps.s9}
           >
             {!inputs.ohneHandlauf && (
-              <OptionCardGroup
-                legend="Handlauf-Abschluss"
-                name="handlaufAbschluss"
-                options={HANDLAUF_ABSCHLUESSE}
-                value={inputs.handlaufAbschluss}
-                onChange={(handlaufAbschluss) => set({ handlaufAbschluss })}
-              />
+              <>
+                <OptionCardGroup
+                  legend="Handlauf-Position"
+                  name="handlaufPosition"
+                  options={HANDLAUF_POSITIONEN}
+                  value={inputs.handlaufPosition}
+                  onChange={(handlaufPosition) => set({ handlaufPosition })}
+                />
+                <OptionCardGroup
+                  legend="Handlauf-Abschluss"
+                  name="handlaufAbschluss"
+                  options={HANDLAUF_ABSCHLUESSE}
+                  value={inputs.handlaufAbschluss}
+                  onChange={(handlaufAbschluss) => set({ handlaufAbschluss })}
+                />
+              </>
             )}
             <OptionCardGroup
               legend="Oberflächenbehandlung"
               name="finish"
-              options={FINISHES.filter((f) => f.active).map((f) => ({
+              options={FINISHES.filter(
+                (f) =>
+                  f.active &&
+                  (!inputs.materialId ||
+                    f.allowedMaterials.includes(inputs.materialId))
+              ).map((f) => ({
                 id: f.finishId,
                 label: f.name.replace(/\s*\(TESTDATEN\)/, ''),
                 description:

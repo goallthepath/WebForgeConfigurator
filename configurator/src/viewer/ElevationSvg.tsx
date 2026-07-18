@@ -48,6 +48,26 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
           <rect x={0.025} y={0.095} width={0.015} height={0.055} rx={0.0075} fill="#fff" />
           <rect x={0.125} y={0.095} width={0.015} height={0.055} rx={0.0075} fill="#fff" />
         </pattern>
+        <pattern id="p-laser-kreise" width={0.16} height={0.16} patternUnits="userSpaceOnUse">
+          <rect width={0.16} height={0.16} fill="#8a9096" />
+          <circle cx={0.04} cy={0.04} r={0.02} fill="#fff" />
+          <circle cx={0.11} cy={0.03} r={0.011} fill="#fff" />
+          <circle cx={0.08} cy={0.095} r={0.025} fill="#fff" />
+          <circle cx={0.14} cy={0.12} r={0.015} fill="#fff" />
+        </pattern>
+        <pattern id="p-laser-quadrate" width={0.16} height={0.16} patternUnits="userSpaceOnUse">
+          <rect width={0.16} height={0.16} fill="#8a9096" />
+          <rect x={0.018} y={0.018} width={0.032} height={0.032} fill="#fff" />
+          <rect x={0.098} y={0.033} width={0.032} height={0.032} fill="#fff" />
+          <rect x={0.038} y={0.098} width={0.032} height={0.032} fill="#fff" />
+          <rect x={0.115} y={0.113} width={0.032} height={0.032} fill="#fff" />
+        </pattern>
+        <pattern id="p-laser-floral" width={0.2} height={0.2} patternUnits="userSpaceOnUse">
+          <rect width={0.2} height={0.2} fill="#8a9096" />
+          <ellipse cx={0.055} cy={0.055} rx={0.034} ry={0.014} fill="#fff" transform="rotate(40 0.055 0.055)" />
+          <ellipse cx={0.145} cy={0.09} rx={0.028} ry={0.012} fill="#fff" transform="rotate(-28 0.145 0.09)" />
+          <ellipse cx={0.075} cy={0.155} rx={0.031} ry={0.013} fill="#fff" transform="rotate(108 0.075 0.155)" />
+        </pattern>
         <pattern id="p-streckmetall" width={0.06} height={0.06} patternUnits="userSpaceOnUse">
           <rect width={0.06} height={0.06} fill="#fff" />
           <path d="M0 0 L0.06 0.06 M0.06 0 L0 0.06" stroke="#6b7178" strokeWidth={0.008} />
@@ -59,6 +79,10 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
       </defs>
       {/* Flächenfüllungen (Glas, Blech, Gitter) */}
       {geometry.panels.map((panel, i) => {
+        let kind = panel.fill.replace(/^(blech|gitter)-/, '');
+        if (kind === 'laser' && panel.motiv && panel.motiv !== 'schlitze') {
+          kind = `laser-${panel.motiv}`;
+        }
         const fillAttr =
           panel.fill === 'glas-klar'
             ? '#d3e5e9'
@@ -66,7 +90,7 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
               ? '#e3ebec'
               : panel.fill === 'blech-voll'
                 ? '#8a9096'
-                : `url(#p-${panel.fill.replace(/^(blech|gitter)-/, '')})`;
+                : `url(#p-${kind})`;
         return (
           <rect
             key={`g-${i}`}
