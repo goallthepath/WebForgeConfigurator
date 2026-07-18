@@ -45,6 +45,7 @@ export type ProfileRole =
   | 'pfosten'
   | 'handlauf'
   | 'fuellstab'
+  | 'querstab'
   | 'rahmen'
   | 'torrahmen'
   | 'torpfosten'

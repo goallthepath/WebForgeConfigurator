@@ -87,9 +87,13 @@ function CameraRig({
   const camera = useThree((state) => state.camera);
 
   useEffect(() => {
-    const cx = bounds.maxX / 2;
+    const cx = (bounds.minX + bounds.maxX) / 2;
     const cz = (bounds.minZ + bounds.maxZ) / 2;
-    const size = Math.max(bounds.maxX, 2.2);
+    const size = Math.max(
+      bounds.maxX - bounds.minX,
+      bounds.maxZ - bounds.minZ,
+      2.2
+    );
     const positions: Record<ViewPreset, [number, number, number]> = {
       perspektive: [cx - size * 0.55, size * 0.6, cz + size * 1.05],
       front: [cx, bounds.heightM / 2, cz + size * 1.35],
@@ -123,7 +127,7 @@ export function RailingScene({
 
   const center = useMemo<[number, number, number]>(
     () => [
-      geometry.bounds.maxX / 2,
+      (geometry.bounds.minX + geometry.bounds.maxX) / 2,
       geometry.bounds.heightM / 2,
       (geometry.bounds.minZ + geometry.bounds.maxZ) / 2,
     ],
@@ -186,6 +190,59 @@ export function RailingScene({
           <ShapeMesh shape={bar.shape} lengthM={bar.heightM} color={color} />
         </mesh>
       ))}
+
+      {geometry.panels.map((panel, i) => (
+        <mesh
+          key={`panel-${i}`}
+          position={panel.center}
+          rotation={[0, panel.rotY, 0]}
+        >
+          <boxGeometry args={[panel.widthM, panel.heightM, 0.01]} />
+          <meshStandardMaterial
+            color={panel.frosted ? '#dfe8ea' : '#bfd8dd'}
+            transparent
+            opacity={panel.frosted ? 0.75 : 0.32}
+            roughness={panel.frosted ? 0.7 : 0.05}
+            metalness={0.05}
+          />
+        </mesh>
+      ))}
+
+      {geometry.endCaps.map((cap, i) => {
+        const r = (cap.shape.dM ?? cap.shape.hM ?? 0.04) / 2;
+        if (cap.kind === 'kugel') {
+          return (
+            <mesh
+              key={`cap-${i}`}
+              position={[
+                cap.position[0] + cap.dir[0] * r * 1.6,
+                cap.position[1],
+                cap.position[2] + cap.dir[1] * r * 1.6,
+              ]}
+            >
+              <sphereGeometry args={[r * 1.8, 20, 20]} />
+              <meshStandardMaterial color={color} metalness={0.55} roughness={0.35} />
+            </mesh>
+          );
+        }
+        if (cap.kind === 'endbogen') {
+          const bogenL = 0.14;
+          return (
+            <mesh
+              key={`cap-${i}`}
+              position={[
+                cap.position[0] + cap.dir[0] * r * 2,
+                cap.position[1] - bogenL / 2,
+                cap.position[2] + cap.dir[1] * r * 2,
+              ]}
+            >
+              <cylinderGeometry args={[r, r, bogenL, 16]} />
+              <meshStandardMaterial color={color} metalness={0.55} roughness={0.38} />
+            </mesh>
+          );
+        }
+        return null;
+      })}
 
       {showDimensions &&
         geometry.dimensions.map((dim, i) => <DimensionLine key={i} dim={dim} />)}

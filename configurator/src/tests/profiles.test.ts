@@ -10,13 +10,22 @@ const profiles = fixtures.profiles as unknown as Profile[];
 describe('Standardprofil-Freigaben (TESTDATEN-Katalog)', () => {
   it('bietet Profile nur in ausdrücklich freigegebenen Produkt/Rolle-Kombinationen an', () => {
     const handlaeufe = profilesForUse(profiles, 'gelaender', 'handlauf');
-    expect(handlaeufe.map((p) => p.profileId)).toEqual([
-      'test-handlauf-rundrohr',
-    ]);
+    expect(handlaeufe.length).toBeGreaterThanOrEqual(4);
+    expect(
+      handlaeufe.every((p) =>
+        p.allowedUses.some((u) => u.product === 'gelaender' && u.role === 'handlauf')
+      )
+    ).toBe(true);
 
-    // Der Handlauf ist NICHT für Fenstergitter freigegeben.
+    // Handläufe sind NICHT für Fenstergitter freigegeben.
     const gitterstaebe = profilesForUse(profiles, 'fenstergitter', 'gitterstab');
-    expect(gitterstaebe.some((p) => p.profileId === 'test-handlauf-rundrohr')).toBe(false);
+    expect(
+      gitterstaebe.some((p) => p.profileId.startsWith('test-handlauf'))
+    ).toBe(false);
+
+    // Querstäbe existieren nur für das Geländer (Reling).
+    const querstaebe = profilesForUse(profiles, 'gelaender', 'querstab');
+    expect(querstaebe.length).toBeGreaterThanOrEqual(3);
   });
 
   it('blendet inaktive Profile aus', () => {

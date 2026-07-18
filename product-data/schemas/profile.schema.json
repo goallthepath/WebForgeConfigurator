@@ -16,7 +16,7 @@
       "type": "object",
       "required": ["shape"],
       "properties": {
-        "shape": { "enum": ["round-tube", "square-tube", "rect-tube", "flat-bar", "square-bar", "round-bar"] },
+        "shape": { "enum": ["round-tube", "square-tube", "rect-tube", "flat-bar", "square-bar", "round-bar", "t-profile"] },
         "widthMm": { "type": "number", "exclusiveMinimum": 0 },
         "heightMm": { "type": "number", "exclusiveMinimum": 0 },
         "diameterMm": { "type": "number", "exclusiveMinimum": 0 },
@@ -35,7 +35,7 @@
           "product": { "enum": ["gelaender", "gartentor", "fenstergitter"] },
           "role": {
             "enum": [
-              "pfosten", "handlauf", "fuellstab", "rahmen",
+              "pfosten", "handlauf", "fuellstab", "querstab", "rahmen",
               "torrahmen", "torpfosten", "torfuellung",
               "gitterrahmen", "gitterstab"
             ]

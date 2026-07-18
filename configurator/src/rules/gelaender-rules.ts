@@ -17,6 +17,12 @@ export interface GelaenderRuleParams {
   maxPfostenabstandMm: number;
   /** Maximaler lichter Abstand zwischen Füllstäben in mm. */
   maxStabAbstandMm: number;
+  /** Maximaler lichter Abstand zwischen Querstab-Lagen (Reling) in mm. */
+  maxQuerstabAbstandMm: number;
+  /** Visuelle/prov. Bodenfreiheit der Füllung in mm. */
+  bodenfreiheitMm: number;
+  /** Maximaler Pfostenabstand bei Glasfüllung in mm. */
+  maxPfostenabstandGlasMm: number;
   minSegmentLaengeMm: number;
   maxSegmentLaengeMm: number;
   minHoeheMm: number;
@@ -28,6 +34,9 @@ export const GELAENDER_RULES_V0: GelaenderRuleParams = {
   // TESTDATEN – dienen nur der Plausibilisierung und 3D-Vorschau.
   maxPfostenabstandMm: 1500,
   maxStabAbstandMm: 110,
+  maxQuerstabAbstandMm: 120,
+  bodenfreiheitMm: 50,
+  maxPfostenabstandGlasMm: 1000,
   minSegmentLaengeMm: 300,
   maxSegmentLaengeMm: 6000,
   minHoeheMm: 800,
@@ -89,6 +98,23 @@ export function validateGelaender(
 
   if (inputs.farbe === 'individuell') {
     warnings.push('Individuelle Farbe: wird als Sonderwunsch persönlich geprüft.');
+  }
+
+  if (inputs.fuellungsart === 'querstab') {
+    warnings.push(
+      'Querstäbe (Reling) gelten als erkletterbar – die Eignung Ihrer Einbausituation wird fachlich geprüft.'
+    );
+  }
+
+  if (inputs.fuellungsart === 'glas') {
+    warnings.push(
+      'Glasaufbau und Glasstärke (Sicherheitsglas) werden bei der fachlichen Prüfung verbindlich festgelegt.'
+    );
+    if (inputs.ohneHandlauf) {
+      warnings.push(
+        'Ausführung ohne Handlauf: Zulässigkeit wird für Ihre Einbausituation fachlich geprüft.'
+      );
+    }
   }
 
   if (params.approval !== 'freigegeben') {

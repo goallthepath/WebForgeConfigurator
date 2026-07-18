@@ -1,6 +1,9 @@
 import type {
   Einbauort,
+  Fuellungsart,
   GelaenderVariante,
+  GlasTyp,
+  HandlaufAbschluss,
   Montageart,
   MontageService,
   Untergrund,
@@ -35,6 +38,77 @@ export const VARIANTEN: OptionDef<GelaenderVariante>[] = [
     description:
       'Eine 90°-Ecke, Absturzseite innen (z. B. Kellerabgang, Podest).',
     icon: '<polyline points="6,10 6,38 42,38" transform="rotate(90 24 24)"/>',
+  },
+  {
+    id: 'u-innen',
+    label: 'U-Form innen',
+    description: 'Zwei 90°-Ecken – Sie stehen im U (z. B. Balkon).',
+    icon: '<polyline points="8,10 8,38 40,38 40,10"/>',
+  },
+  {
+    id: 'u-aussen',
+    label: 'U-Form aussen',
+    description:
+      'Zwei 90°-Ecken, Absturzseite innen (z. B. umlaufendes Podest).',
+    icon: '<polyline points="8,38 8,10 40,10 40,38"/>',
+  },
+];
+
+export const FUELLUNGSARTEN: OptionDef<Fuellungsart>[] = [
+  {
+    id: 'staketen',
+    label: 'Staketen (senkrecht)',
+    description:
+      'Senkrechte Füllstäbe – zeitlos, kindersicher und schwer erkletterbar.',
+    icon: '<line x1="8" y1="10" x2="8" y2="38"/><line x1="16" y1="10" x2="16" y2="38"/><line x1="24" y1="10" x2="24" y2="38"/><line x1="32" y1="10" x2="32" y2="38"/><line x1="40" y1="10" x2="40" y2="38"/><line x1="4" y1="8" x2="44" y2="8"/>',
+  },
+  {
+    id: 'querstab',
+    label: 'Querstäbe (Reling)',
+    description:
+      'Waagrechte Stäbe – elegant und schlank. Hinweis: erkletterbar, Eignung wird geprüft.',
+    icon: '<line x1="6" y1="12" x2="42" y2="12"/><line x1="6" y1="20" x2="42" y2="20"/><line x1="6" y1="28" x2="42" y2="28"/><line x1="6" y1="36" x2="42" y2="36"/><line x1="10" y1="8" x2="10" y2="40"/><line x1="38" y1="8" x2="38" y2="40"/>',
+  },
+  {
+    id: 'glas',
+    label: 'Glasfüllung',
+    description:
+      'Sicherheitsglas zwischen Metallpfosten – maximale Transparenz und Windschutz.',
+    icon: '<rect x="10" y="10" width="28" height="28"/><line x1="14" y1="34" x2="34" y2="14"/>',
+  },
+];
+
+export const HANDLAUF_ABSCHLUESSE: OptionDef<HandlaufAbschluss>[] = [
+  {
+    id: 'gerade',
+    label: 'Gerade Kappe',
+    description: 'Schlicht abgeschlossenes Handlaufende.',
+    icon: '<line x1="8" y1="24" x2="40" y2="24"/><line x1="40" y1="18" x2="40" y2="30"/>',
+  },
+  {
+    id: 'kugel',
+    label: 'Endkugel',
+    description: 'Klassische Kugel – die Handschrift der Kunstschlosserei.',
+    icon: '<line x1="8" y1="24" x2="36" y2="24"/><circle cx="40" cy="24" r="4"/>',
+  },
+  {
+    id: 'endbogen',
+    label: 'Endbogen 90°',
+    description: 'Nach unten gebogenes Ende – sicher, nichts bleibt hängen.',
+    icon: '<path d="M8 22 H34 Q40 22 40 28 V38"/>',
+  },
+];
+
+export const GLASTYPEN: OptionDef<GlasTyp>[] = [
+  {
+    id: 'klar',
+    label: 'Klarglas',
+    description: 'Volle Durchsicht – Sicherheitsglas (Aufbau wird fachlich bestimmt).',
+  },
+  {
+    id: 'satiniert',
+    label: 'Satiniert',
+    description: 'Milchig-matt – Sichtschutz bei vollem Lichtdurchlass.',
   },
 ];
 

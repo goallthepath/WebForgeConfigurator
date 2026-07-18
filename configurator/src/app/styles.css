@@ -524,6 +524,38 @@ h3 {
   font-size: 0.75rem;
 }
 
+.material-details {
+  margin: var(--webforge-space-sm) 0;
+  border: 1px dashed var(--webforge-color-mist);
+  border-radius: var(--webforge-radius-sm);
+  padding: 0.4rem 0.6rem;
+}
+
+.material-details summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--webforge-color-iron);
+}
+
+.material-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  margin-top: 0.4rem;
+}
+
+.material-table th,
+.material-table td {
+  text-align: left;
+  padding: 0.2rem 0.3rem;
+  border-bottom: 1px solid var(--webforge-color-mist);
+}
+
+.material-table th:nth-child(2),
+.material-table td:nth-child(2) {
+  text-align: right;
+}
+
 .versions {
   font-size: 0.75rem;
   color: var(--webforge-color-steel);

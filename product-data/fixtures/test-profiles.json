@@ -1,13 +1,13 @@
 {
   "$meta": {
-    "catalogVersion": "0.0.1-TESTDATEN",
+    "catalogVersion": "0.0.2-TESTDATEN",
     "status": "TESTDATEN – ausschliesslich für lokale Entwicklung und Tests. Enthält KEINE freigegebenen Masse. Produktivnutzung ist gesperrt (approval != freigegeben).",
-    "source": "Vom Build Agent erfundene Platzhalterformen ohne fachliche Gültigkeit. Der reale Profilkatalog benötigt die Freigabe an Gate C (docs/assumptions.md A-002)."
+    "source": "Vom Build Agent zusammengestellte, marktübliche Platzhalterformen ohne fachliche Gültigkeit. Der reale Profilkatalog benötigt die Freigabe an Gate C (docs/assumptions.md A-002)."
   },
   "profiles": [
     {
-      "profileId": "test-pfosten-quadratrohr",
-      "name": "TESTDATEN Pfosten-Quadratrohr",
+      "profileId": "test-pfosten-quadratrohr-40",
+      "name": "TESTDATEN Pfosten Quadratrohr 40",
       "crossSection": { "shape": "square-tube", "widthMm": 40, "heightMm": 40, "wallThicknessMm": 2 },
       "material": "test-stahl",
       "weightKgPerM": null,
@@ -19,9 +19,39 @@
       "active": true
     },
     {
-      "profileId": "test-handlauf-rundrohr",
-      "name": "TESTDATEN Handlauf-Rundrohr",
-      "crossSection": { "shape": "round-tube", "diameterMm": 42, "wallThicknessMm": 2 },
+      "profileId": "test-pfosten-rundrohr-42",
+      "name": "TESTDATEN Pfosten Rundrohr 42",
+      "crossSection": { "shape": "round-tube", "diameterMm": 42.4, "wallThicknessMm": 2.6 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [{ "product": "gelaender", "role": "pfosten" }],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-pfosten-t-stahl-50",
+      "name": "TESTDATEN Pfosten T-Stahl 50",
+      "crossSection": { "shape": "t-profile", "widthMm": 50, "heightMm": 50, "wallThicknessMm": 6 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [{ "product": "gelaender", "role": "pfosten" }],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-pfosten-flachstahl-60",
+      "name": "TESTDATEN Pfosten Flachstahl 60 (Schmiedeoptik)",
+      "crossSection": { "shape": "flat-bar", "widthMm": 60, "heightMm": 12 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [{ "product": "gelaender", "role": "pfosten" }],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-handlauf-rundrohr-42",
+      "name": "TESTDATEN Handlauf Rundrohr 42",
+      "crossSection": { "shape": "round-tube", "diameterMm": 42.4, "wallThicknessMm": 2.6 },
       "material": "test-stahl",
       "weightKgPerM": null,
       "allowedUses": [{ "product": "gelaender", "role": "handlauf" }],
@@ -29,8 +59,38 @@
       "active": true
     },
     {
-      "profileId": "test-fuellstab-rundstab",
-      "name": "TESTDATEN Füllstab-Rundstab",
+      "profileId": "test-handlauf-rundrohr-33",
+      "name": "TESTDATEN Handlauf Rundrohr 33 (schlank)",
+      "crossSection": { "shape": "round-tube", "diameterMm": 33.7, "wallThicknessMm": 2.6 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [{ "product": "gelaender", "role": "handlauf" }],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-handlauf-quadratrohr-40",
+      "name": "TESTDATEN Handlauf Quadratrohr 40 (kantig)",
+      "crossSection": { "shape": "square-tube", "widthMm": 40, "heightMm": 40, "wallThicknessMm": 2 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [{ "product": "gelaender", "role": "handlauf" }],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-handlauf-flachprofil-40",
+      "name": "TESTDATEN Handlauf Flachprofil 40 (klassisch)",
+      "crossSection": { "shape": "flat-bar", "widthMm": 40, "heightMm": 8 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [{ "product": "gelaender", "role": "handlauf" }],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-fuellstab-rundstab-12",
+      "name": "TESTDATEN Füllstab Rundstab 12",
       "crossSection": { "shape": "round-bar", "diameterMm": 12 },
       "material": "test-stahl",
       "weightKgPerM": null,
@@ -43,8 +103,75 @@
       "active": true
     },
     {
+      "profileId": "test-fuellstab-vierkant-12",
+      "name": "TESTDATEN Füllstab Vierkantstab 12",
+      "crossSection": { "shape": "square-bar", "widthMm": 12, "heightMm": 12 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [
+        { "product": "gelaender", "role": "fuellstab" },
+        { "product": "fenstergitter", "role": "gitterstab" },
+        { "product": "gartentor", "role": "torfuellung" }
+      ],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-fuellstab-vierkant-gedreht",
+      "name": "TESTDATEN Füllstab Vierkant gedreht (Schmiedeoptik)",
+      "crossSection": { "shape": "square-bar", "widthMm": 14, "heightMm": 14 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [
+        { "product": "gelaender", "role": "fuellstab" },
+        { "product": "fenstergitter", "role": "gitterstab" }
+      ],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-fuellstab-rechteckrohr-40x20",
+      "name": "TESTDATEN Füllstab Rechteckrohr 40×20",
+      "crossSection": { "shape": "rect-tube", "widthMm": 40, "heightMm": 20, "wallThicknessMm": 2 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [{ "product": "gelaender", "role": "fuellstab" }],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-querstab-rundrohr-16",
+      "name": "TESTDATEN Querstab Rundrohr 16 (Reling)",
+      "crossSection": { "shape": "round-tube", "diameterMm": 16, "wallThicknessMm": 1.5 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [{ "product": "gelaender", "role": "querstab" }],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-querstab-rundstab-10",
+      "name": "TESTDATEN Querstab Rundstab 10 (fein)",
+      "crossSection": { "shape": "round-bar", "diameterMm": 10 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [{ "product": "gelaender", "role": "querstab" }],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-querstab-flachstahl-30",
+      "name": "TESTDATEN Querstab Flachstahl 30×6",
+      "crossSection": { "shape": "flat-bar", "widthMm": 30, "heightMm": 6 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [{ "product": "gelaender", "role": "querstab" }],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
       "profileId": "test-rahmen-rechteckrohr",
-      "name": "TESTDATEN Rahmen-Rechteckrohr",
+      "name": "TESTDATEN Rahmen Rechteckrohr 40×20",
       "crossSection": { "shape": "rect-tube", "widthMm": 40, "heightMm": 20, "wallThicknessMm": 2 },
       "material": "test-stahl",
       "weightKgPerM": null,

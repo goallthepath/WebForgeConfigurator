@@ -75,6 +75,43 @@ Schrittassistenten mit Längenfeldern pro Segment.
   Laufmeter im Schweizer Markt üblich und akzeptiert sind.
   ⚠ Marktbeobachtung, NICHT als WebForge-Preis verwenden.
 
+## Vertiefung Geländer (Produktseiten-Analyse, 2026-07-18)
+
+**metallbauXpress Staketengeländer Classic:** Edelstahlhandlauf Ø 42.4,
+T-Stahl-Pfosten 60×60×7, Rechteckrohr-Füllung 40×20×2, Flachstahl 30×6,
+max. Pfostenabstand 1.2 m, Höhe 1.02 m, «statisch geprüft nach SIA 261/358»,
+max. 12 cm Öffnungen (Kindersicherheit), 120 kg/m Horizontallast,
+ab 253 CHF/m, feuerverzinkt oder Duplex-Pulverbeschichtung.
+
+**metallbauXpress Glasgeländer Pure:** VSG12-2 werkseitig in Rahmenleisten
+verklebt, klar oder satiniert, nur Seitenmontage, T-Stahl 50×50×5,
+max. Pfostenabstand 1.0 m, **ohne Handlauf** (puristisch), ab 433 CHF/m.
+
+**Deutsche Konfiguratoren** (meingelaender.de, Geländer-Manufaktur,
+Cosch, gelaender-inox.de u. a.): etabliertes Optionsvokabular —
+Füllungen Staketen / «Reling» (Querstab) / Glas (klar, matt, farbig);
+Handlauf-Endstücke gerade oder gewölbte Kappe, **Kugel**, **90°-Endbogen**.
+
+⚠ Alle Zahlen sind Marktbeobachtung. Sie belegen, dass unsere
+TESTDATEN-Platzhalter plausibel liegen, ersetzen aber keine Freigabe
+(Gate C) — insbesondere Normwerte werden nie ungeprüft übernommen.
+
+## Optimierung für den Meister (Werkstatt-Sicht, Backlog)
+
+1. **Materialauszug** aus jeder Konfiguration (Pfosten, Zuschnitte,
+   Stückzahlen) — im Modul bereits als provisorische Tabelle umgesetzt;
+   später Teil von PDF/Backend und Basis der Stückliste.
+2. Anfrage im Backend mit 3D-Vorschaubild + abgewickelter Masszeichnung
+   öffnen (Phase 3/6).
+3. Sicherheitsstufe (Grün/Gelb/Rot) prominent in der Anfrageliste —
+   Priorisierung der Fachprüfung.
+4. Kunde liefert Fotos direkt im Abschluss-Schritt (Upload, Phase 3) —
+   weniger Rückfragen vor dem Aufmass.
+5. Konfigurations-Link in beiden Richtungen: der Meister kann eine korrigierte
+   Variante an den Kunden zurückschicken (bereits möglich).
+6. Später: «Aufmass-Service» als Option analog Ausmessbox (P2, mit
+   dem Meister besprechen).
+
 ## Konsequenzen für unsere Module
 
 1. Schrittassistent mit Bildkarten-Optionen + Tooltips (alle drei Module).

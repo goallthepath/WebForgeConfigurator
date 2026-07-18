@@ -33,33 +33,141 @@ export function fuellstabAnzahl(
   return Math.max(0, n);
 }
 
+/**
+ * Anzahl horizontaler Querstab-Lagen (Reling) zwischen Unterkante und
+ * Handlauf, sodass der lichte Abstand das Maximum nicht überschreitet.
+ */
+export function querstabLagen(
+  freieHoeheMm: number,
+  stabHoeheMm: number,
+  maxLichtAbstandMm: number
+): number {
+  if (freieHoeheMm <= 0) return 0;
+  const n = Math.ceil(
+    (freieHoeheMm - maxLichtAbstandMm) / (stabHoeheMm + maxLichtAbstandMm)
+  );
+  return Math.max(0, n);
+}
+
 export function deriveGelaender(
   inputs: GelaenderInputs,
   stabBreiteMm: number,
   params: GelaenderRuleParams = GELAENDER_RULES_V0
 ): GelaenderDerived {
   const segmente = inputs.segmentLaengenMm.filter((l) => l > 0);
-  const pfostenProSegment = segmente.map((l) =>
-    pfostenAnzahl(l, params.maxPfostenabstandMm)
-  );
+  // Glasfüllung verlangt engere Pfostenabstände (TESTDATEN-Parameter).
+  const maxAbstand =
+    inputs.fuellungsart === 'glas'
+      ? params.maxPfostenabstandGlasMm
+      : params.maxPfostenabstandMm;
+  const pfostenProSegment = segmente.map((l) => pfostenAnzahl(l, maxAbstand));
 
-  // L-Form: Der Eckpfosten wird von beiden Segmenten geteilt.
+  // Eckpfosten werden zwischen aufeinanderfolgenden Segmenten geteilt.
   const eckenGeteilt = segmente.length > 1 ? segmente.length - 1 : 0;
   const pfostenTotal =
     pfostenProSegment.reduce((sum, n) => sum + n, 0) - eckenGeteilt;
 
-  const fuellstaebeProSegment = segmente.map((laenge, i) => {
-    const felder = Math.max(1, pfostenProSegment[i] - 1);
-    const feldLaenge = laenge / felder;
-    return felder * fuellstabAnzahl(feldLaenge, stabBreiteMm, params.maxStabAbstandMm);
-  });
+  const felderProSegment = segmente.map((_, i) =>
+    Math.max(1, pfostenProSegment[i] - 1)
+  );
+
+  const fuellstaebeProSegment =
+    inputs.fuellungsart === 'staketen'
+      ? segmente.map((laenge, i) => {
+          const feldLaenge = laenge / felderProSegment[i];
+          return (
+            felderProSegment[i] *
+            fuellstabAnzahl(feldLaenge, stabBreiteMm, params.maxStabAbstandMm)
+          );
+        })
+      : segmente.map(() => 0);
+
+  const hoehe = inputs.hoeheMm ?? 0;
+  const lagen =
+    inputs.fuellungsart === 'querstab' && hoehe > 0
+      ? querstabLagen(
+          hoehe - params.bodenfreiheitMm,
+          stabBreiteMm,
+          params.maxQuerstabAbstandMm
+        )
+      : 0;
+
+  const glasfelderTotal =
+    inputs.fuellungsart === 'glas'
+      ? felderProSegment.reduce((sum, n) => sum + n, 0)
+      : 0;
 
   return {
     pfostenProSegment,
     pfostenTotal,
     fuellstaebeProSegment,
     fuellstaebeTotal: fuellstaebeProSegment.reduce((sum, n) => sum + n, 0),
+    querstabLagen: lagen,
+    glasfelderTotal,
     gesamtlaengeMm: segmente.reduce((sum, l) => sum + l, 0),
-    handlaufLaengenMm: segmente,
+    handlaufLaengenMm: inputs.ohneHandlauf ? [] : segmente,
   };
+}
+
+/**
+ * Provisorischer Materialauszug für die Zusammenfassung (und später die
+ * Werkstatt-Stückliste). Alle Werte TESTDATEN-basiert.
+ */
+export interface MaterialPosition {
+  bezeichnung: string;
+  anzahl: number;
+  laengeMm: number | null;
+}
+
+export function materialAuszug(
+  inputs: GelaenderInputs,
+  derived: GelaenderDerived
+): MaterialPosition[] {
+  const positionen: MaterialPosition[] = [];
+  if (derived.pfostenTotal > 0 && inputs.hoeheMm) {
+    positionen.push({
+      bezeichnung: 'Pfosten',
+      anzahl: derived.pfostenTotal,
+      laengeMm: inputs.hoeheMm,
+    });
+  }
+  derived.handlaufLaengenMm.forEach((laenge, i) => {
+    positionen.push({
+      bezeichnung:
+        derived.handlaufLaengenMm.length > 1
+          ? `Handlauf Segment ${i + 1}`
+          : 'Handlauf',
+      anzahl: 1,
+      laengeMm: laenge,
+    });
+  });
+  if (derived.fuellstaebeTotal > 0 && inputs.hoeheMm) {
+    positionen.push({
+      bezeichnung: 'Füllstäbe',
+      anzahl: derived.fuellstaebeTotal,
+      laengeMm: null,
+    });
+  }
+  if (derived.querstabLagen > 0) {
+    inputs.segmentLaengenMm.forEach((laenge, i) => {
+      if (laenge > 0) {
+        positionen.push({
+          bezeichnung:
+            inputs.segmentLaengenMm.length > 1
+              ? `Querstäbe Segment ${i + 1}`
+              : 'Querstäbe',
+          anzahl: derived.querstabLagen,
+          laengeMm: laenge,
+        });
+      }
+    });
+  }
+  if (derived.glasfelderTotal > 0) {
+    positionen.push({
+      bezeichnung: `Glasfelder (${inputs.glasTyp === 'satiniert' ? 'satiniert' : 'klar'})`,
+      anzahl: derived.glasfelderTotal,
+      laengeMm: null,
+    });
+  }
+  return positionen;
 }

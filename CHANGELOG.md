@@ -4,6 +4,31 @@ Alle nennenswerten Änderungen an der WebForge-Plattform werden hier dokumentier
 
 ## [Unreleased]
 
+### Geländer-Modul vertieft (2026-07-18, zweiter Ausbau)
+
+- Grundformen erweitert: U-Form innen/aussen (drei Segmente, zwei geteilte
+  Eckpfosten) über generischen Polygonzug-Pfad (ADR-004).
+- Drei Geländertypen: Staketen, Querstab/Reling (Lagenberechnung),
+  Glasfüllung (klar/satiniert, engerer Pfostenabstand, optional ohne
+  Handlauf); Schmiede-Ornamente bewusst als Escape-Hatch zur individuellen
+  Anfrage (Kernhandwerk).
+- Handlauf-Abschlüsse: gerade Kappe, Endkugel, Endbogen 90° — in 3D und
+  2D-Zeichnung dargestellt.
+- Profilkatalog 0.0.2-TESTDATEN: 16 Profile über die Rollen Pfosten (4,
+  inkl. T-Stahl und Flachstahl-Schmiedeoptik), Handlauf (4), Füllstab (4,
+  inkl. Vierkant gedreht), Querstab (3); neue Rolle `querstab` und Form
+  `t-profile` im Schema.
+- 2D-Abwicklung exakt über Pfadkoordinate `tM` je Element (korrekt für
+  L- und U-Formen); Glasfelder und Endkappen in der SVG-Zeichnung.
+- Provisorischer Materialauszug (Werkstatt-Vorstufe der Stückliste) in der
+  Zusammenfassung: Positionen, Stückzahlen, Zuschnittlängen — TESTDATEN.
+- Neue Warnhinweise: Querstab erkletterbar (Fachprüfung), Glasaufbau wird
+  fachlich bestimmt, «ohne Handlauf» prüfpflichtig.
+- Recherche vertieft (Classic/Pure-Produktdaten, deutsches
+  Optionsvokabular) und Werkstatt-Backlog für den Meister dokumentiert.
+- Tests auf 33 erweitert (U-Pfad, Querstab-Lagen, Glasfelder, Endkappen,
+  Abwicklungs-Monotonie, Materialauszug).
+
 ### Konfigurator-Kern und Geländer-Modul (2026-07-18)
 
 - Gemeinsamer Assistenten-Kern: Schrittkarten mit progressiver Freischaltung,

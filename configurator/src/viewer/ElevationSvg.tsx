@@ -3,36 +3,57 @@ import type { RailingGeometry } from '../products/gelaender/geometry';
 /**
  * 2D-Frontansicht als SVG – Fallback ohne WebGL und Grundlage für die
  * spätere PDF-Masszeichnung. Rendert dasselbe Geometriemodell wie die
- * 3D-Szene (Segment 1; L-Segmente erscheinen abgewickelt).
+ * 3D-Szene; L- und U-Formen erscheinen entlang des Pfads abgewickelt
+ * (jedes Element trägt seine Pfadkoordinate tM).
  */
 export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
-  const abgewickelt = geometry.bounds.maxX + Math.abs(geometry.bounds.maxZ - geometry.bounds.minZ);
-  const wM = Math.max(abgewickelt, 1);
+  const laengeM = Math.max(
+    ...geometry.rails.map((r) => r.tRangeM[1]),
+    ...geometry.posts.map((p) => p.tM),
+    1
+  );
   const hM = geometry.bounds.heightM;
   const pad = 0.35;
-  const view = `${-pad} ${-hM - pad} ${wM + 2 * pad} ${hM + 2 * pad}`;
-
-  // Abwicklung: x = Lauflänge entlang der Segmente.
-  const unroll = (x: number, z: number) => x + Math.abs(z);
+  const view = `${-pad} ${-hM - pad} ${laengeM + 2 * pad} ${hM + 2 * pad}`;
 
   return (
     <svg
       viewBox={view}
       className="elevation-svg"
       role="img"
-      aria-label="Masszeichnung des Geländers (Frontansicht)"
+      aria-label="Masszeichnung des Geländers (abgewickelte Frontansicht)"
       preserveAspectRatio="xMidYMid meet"
     >
       {/* Boden */}
-      <line x1={-pad} y1={0} x2={wM + pad} y2={0} stroke="#6b7178" strokeWidth={0.02} />
+      <line
+        x1={-pad}
+        y1={0}
+        x2={laengeM + pad}
+        y2={0}
+        stroke="#6b7178"
+        strokeWidth={0.02}
+      />
+      {/* Glasfelder */}
+      {geometry.panels.map((panel, i) => (
+        <rect
+          key={`g-${i}`}
+          x={panel.tM - panel.widthM / 2}
+          y={-(panel.center[1] + panel.heightM / 2)}
+          width={panel.widthM}
+          height={panel.heightM}
+          fill={panel.frosted ? '#e3ebec' : '#d3e5e9'}
+          fillOpacity={panel.frosted ? 0.9 : 0.55}
+          stroke="#9db8bd"
+          strokeWidth={0.008}
+        />
+      ))}
       {/* Pfosten */}
       {geometry.posts.map((post, i) => {
         const w = post.shape.dM ?? post.shape.wM ?? 0.04;
-        const x = unroll(post.x, post.z);
         return (
           <rect
             key={`p-${i}`}
-            x={x - w / 2}
+            x={post.tM - w / 2}
             y={-post.heightM}
             width={w}
             height={post.heightM}
@@ -40,14 +61,13 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
           />
         );
       })}
-      {/* Füllstäbe */}
+      {/* Füllstäbe (Staketen) */}
       {geometry.bars.map((bar, i) => {
         const w = bar.shape.dM ?? bar.shape.wM ?? 0.012;
-        const x = unroll(bar.x, bar.z);
         return (
           <rect
             key={`b-${i}`}
-            x={x - w / 2}
+            x={bar.tM - w / 2}
             y={-(bar.yM + bar.heightM)}
             width={w}
             height={bar.heightM}
@@ -55,28 +75,61 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
           />
         );
       })}
-      {/* Handlauf */}
+      {/* Handlauf und Querstäbe */}
       {geometry.rails.map((rail, i) => {
         const h = rail.shape.dM ?? rail.shape.hM ?? 0.04;
-        const x1 = unroll(rail.start[0], rail.start[2]);
-        const x2 = unroll(rail.end[0], rail.end[2]);
         return (
           <rect
             key={`r-${i}`}
-            x={Math.min(x1, x2)}
+            x={rail.tRangeM[0]}
             y={-rail.start[1] - h / 2}
-            width={Math.abs(x2 - x1)}
+            width={rail.tRangeM[1] - rail.tRangeM[0]}
             height={h}
             fill="#1f2124"
           />
         );
       })}
-      {/* Masslinien */}
-      {geometry.dimensions.map((dim, i) => {
-        const horizontal = dim.start[1] === dim.end[1];
-        if (horizontal) {
-          const x1 = unroll(dim.start[0], dim.start[2]);
-          const x2 = unroll(dim.end[0], dim.end[2]);
+      {/* Endkappen (Kugel als Kreis, Endbogen als kurzer Abgang) */}
+      {geometry.endCaps.map((cap, i) => {
+        const r = ((cap.shape.dM ?? cap.shape.hM ?? 0.04) / 2) * 1.8;
+        const links = i === 0;
+        const t = links ? 0 : laengeM;
+        if (cap.kind === 'kugel') {
+          return (
+            <circle
+              key={`c-${i}`}
+              cx={links ? t - r : t + r}
+              cy={-cap.position[1]}
+              r={r}
+              fill="#1f2124"
+            />
+          );
+        }
+        if (cap.kind === 'endbogen') {
+          return (
+            <rect
+              key={`c-${i}`}
+              x={links ? t - 0.05 : t}
+              y={-cap.position[1]}
+              width={0.05}
+              height={0.14}
+              fill="#1f2124"
+            />
+          );
+        }
+        return null;
+      })}
+      {/* Massketten */}
+      {(() => {
+        const laengen = geometry.dimensions.filter((d) => d.start[1] === d.end[1]);
+        const hoehe = geometry.dimensions.find((d) => d.start[1] !== d.end[1]);
+        let t = 0;
+        const teile = laengen.map((dim, i) => {
+          const len =
+            Math.abs(dim.end[0] - dim.start[0]) + Math.abs(dim.end[2] - dim.start[2]);
+          const x1 = t;
+          const x2 = t + len;
+          t = x2;
           return (
             <g key={`d-${i}`} stroke="#a8763e" strokeWidth={0.015}>
               <line x1={x1} y1={0.18} x2={x2} y2={0.18} />
@@ -94,24 +147,29 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
               </text>
             </g>
           );
-        }
+        });
         return (
-          <g key={`d-${i}`} stroke="#a8763e" strokeWidth={0.015}>
-            <line x1={-0.22} y1={0} x2={-0.22} y2={-dim.end[1]} />
-            <text
-              x={-0.3}
-              y={-dim.end[1] / 2}
-              fontSize={0.13}
-              fill="#43484e"
-              stroke="none"
-              textAnchor="middle"
-              transform={`rotate(-90 ${-0.3} ${-dim.end[1] / 2})`}
-            >
-              {dim.label}
-            </text>
-          </g>
+          <>
+            {teile}
+            {hoehe && (
+              <g stroke="#a8763e" strokeWidth={0.015}>
+                <line x1={-0.22} y1={0} x2={-0.22} y2={-hM} />
+                <text
+                  x={-0.3}
+                  y={-hM / 2}
+                  fontSize={0.13}
+                  fill="#43484e"
+                  stroke="none"
+                  textAnchor="middle"
+                  transform={`rotate(-90 ${-0.3} ${-hM / 2})`}
+                >
+                  {hoehe.label}
+                </text>
+              </g>
+            )}
+          </>
         );
-      })}
+      })()}
     </svg>
   );
 }

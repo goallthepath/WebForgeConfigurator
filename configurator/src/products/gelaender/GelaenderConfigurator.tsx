@@ -19,26 +19,32 @@ import {
   profilBreiteMm,
 } from '../profile-catalog';
 import type { Profile, ProfileRole } from '../types';
-import { deriveGelaender } from './derive';
+import { deriveGelaender, materialAuszug } from './derive';
 import { buildRailingGeometry } from './geometry';
 import {
   EINBAUORTE,
   FARBEN,
   farbHex,
+  FUELLUNGSARTEN,
+  GLASTYPEN,
+  HANDLAUF_ABSCHLUESSE,
   MONTAGE_SERVICES,
   MONTAGEARTEN,
   UNTERGRUENDE,
   VARIANTEN,
   type OptionDef,
 } from './options';
-import { EMPTY_GELAENDER_INPUTS, type GelaenderInputs } from './types';
+import {
+  EMPTY_GELAENDER_INPUTS,
+  SEGMENTE_PRO_VARIANTE,
+  type GelaenderInputs,
+} from './types';
 
 const STORAGE_KEY = 'webforge-gelaender-draft-v1';
 
 type Action =
   | { type: 'set'; patch: Partial<GelaenderInputs> }
-  | { type: 'reset' }
-  | { type: 'restore'; inputs: GelaenderInputs };
+  | { type: 'reset' };
 
 function reducer(state: GelaenderInputs, action: Action): GelaenderInputs {
   switch (action.type) {
@@ -46,18 +52,21 @@ function reducer(state: GelaenderInputs, action: Action): GelaenderInputs {
       const next = { ...state, ...action.patch };
       // Variantenwechsel passt die Segmentanzahl an, ohne Werte zu verlieren.
       if (action.patch.variante) {
-        const anzahl = action.patch.variante === 'i' ? 1 : 2;
+        const anzahl = SEGMENTE_PRO_VARIANTE[action.patch.variante];
         next.segmentLaengenMm = Array.from(
           { length: anzahl },
           (_, i) => state.segmentLaengenMm[i] ?? 0
         );
       }
+      // «Ohne Handlauf» gibt es nur bei Glasfüllung.
+      if (action.patch.fuellungsart && action.patch.fuellungsart !== 'glas') {
+        next.ohneHandlauf = false;
+        next.glasTyp = null;
+      }
       return next;
     }
     case 'reset':
       return EMPTY_GELAENDER_INPUTS;
-    case 'restore':
-      return action.inputs;
   }
 }
 
@@ -72,13 +81,18 @@ function loadInitial(): GelaenderInputs {
     }
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return { ...EMPTY_GELAENDER_INPUTS, ...(JSON.parse(stored) as GelaenderInputs) };
+      return {
+        ...EMPTY_GELAENDER_INPUTS,
+        ...(JSON.parse(stored) as GelaenderInputs),
+      };
     }
   } catch {
     // defekte Drafts still verwerfen
   }
   return EMPTY_GELAENDER_INPUTS;
 }
+
+const SEGMENT_LABELS = ['Erstes Segment', 'Zweites Segment', 'Drittes Segment'];
 
 function profileOptions(role: ProfileRole): OptionDef<string>[] {
   return profilesForUse(PROFILES, 'gelaender', role).map((p) => ({
@@ -97,6 +111,7 @@ function crossSectionLabel(p: Profile): string {
     'flat-bar': 'Flachstahl',
     'square-bar': 'Vierkantstab',
     'round-bar': 'Rundstab',
+    't-profile': 'T-Stahl',
   };
   const shape = shapeNames[String(cs.shape)] ?? String(cs.shape);
   const masse = cs.diameterMm
@@ -120,15 +135,23 @@ export function GelaenderConfigurator() {
 
   const selectedProfiles = useMemo(
     () =>
-      [inputs.pfostenProfilId, inputs.handlaufProfilId, inputs.fuellstabProfilId]
+      [
+        inputs.pfostenProfilId,
+        inputs.ohneHandlauf ? null : inputs.handlaufProfilId,
+        inputs.fuellungsart === 'staketen' ? inputs.fuellstabProfilId : null,
+        inputs.fuellungsart === 'querstab' ? inputs.querstabProfilId : null,
+      ]
         .map((id) => (id ? getProfile(id) : undefined))
         .filter((p): p is Profile => Boolean(p)),
-    [inputs.pfostenProfilId, inputs.handlaufProfilId, inputs.fuellstabProfilId]
+    [inputs]
   );
 
-  const stabBreite = inputs.fuellstabProfilId
-    ? profilBreiteMm(getProfile(inputs.fuellstabProfilId)!)
-    : 12;
+  // Massgebende Stabbreite je Füllungsart (für Teilung/Lagen).
+  const stabProfil =
+    inputs.fuellungsart === 'querstab'
+      ? inputs.querstabProfilId
+      : inputs.fuellstabProfilId;
+  const stabBreite = stabProfil ? profilBreiteMm(getProfile(stabProfil)!) : 12;
 
   const derived = useMemo(
     () => deriveGelaender(inputs, stabBreite),
@@ -138,9 +161,18 @@ export function GelaenderConfigurator() {
   const geometry = useMemo(
     () =>
       buildRailingGeometry(inputs, derived, {
-        pfosten: inputs.pfostenProfilId ? getProfile(inputs.pfostenProfilId) : undefined,
-        handlauf: inputs.handlaufProfilId ? getProfile(inputs.handlaufProfilId) : undefined,
-        fuellstab: inputs.fuellstabProfilId ? getProfile(inputs.fuellstabProfilId) : undefined,
+        pfosten: inputs.pfostenProfilId
+          ? getProfile(inputs.pfostenProfilId)
+          : undefined,
+        handlauf: inputs.handlaufProfilId
+          ? getProfile(inputs.handlaufProfilId)
+          : undefined,
+        fuellstab: inputs.fuellstabProfilId
+          ? getProfile(inputs.fuellstabProfilId)
+          : undefined,
+        querstab: inputs.querstabProfilId
+          ? getProfile(inputs.querstabProfilId)
+          : undefined,
       }),
     [inputs, derived]
   );
@@ -151,6 +183,10 @@ export function GelaenderConfigurator() {
   );
 
   const estimate = estimateFor(module.priceVersion);
+  const material = useMemo(
+    () => materialAuszug(inputs, derived),
+    [inputs, derived]
+  );
 
   // Freischaltlogik der Schritte
   const masseOk =
@@ -158,17 +194,28 @@ export function GelaenderConfigurator() {
     inputs.segmentLaengenMm.every((l) => l > 0) &&
     inputs.hoeheMm !== null &&
     inputs.hoeheMm > 0;
+  const fuellungOk =
+    inputs.fuellungsart === 'staketen'
+      ? Boolean(inputs.fuellstabProfilId)
+      : inputs.fuellungsart === 'querstab'
+        ? Boolean(inputs.querstabProfilId)
+        : inputs.fuellungsart === 'glas'
+          ? Boolean(inputs.glasTyp)
+          : false;
   const profileOk = Boolean(
-    inputs.pfostenProfilId && inputs.handlaufProfilId && inputs.fuellstabProfilId
+    inputs.pfostenProfilId &&
+      (inputs.ohneHandlauf || inputs.handlaufProfilId) &&
+      fuellungOk
   );
+  const ausfuehrungOk = inputs.ohneHandlauf || inputs.handlaufAbschluss !== null;
   const steps = {
-    s1: true,
     s2: inputs.variante !== null,
     s3: inputs.einbauort !== null,
     s4: inputs.montageart !== null && inputs.untergrund !== null,
     s5: masseOk,
-    s6: profileOk,
-    s7: Boolean(inputs.finishId && inputs.farbe),
+    s6: inputs.fuellungsart !== null,
+    s7: profileOk,
+    s8: ausfuehrungOk && Boolean(inputs.finishId && inputs.farbe),
   };
   const geometryReady = masseOk && inputs.variante !== null;
 
@@ -201,20 +248,25 @@ export function GelaenderConfigurator() {
         <div className="configurator-steps">
           <StepSection number={1} title="Form wählen" unlocked done={steps.s2}>
             <OptionCardGroup
-              legend="Welche Form hat Ihr Geländer?"
+              legend="Welchen Grundriss hat Ihr Geländer?"
               name="variante"
               options={VARIANTEN}
               value={inputs.variante}
               onChange={(variante) => set({ variante })}
             />
             <p className="escape-hatch">
-              Mehr als zwei Ecken, Winkel ≠ 90° oder geschwungene Formen?{' '}
+              Mehr Ecken, Winkel ≠ 90°, geschwungene oder Treppenläufe?{' '}
               <a href="/projekt-starten/">Individuelle Ausführung anfragen</a> –
               Unser Meister plant sie persönlich mit Ihnen.
             </p>
           </StepSection>
 
-          <StepSection number={2} title="Einbausituation" unlocked={steps.s2} done={steps.s3}>
+          <StepSection
+            number={2}
+            title="Einbausituation"
+            unlocked={steps.s2}
+            done={steps.s3}
+          >
             <OptionCardGroup
               legend="Wo wird das Geländer montiert?"
               name="einbauort"
@@ -249,7 +301,7 @@ export function GelaenderConfigurator() {
           <StepSection
             number={4}
             title="Masse"
-            hint="Messen Sie entlang der Vorderkante. Bei Wandanschluss bis zur Wand messen – den Wandabstand berücksichtigen wir bei der Planung."
+            hint="Messen Sie entlang der Vorderkante, bei Ecken jedes Segment einzeln. Bei Wandanschluss bis zur Wand messen – den Wandabstand berücksichtigen wir bei der Planung."
             unlocked={steps.s4}
             done={steps.s5}
           >
@@ -259,7 +311,7 @@ export function GelaenderConfigurator() {
                 label={
                   inputs.segmentLaengenMm.length === 1
                     ? 'Länge'
-                    : `Segment ${i + 1} (${i === 0 ? 'erster' : 'zweiter'} Schenkel)`
+                    : `${SEGMENT_LABELS[i] ?? `Segment ${i + 1}`}`
                 }
                 unit="mm"
                 value={laenge || null}
@@ -293,10 +345,31 @@ export function GelaenderConfigurator() {
 
           <StepSection
             number={5}
-            title="Profile wählen"
-            hint="Alle Profile stammen aus dem WebForge-Standardkatalog. Aktuell Testkatalog – das definitive Sortiment wird fachlich freigegeben."
+            title="Geländertyp"
             unlocked={steps.s5}
             done={steps.s6}
+          >
+            <OptionCardGroup
+              legend="Welche Füllung wünschen Sie?"
+              name="fuellungsart"
+              options={FUELLUNGSARTEN}
+              value={inputs.fuellungsart}
+              onChange={(fuellungsart) => set({ fuellungsart })}
+            />
+            <p className="escape-hatch">
+              Schmiedeeiserne Ornamente, Zierelemente oder historische
+              Nachbildungen?{' '}
+              <a href="/projekt-starten/">Individuelle Ausführung anfragen</a> –
+              das ist das Kernhandwerk der Kunstschlosserei.
+            </p>
+          </StepSection>
+
+          <StepSection
+            number={6}
+            title="Profile wählen"
+            hint="Alle Profile stammen aus dem WebForge-Standardkatalog. Aktuell Testkatalog – das definitive Sortiment wird fachlich freigegeben."
+            unlocked={steps.s6}
+            done={steps.s7}
           >
             <OptionCardGroup
               legend="Pfosten"
@@ -306,25 +379,73 @@ export function GelaenderConfigurator() {
               onChange={(pfostenProfilId) => set({ pfostenProfilId })}
               badge={() => 'TESTDATEN'}
             />
-            <OptionCardGroup
-              legend="Handlauf"
-              name="handlaufProfil"
-              options={profileOptions('handlauf')}
-              value={inputs.handlaufProfilId}
-              onChange={(handlaufProfilId) => set({ handlaufProfilId })}
-              badge={() => 'TESTDATEN'}
-            />
-            <OptionCardGroup
-              legend="Füllstäbe"
-              name="fuellstabProfil"
-              options={profileOptions('fuellstab')}
-              value={inputs.fuellstabProfilId}
-              onChange={(fuellstabProfilId) => set({ fuellstabProfilId })}
-              badge={() => 'TESTDATEN'}
-            />
+            {inputs.fuellungsart === 'glas' && (
+              <label className="check-row">
+                <input
+                  type="checkbox"
+                  checked={inputs.ohneHandlauf}
+                  onChange={(e) => set({ ohneHandlauf: e.target.checked })}
+                />
+                Puristisch ohne Handlauf (nur Glaskante sichtbar)
+              </label>
+            )}
+            {!inputs.ohneHandlauf && (
+              <OptionCardGroup
+                legend="Handlauf"
+                name="handlaufProfil"
+                options={profileOptions('handlauf')}
+                value={inputs.handlaufProfilId}
+                onChange={(handlaufProfilId) => set({ handlaufProfilId })}
+                badge={() => 'TESTDATEN'}
+              />
+            )}
+            {inputs.fuellungsart === 'staketen' && (
+              <OptionCardGroup
+                legend="Füllstäbe"
+                name="fuellstabProfil"
+                options={profileOptions('fuellstab')}
+                value={inputs.fuellstabProfilId}
+                onChange={(fuellstabProfilId) => set({ fuellstabProfilId })}
+                badge={() => 'TESTDATEN'}
+              />
+            )}
+            {inputs.fuellungsart === 'querstab' && (
+              <OptionCardGroup
+                legend="Querstäbe (Reling)"
+                name="querstabProfil"
+                options={profileOptions('querstab')}
+                value={inputs.querstabProfilId}
+                onChange={(querstabProfilId) => set({ querstabProfilId })}
+                badge={() => 'TESTDATEN'}
+              />
+            )}
+            {inputs.fuellungsart === 'glas' && (
+              <OptionCardGroup
+                legend="Glasart"
+                name="glasTyp"
+                options={GLASTYPEN}
+                value={inputs.glasTyp}
+                onChange={(glasTyp) => set({ glasTyp })}
+                badge={() => 'TESTDATEN'}
+              />
+            )}
           </StepSection>
 
-          <StepSection number={6} title="Oberfläche und Farbe" unlocked={steps.s6} done={steps.s7}>
+          <StepSection
+            number={7}
+            title="Ausführung, Oberfläche und Farbe"
+            unlocked={steps.s7}
+            done={steps.s8}
+          >
+            {!inputs.ohneHandlauf && (
+              <OptionCardGroup
+                legend="Handlauf-Abschluss"
+                name="handlaufAbschluss"
+                options={HANDLAUF_ABSCHLUESSE}
+                value={inputs.handlaufAbschluss}
+                onChange={(handlaufAbschluss) => set({ handlaufAbschluss })}
+              />
+            )}
             <OptionCardGroup
               legend="Oberflächenbehandlung"
               name="finish"
@@ -378,7 +499,12 @@ export function GelaenderConfigurator() {
             </fieldset>
           </StepSection>
 
-          <StepSection number={7} title="Montage" unlocked={steps.s7} done={inputs.montageService !== null}>
+          <StepSection
+            number={8}
+            title="Montage"
+            unlocked={steps.s8}
+            done={inputs.montageService !== null}
+          >
             <OptionCardGroup
               legend="Wer montiert?"
               name="montageService"
@@ -399,20 +525,65 @@ export function GelaenderConfigurator() {
           <div className="summary-card">
             <h2>Ihre Konfiguration</h2>
             {geometryReady ? (
-              <ul className="summary-list">
-                <li>
-                  Gesamtlänge: <strong>{derived.gesamtlaengeMm} mm</strong>
-                  {inputs.masseUngefaehr && ' (ungefähr)'}
-                </li>
-                <li>
-                  Pfosten: <strong>{derived.pfostenTotal}</strong>
-                  <span className="provisional"> provisorisch</span>
-                </li>
-                <li>
-                  Füllstäbe: <strong>{derived.fuellstaebeTotal}</strong>
-                  <span className="provisional"> provisorisch</span>
-                </li>
-              </ul>
+              <>
+                <ul className="summary-list">
+                  <li>
+                    Gesamtlänge: <strong>{derived.gesamtlaengeMm} mm</strong>
+                    {inputs.masseUngefaehr && ' (ungefähr)'}
+                  </li>
+                  <li>
+                    Pfosten: <strong>{derived.pfostenTotal}</strong>
+                    <span className="provisional"> provisorisch</span>
+                  </li>
+                  {derived.fuellstaebeTotal > 0 && (
+                    <li>
+                      Füllstäbe: <strong>{derived.fuellstaebeTotal}</strong>
+                      <span className="provisional"> provisorisch</span>
+                    </li>
+                  )}
+                  {derived.querstabLagen > 0 && (
+                    <li>
+                      Querstab-Lagen: <strong>{derived.querstabLagen}</strong>
+                      <span className="provisional"> provisorisch</span>
+                    </li>
+                  )}
+                  {derived.glasfelderTotal > 0 && (
+                    <li>
+                      Glasfelder: <strong>{derived.glasfelderTotal}</strong>
+                      <span className="provisional"> provisorisch</span>
+                    </li>
+                  )}
+                </ul>
+                {material.length > 0 && (
+                  <details className="material-details">
+                    <summary>
+                      Materialauszug (provisorisch, für die Werkstatt)
+                    </summary>
+                    <table className="material-table">
+                      <thead>
+                        <tr>
+                          <th>Position</th>
+                          <th>Stk.</th>
+                          <th>Länge</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {material.map((pos) => (
+                          <tr key={pos.bezeichnung}>
+                            <td>{pos.bezeichnung}</td>
+                            <td>{pos.anzahl}</td>
+                            <td>{pos.laengeMm ? `${pos.laengeMm} mm` : '–'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <p className="field-hint">
+                      Basis TESTDATEN-Regeln – verbindliche Stückliste erst
+                      nach fachlicher Freigabe und Prüfung.
+                    </p>
+                  </details>
+                )}
+              </>
             ) : (
               <p className="field-hint">Noch keine Masse erfasst.</p>
             )}
