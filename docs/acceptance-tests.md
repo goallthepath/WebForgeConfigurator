@@ -10,8 +10,9 @@
 [x] Automatische Tests laufen (npm test, 13 Tests grün)
 [x] REST-Endpunkt webforge/v1/health antwortet
 [x] E-Mail-Versand lokal über Mailpit nachgewiesen (wp_mail → Mailpit-Posteingang)
-[ ] Bestandsaufnahme der bestehenden Installation (blockiert durch A-001)
-[ ] Backup des Altsystems geprüft (blockiert durch A-001)
+[x] Bestandsaufnahme der bestehenden Website — öffentlicher Teil vollständig
+    (docs/legacy-site-inventory.md); Backend-Inventar blockiert durch A-001
+[ ] Backup des Altsystems geprüft (blockiert durch A-001: kein Hosting-Zugang)
 [x] Alte Website wurde nicht verändert (kein Zugriff erfolgt)
 ```
 

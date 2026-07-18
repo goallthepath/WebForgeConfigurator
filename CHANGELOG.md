@@ -17,3 +17,8 @@ Alle nennenswerten Änderungen an der WebForge-Plattform werden hier dokumentier
 - Design-Tokens als gemeinsame Quelle für Website und Konfigurator (Entwurf, Gate A offen).
 - Architekturentscheidungen ADR-001 bis ADR-003 dokumentiert.
 - Offene Annahmen in `docs/assumptions.md` festgehalten.
+- Bestandsaufnahme der alten Website (öffentlicher Teil) inkl. Firmendaten,
+  Seiteninventar, Weiterleitungsplan und Migrationsliste (FND-002 teilweise).
+- Konfigurator-Marktrecherche (metallbauXpress, Kordo u. a.) mit
+  UX-Konsequenzen für die drei Module dokumentiert.
+- Echte Firmendaten in Footer und Vision übernommen.

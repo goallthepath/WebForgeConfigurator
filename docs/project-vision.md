@@ -1,7 +1,8 @@
 # Projektvision – Digitale Werkstatt WebForge
 
-Die Musterschlosserei (Einmannbetrieb, Inhaber N. N.) erhält eine
-digitale Plattform, die drei klar getrennte Kundenwege anbietet:
+Die **Musterschlosserei** (Einzelunternehmen, Inhaber
+N. N., Musterstrasse 1, 0000 Musterort, UID CHE-000.000.000) erhält
+eine digitale Plattform, die drei klar getrennte Kundenwege anbietet:
 
 1. **Produkt konfigurieren** – Standardlösungen online zusammenstellen.
 2. **Individuelle Lösung planen** – geführte Projektanfrage mit Upload.
