@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.ch/schemas/profile.schema.json",
+  "title": "WebForge Standardprofil",
+  "description": "Ein freigegebenes Standard-Metallprofil. Dieselbe profileId steuert 3D-Querschnitt, Masse, Material, Gewicht, Oberfläche, Preis, Regeln, PDF und Stückliste (ADR-002).",
+  "type": "object",
+  "required": ["profileId", "name", "crossSection", "approval", "allowedUses", "active"],
+  "properties": {
+    "profileId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Eindeutige, stabile Kennung, z. B. rundrohr-42x2"
+    },
+    "name": { "type": "string" },
+    "crossSection": {
+      "type": "object",
+      "required": ["shape"],
+      "properties": {
+        "shape": { "enum": ["round-tube", "square-tube", "rect-tube", "flat-bar", "square-bar", "round-bar"] },
+        "widthMm": { "type": "number", "exclusiveMinimum": 0 },
+        "heightMm": { "type": "number", "exclusiveMinimum": 0 },
+        "diameterMm": { "type": "number", "exclusiveMinimum": 0 },
+        "wallThicknessMm": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "material": { "type": "string", "description": "Verweis auf materials/*.json (materialId)" },
+    "weightKgPerM": { "type": ["number", "null"], "description": "null = noch nicht freigegeben" },
+    "allowedUses": {
+      "type": "array",
+      "description": "Freigaben je Produkt und Bauteilrolle. Ein Profil erscheint nur in ausdrücklich freigegebenen Verwendungen.",
+      "items": {
+        "type": "object",
+        "required": ["product", "role"],
+        "properties": {
+          "product": { "enum": ["gelaender", "gartentor", "fenstergitter"] },
+          "role": {
+            "enum": [
+              "pfosten", "handlauf", "fuellstab", "rahmen",
+              "torrahmen", "torpfosten", "torfuellung",
+              "gitterrahmen", "gitterstab"
+            ]
+          }
+        }
+      }
+    },
+    "approval": {
+      "enum": ["freigegeben", "fachliche Freigabe erforderlich", "TESTDATEN"],
+      "description": "Nur 'freigegeben' darf produktiv wirksam werden."
+    },
+    "active": { "type": "boolean", "description": "Inaktive Profile werden serverseitig abgewiesen." }
+  }
+}

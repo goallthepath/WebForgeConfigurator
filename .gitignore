@@ -1,0 +1,27 @@
+# Abhängigkeiten
+node_modules/
+vendor/
+
+# Builds
+configurator/dist/
+design-tokens/generated/
+
+# Umgebungen / Geheimnisse
+.env
+.env.local
+*.local.php
+
+# WordPress-Laufzeitdaten (liegen im Docker-Volume, nicht im Repo)
+wordpress/core/
+wordpress/wp-content/uploads/
+
+# Betriebssystem / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Logs & Temporäres
+*.log
+.tmp/
+coverage/

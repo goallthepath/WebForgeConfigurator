@@ -1,0 +1,70 @@
+{
+  "$meta": {
+    "catalogVersion": "0.0.1-TESTDATEN",
+    "status": "TESTDATEN – ausschliesslich für lokale Entwicklung und Tests. Enthält KEINE freigegebenen Masse. Produktivnutzung ist gesperrt (approval != freigegeben).",
+    "source": "Vom Build Agent erfundene Platzhalterformen ohne fachliche Gültigkeit. Der reale Profilkatalog benötigt die Freigabe an Gate C (docs/assumptions.md A-002)."
+  },
+  "profiles": [
+    {
+      "profileId": "test-pfosten-quadratrohr",
+      "name": "TESTDATEN Pfosten-Quadratrohr",
+      "crossSection": { "shape": "square-tube", "widthMm": 40, "heightMm": 40, "wallThicknessMm": 2 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [
+        { "product": "gelaender", "role": "pfosten" },
+        { "product": "gartentor", "role": "torpfosten" }
+      ],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-handlauf-rundrohr",
+      "name": "TESTDATEN Handlauf-Rundrohr",
+      "crossSection": { "shape": "round-tube", "diameterMm": 42, "wallThicknessMm": 2 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [{ "product": "gelaender", "role": "handlauf" }],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-fuellstab-rundstab",
+      "name": "TESTDATEN Füllstab-Rundstab",
+      "crossSection": { "shape": "round-bar", "diameterMm": 12 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [
+        { "product": "gelaender", "role": "fuellstab" },
+        { "product": "fenstergitter", "role": "gitterstab" },
+        { "product": "gartentor", "role": "torfuellung" }
+      ],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-rahmen-rechteckrohr",
+      "name": "TESTDATEN Rahmen-Rechteckrohr",
+      "crossSection": { "shape": "rect-tube", "widthMm": 40, "heightMm": 20, "wallThicknessMm": 2 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [
+        { "product": "gelaender", "role": "rahmen" },
+        { "product": "gartentor", "role": "torrahmen" },
+        { "product": "fenstergitter", "role": "gitterrahmen" }
+      ],
+      "approval": "TESTDATEN",
+      "active": true
+    },
+    {
+      "profileId": "test-inaktives-profil",
+      "name": "TESTDATEN Inaktives Profil (für Abweisungstests)",
+      "crossSection": { "shape": "flat-bar", "widthMm": 30, "heightMm": 6 },
+      "material": "test-stahl",
+      "weightKgPerM": null,
+      "allowedUses": [{ "product": "gelaender", "role": "fuellstab" }],
+      "approval": "TESTDATEN",
+      "active": false
+    }
+  ]
+}

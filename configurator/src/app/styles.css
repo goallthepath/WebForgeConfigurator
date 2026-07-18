@@ -1,0 +1,106 @@
+/* Basisstile des Konfigurators.
+   Farben/Schriften kommen als CSS-Variablen aus design-tokens/tokens.json
+   (gesetzt in tokens.ts) – hier keine Hex-Werte duplizieren. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--webforge-font-body);
+  background: var(--webforge-color-paper);
+  color: var(--webforge-color-ink);
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--webforge-font-heading);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.app-header {
+  background: var(--webforge-color-ink);
+  color: var(--webforge-color-paper);
+  padding: var(--webforge-space-md) var(--webforge-space-lg);
+}
+
+.app-header a {
+  color: var(--webforge-color-paper);
+  text-decoration: none;
+  font-family: var(--webforge-font-heading);
+  font-size: 1.15rem;
+}
+
+.app-main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--webforge-space-xl) var(--webforge-space-md);
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--webforge-space-md);
+  margin-top: var(--webforge-space-lg);
+}
+
+.product-card {
+  display: block;
+  background: #fff;
+  border: 1px solid var(--webforge-color-mist);
+  border-radius: var(--webforge-radius-md);
+  padding: var(--webforge-space-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 120ms ease;
+}
+
+.product-card:hover,
+.product-card:focus-visible {
+  border-color: var(--webforge-color-brass);
+  outline: 2px solid var(--webforge-color-brass);
+  outline-offset: 2px;
+}
+
+.product-card h2 {
+  margin: 0 0 var(--webforge-space-xs);
+  font-size: 1.3rem;
+}
+
+.product-card p {
+  margin: 0;
+  color: var(--webforge-color-iron);
+}
+
+.status-banner {
+  border-radius: var(--webforge-radius-sm);
+  padding: var(--webforge-space-sm) var(--webforge-space-md);
+  margin: var(--webforge-space-md) 0;
+  border: 1px solid;
+}
+
+.status-banner.yellow {
+  border-color: var(--webforge-color-warning);
+  color: var(--webforge-color-warning);
+  background: #fdf6e7;
+}
+
+.viewer-shell {
+  height: 20rem;
+  background: var(--webforge-color-mist);
+  border-radius: var(--webforge-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+@media (max-width: 40rem) {
+  .app-main {
+    padding: var(--webforge-space-lg) var(--webforge-space-sm);
+  }
+}

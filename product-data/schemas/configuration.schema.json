@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.ch/schemas/configuration.schema.json",
+  "title": "WebForge Konfiguration",
+  "description": "Strukturierter, versionierter Datensatz einer Produktkonfiguration (docs/configurator-model.md).",
+  "type": "object",
+  "required": [
+    "configurationId", "product", "productVersion", "ruleVersion",
+    "priceVersion", "status", "inputs", "derived", "validation", "estimate"
+  ],
+  "properties": {
+    "configurationId": { "type": "string", "pattern": "^WFC-\\d{4}-\\d{6}$" },
+    "product": { "enum": ["gelaender", "gartentor", "fenstergitter"] },
+    "productVersion": { "type": "string" },
+    "ruleVersion": { "type": "string" },
+    "priceVersion": {
+      "type": ["string", "null"],
+      "description": "null = keine freigegebene Preisversion; Preisart ist dann zwingend individual-review (A-003)."
+    },
+    "status": { "enum": ["draft", "submitted"] },
+    "calculatedAt": { "type": "string", "format": "date-time" },
+    "inputs": { "type": "object" },
+    "derived": { "type": "object" },
+    "assumptions": { "type": "array", "items": { "type": "string" } },
+    "validation": {
+      "type": "object",
+      "required": ["level", "warnings"],
+      "properties": {
+        "level": { "enum": ["green", "yellow", "red"] },
+        "warnings": { "type": "array", "items": { "type": "string" } },
+        "errors": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "estimate": {
+      "type": "object",
+      "required": ["type", "currency"],
+      "properties": {
+        "type": { "enum": ["guide-price", "range", "individual-review"] },
+        "currency": { "const": "CHF" },
+        "minimum": { "type": "number", "minimum": 0 },
+        "maximum": { "type": "number", "minimum": 0 }
+      }
+    },
+    "server": {
+      "type": "object",
+      "description": "Serverseitiges Ergebnis beim Absenden (autoritativ); inkl. dokumentierter Abweichung zum Browserwert.",
+      "properties": {
+        "recalculatedAt": { "type": "string", "format": "date-time" },
+        "deviationFromClient": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

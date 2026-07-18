@@ -1,0 +1,22 @@
+{
+  "$meta": {
+    "catalogVersion": "0.0.1-TESTDATEN",
+    "status": "TESTDATEN – reale Material-Metadaten (Eignungen, Aufpreise) benötigen fachliche Freigabe (Gate C)."
+  },
+  "materials": [
+    {
+      "materialId": "test-stahl",
+      "name": "Stahl (TESTDATEN)",
+      "outdoorSuitable": null,
+      "approval": "fachliche Freigabe erforderlich",
+      "active": true
+    },
+    {
+      "materialId": "test-edelstahl",
+      "name": "Edelstahl (TESTDATEN)",
+      "outdoorSuitable": null,
+      "approval": "fachliche Freigabe erforderlich",
+      "active": true
+    }
+  ]
+}
