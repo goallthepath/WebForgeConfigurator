@@ -12,6 +12,10 @@ if ( 'local' !== wp_get_environment_type() ) {
 	return;
 }
 
+// PHPMailer lehnt die WordPress-Vorgabe "wordpress@localhost" als ungültig ab.
+add_filter( 'wp_mail_from', static fn () => 'entwicklung@webforge.local' );
+add_filter( 'wp_mail_from_name', static fn () => 'WebForge Lokal' );
+
 add_action(
 	'phpmailer_init',
 	static function ( $phpmailer ) {

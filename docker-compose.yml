@@ -51,6 +51,10 @@ services:
       WORDPRESS_DB_NAME: ${DB_NAME:-webforge}
       WORDPRESS_DB_USER: ${DB_USER:-webforge}
       WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-webforge_dev_only}
+      # Muss mit dem wordpress-Service übereinstimmen: das Image liest
+      # WORDPRESS_CONFIG_EXTRA zur Laufzeit, sonst gilt hier "production".
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_ENVIRONMENT_TYPE', '${WP_ENVIRONMENT_TYPE:-local}');
     volumes:
       - wp_data:/var/www/html
       - ./wordpress/wp-content/themes/webforge:/var/www/html/wp-content/themes/webforge

@@ -33,9 +33,20 @@ npm install
 npm run dev        # http://localhost:5173/konfigurator/
 ```
 
-Erststart von WordPress: Installation über http://localhost:8080 durchführen,
-danach Theme `WebForge` und Plugin `WebForge Core` im Backend aktivieren
-(oder per wp-cli: `docker compose run --rm wpcli wp theme activate webforge` usw.).
+Erststart von WordPress (bereits erledigt in dieser Umgebung):
+
+```text
+docker compose run --rm wpcli wp core install --url=http://localhost:8080 \
+  --title="Musterschlosserei (lokale Entwicklung)" \
+  --admin_user=webforge-admin --admin_password=webforge_dev_only \
+  --admin_email=dev@webforge.local --skip-email
+docker compose run --rm wpcli wp theme activate webforge
+docker compose run --rm wpcli wp plugin activate webforge-core
+docker compose run --rm wpcli wp rewrite structure "/%postname%/" --hard
+```
+
+Lokaler Backend-Login: `webforge-admin` / `webforge_dev_only`
+(nur lokale Entwicklung — niemals für Staging oder Produktion verwenden).
 
 ## Prüfungen
 
