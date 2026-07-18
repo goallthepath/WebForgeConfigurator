@@ -99,8 +99,462 @@ h3 {
   overflow: hidden;
 }
 
+/* ---- Konfigurator-Layout ---- */
+
+.lead {
+  color: var(--webforge-color-iron);
+  max-width: 46rem;
+}
+
+.configurator-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: var(--webforge-space-lg);
+  align-items: start;
+}
+
+.configurator-aside {
+  position: sticky;
+  top: var(--webforge-space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--webforge-space-md);
+}
+
+/* ---- Schritte ---- */
+
+.step-section {
+  background: #fff;
+  border: 1px solid var(--webforge-color-mist);
+  border-radius: var(--webforge-radius-md);
+  padding: var(--webforge-space-md) var(--webforge-space-lg);
+  margin-bottom: var(--webforge-space-md);
+}
+
+.step-section.locked {
+  opacity: 0.55;
+}
+
+.step-title {
+  display: flex;
+  align-items: center;
+  gap: var(--webforge-space-sm);
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  background: var(--webforge-color-ink);
+  color: var(--webforge-color-paper);
+  font-family: var(--webforge-font-body);
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.step-section.done .step-number {
+  background: var(--webforge-color-success);
+}
+
+.step-hint,
+.step-locked-note,
+.field-hint {
+  color: var(--webforge-color-steel);
+  font-size: 0.9rem;
+}
+
+.escape-hatch {
+  border-left: 3px solid var(--webforge-color-brass);
+  padding-left: var(--webforge-space-sm);
+  font-size: 0.92rem;
+  color: var(--webforge-color-iron);
+}
+
+/* ---- Optionskarten ---- */
+
+.option-group {
+  border: 0;
+  padding: 0;
+  margin: var(--webforge-space-md) 0 0;
+}
+
+.option-group legend {
+  font-weight: 600;
+  margin-bottom: var(--webforge-space-xs);
+}
+
+.option-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: var(--webforge-space-sm);
+}
+
+.option-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  border: 1.5px solid var(--webforge-color-mist);
+  border-radius: var(--webforge-radius-md);
+  padding: var(--webforge-space-sm);
+  cursor: pointer;
+  background: var(--webforge-color-paper);
+}
+
+.option-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.option-card:hover {
+  border-color: var(--webforge-color-brass);
+}
+
+.option-card.selected {
+  border-color: var(--webforge-color-brass);
+  box-shadow: 0 0 0 1px var(--webforge-color-brass);
+  background: #fff;
+}
+
+.option-card:focus-within {
+  outline: 2px solid var(--webforge-color-brass);
+  outline-offset: 2px;
+}
+
+.option-icon {
+  width: 3rem;
+  height: 3rem;
+  stroke: var(--webforge-color-ink);
+  stroke-width: 3;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.option-label {
+  font-weight: 600;
+}
+
+.option-description {
+  font-size: 0.85rem;
+  color: var(--webforge-color-steel);
+}
+
+.option-badge {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  background: var(--webforge-color-warning);
+  color: #fff;
+  border-radius: 3px;
+  padding: 0.1rem 0.3rem;
+}
+
+/* ---- Felder ---- */
+
+.number-field {
+  margin: var(--webforge-space-sm) 0;
+  max-width: 22rem;
+}
+
+.number-field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.number-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.number-input input {
+  flex: 1;
+  padding: 0.55rem 0.7rem;
+  border: 1.5px solid var(--webforge-color-mist);
+  border-radius: var(--webforge-radius-sm);
+  font-size: 1rem;
+  font-family: var(--webforge-font-body);
+}
+
+.number-input input:focus-visible {
+  outline: 2px solid var(--webforge-color-brass);
+  outline-offset: 1px;
+}
+
+.number-input .unit {
+  color: var(--webforge-color-steel);
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: var(--webforge-space-sm);
+}
+
+/* ---- Farb-Swatches ---- */
+
+.swatch-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--webforge-space-sm);
+}
+
+.swatch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1.5px solid var(--webforge-color-mist);
+  border-radius: var(--webforge-radius-sm);
+  padding: 0.45rem 0.6rem;
+  cursor: pointer;
+}
+
+.swatch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.swatch.selected {
+  border-color: var(--webforge-color-brass);
+  box-shadow: 0 0 0 1px var(--webforge-color-brass);
+}
+
+.swatch:focus-within {
+  outline: 2px solid var(--webforge-color-brass);
+  outline-offset: 2px;
+}
+
+.swatch-chip {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 4px;
+  border: 1px solid var(--webforge-color-steel);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--webforge-color-steel);
+  flex-shrink: 0;
+}
+
+.swatch-label {
+  font-size: 0.85rem;
+}
+
+/* ---- Viewer ---- */
+
+.viewer-block {
+  background: #fff;
+  border: 1px solid var(--webforge-color-mist);
+  border-radius: var(--webforge-radius-md);
+  overflow: hidden;
+}
+
+.viewer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--webforge-color-mist);
+  align-items: center;
+}
+
+.viewer-toolbar button {
+  border: 1px solid var(--webforge-color-mist);
+  background: var(--webforge-color-paper);
+  border-radius: var(--webforge-radius-sm);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: var(--webforge-font-body);
+}
+
+.viewer-toolbar button.active {
+  background: var(--webforge-color-ink);
+  color: var(--webforge-color-paper);
+  border-color: var(--webforge-color-ink);
+}
+
+.dims-toggle {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--webforge-color-iron);
+}
+
+.viewer-shell {
+  height: 22rem;
+  background: #efedea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.viewer-empty {
+  color: var(--webforge-color-steel);
+  padding: var(--webforge-space-md);
+  text-align: center;
+}
+
+.elevation-svg {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+}
+
+.dim-label-wrap {
+  pointer-events: none;
+}
+
+.dim-label {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--webforge-color-iron);
+  border: 1px solid var(--webforge-color-brass);
+  border-radius: 3px;
+  padding: 0 0.3rem;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  font-family: var(--webforge-font-body);
+}
+
+/* ---- Zusammenfassung ---- */
+
+.summary-card {
+  background: #fff;
+  border: 1px solid var(--webforge-color-mist);
+  border-radius: var(--webforge-radius-md);
+  padding: var(--webforge-space-md) var(--webforge-space-lg);
+}
+
+.summary-card h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+}
+
+.summary-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--webforge-space-sm);
+}
+
+.summary-list li {
+  padding: 0.25rem 0;
+  border-bottom: 1px dashed var(--webforge-color-mist);
+}
+
+.provisional {
+  font-size: 0.75rem;
+  color: var(--webforge-color-warning);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-banner ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.status-banner.red {
+  border-color: var(--webforge-color-danger);
+  color: var(--webforge-color-danger);
+  background: #fbeeed;
+}
+
+.estimate {
+  font-weight: 600;
+}
+
+.summary-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: var(--webforge-space-sm) 0;
+}
+
+.summary-actions button {
+  padding: 0.65rem 1rem;
+  border-radius: var(--webforge-radius-sm);
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-family: var(--webforge-font-body);
+  border: 1.5px solid transparent;
+}
+
+.summary-actions .primary {
+  background: var(--webforge-color-brass);
+  color: #fff;
+}
+
+.summary-actions .primary:hover:not(:disabled) {
+  background: var(--webforge-color-brassDark, #8a5f30);
+}
+
+.summary-actions .primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.summary-actions .secondary {
+  background: var(--webforge-color-paper);
+  border-color: var(--webforge-color-brass);
+  color: var(--webforge-color-brass);
+}
+
+.summary-actions .ghost {
+  background: none;
+  color: var(--webforge-color-steel);
+}
+
+.share-url {
+  word-break: break-all;
+  font-size: 0.75rem;
+}
+
+.versions {
+  font-size: 0.75rem;
+  color: var(--webforge-color-steel);
+  border-top: 1px solid var(--webforge-color-mist);
+  padding-top: var(--webforge-space-xs);
+  margin-bottom: 0;
+}
+
+/* ---- Mobile ---- */
+
+@media (max-width: 60rem) {
+  .configurator-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .configurator-aside {
+    position: static;
+    order: -1;
+  }
+
+  .viewer-shell {
+    height: 16rem;
+  }
+}
+
 @media (max-width: 40rem) {
   .app-main {
     padding: var(--webforge-space-lg) var(--webforge-space-sm);
+  }
+
+  .step-section {
+    padding: var(--webforge-space-sm) var(--webforge-space-md);
   }
 }
