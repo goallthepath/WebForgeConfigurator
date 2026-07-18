@@ -33,9 +33,11 @@ import { buildTreppeGeometry } from './geometry';
 import {
   EMPTY_TREPPE_INPUTS,
   type GelaenderSeite,
+  type Setzstufen,
   type Stufentyp,
   type TreppeInputs,
   type TreppenFuellung,
+  type TreppenKonstruktion,
   type TreppenModus,
 } from './types';
 
@@ -77,6 +79,34 @@ const STUFENTYPEN: OptionDef<Stufentyp>[] = [
     id: 'blech-glatt',
     label: 'Glattblech',
     description: 'Glatte Stahlstufe – z. B. für Holz- oder Steinauflagen.',
+  },
+];
+
+const KONSTRUKTIONEN: OptionDef<TreppenKonstruktion>[] = [
+  {
+    id: 'wangen',
+    label: 'Wangentreppe',
+    description: 'Zwei seitliche Wangen tragen die Stufen – der Klassiker.',
+    icon: '<line x1="6" y1="40" x2="42" y2="10"/><line x1="10" y1="44" x2="46" y2="14"/><line x1="14" y1="36" x2="22" y2="36"/><line x1="22" y1="28" x2="30" y2="28"/><line x1="30" y1="20" x2="38" y2="20"/>',
+  },
+  {
+    id: 'mittelholm',
+    label: 'Mittelholmtreppe',
+    description: 'Ein zentraler Holm, frei auskragende Stufen – leicht und modern.',
+    icon: '<line x1="8" y1="42" x2="44" y2="12"/><line x1="12" y1="36" x2="24" y2="36"/><line x1="20" y1="28" x2="32" y2="28"/><line x1="28" y1="20" x2="40" y2="20"/>',
+  },
+];
+
+const SETZSTUFEN_OPTIONEN: OptionDef<Setzstufen>[] = [
+  {
+    id: 'offen',
+    label: 'Offene Steigungen',
+    description: 'Luftig und leicht – Öffnungen werden nach BFU geprüft.',
+  },
+  {
+    id: 'geschlossen',
+    label: 'Geschlossene Setzstufen',
+    description: 'Blech-Setzstufen – geschlossen, kindersicher, aussen dicht.',
   },
 ];
 
@@ -449,6 +479,13 @@ export function TreppeConfigurator() {
               done={treppeOk}
             >
               <OptionCardGroup
+                legend="Konstruktion"
+                name="tr-konstruktion"
+                options={KONSTRUKTIONEN}
+                value={inputs.konstruktion}
+                onChange={(konstruktion) => set({ konstruktion })}
+              />
+              <OptionCardGroup
                 legend="Stufenausführung"
                 name="tr-stufentyp"
                 options={STUFENTYPEN}
@@ -456,7 +493,14 @@ export function TreppeConfigurator() {
                 onChange={(stufentyp) => set({ stufentyp })}
               />
               <OptionCardGroup
-                legend="Wangenprofil"
+                legend="Steigungen (Setzstufen)"
+                name="tr-setzstufen"
+                options={SETZSTUFEN_OPTIONEN}
+                value={inputs.setzstufen}
+                onChange={(setzstufen) => set({ setzstufen })}
+              />
+              <OptionCardGroup
+                legend={inputs.konstruktion === 'mittelholm' ? 'Holm-/Wangenmaterial (Vorschau)' : 'Wangenprofil'}
                 name="tr-wange"
                 options={profileOptions('wange', inputs.materialId)}
                 value={inputs.wangenProfilId}

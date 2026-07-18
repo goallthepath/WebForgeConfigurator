@@ -149,15 +149,28 @@ export function TreppeScene({
         <meshStandardMaterial color={CONCRETE_COLOR} roughness={0.95} />
       </mesh>
 
-      {/* Wangen (geneigte Flachstähle) */}
-      {geometry.wangen.map((wange, i) => (
+      {/* Tragkonstruktion: Wangen oder Mittelholm (geneigt) */}
+      {geometry.traeger.map((traeger, i) => (
         <mesh
           key={`w-${i}`}
-          position={wange.center}
-          rotation={[0, 0, wange.neigungRad]}
+          position={traeger.center}
+          rotation={[0, 0, traeger.neigungRad]}
           castShadow={!mobile}
         >
-          <boxGeometry args={[wange.laengeM, wange.hoeheM, wange.dickeM]} />
+          <boxGeometry args={[traeger.laengeM, traeger.hoeheM, traeger.dickeM]} />
+          <meshStandardMaterial
+            color={treppenFarbe}
+            {...METAL}
+            transparent={bestand}
+            opacity={treppenOpacity}
+          />
+        </mesh>
+      ))}
+
+      {/* Geschlossene Setzstufen */}
+      {geometry.setzstufen.map((setz, i) => (
+        <mesh key={`sz-${i}`} position={setz.center} castShadow={!mobile}>
+          <boxGeometry args={setz.sizeM} />
           <meshStandardMaterial
             color={treppenFarbe}
             {...METAL}
@@ -196,6 +209,55 @@ export function TreppeScene({
           <ShapeMesh shape={stab.shape} lengthM={stab.hoeheM} color={color} />
         </mesh>
       ))}
+      {/* Handlauf-Abschlüsse */}
+      {geometry.endCaps.map((cap, i) => {
+        const r = (cap.shape.dM ?? cap.shape.hM ?? 0.04) / 2;
+        const dirX = cap.dir[0] >= 0 ? 1 : -1;
+        if (cap.kind === 'gerade') return null;
+        if (cap.kind === 'kugel') {
+          return (
+            <mesh
+              key={`cap-${i}`}
+              position={[cap.position[0] + dirX * r * 1.4, cap.position[1], cap.position[2]]}
+            >
+              <sphereGeometry args={[r * 1.8, 18, 18]} />
+              <meshStandardMaterial color={color} {...METAL} roughness={0.32} />
+            </mesh>
+          );
+        }
+        if (cap.kind === 'kugel-drittel') {
+          return (
+            <mesh
+              key={`cap-${i}`}
+              position={cap.position}
+              rotation={[0, 0, dirX > 0 ? -Math.PI / 2 : Math.PI / 2]}
+              scale={[0.45, 1, 1]}
+            >
+              <sphereGeometry args={[r * 1.05, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+              <meshStandardMaterial color={color} {...METAL} side={THREE.DoubleSide} />
+            </mesh>
+          );
+        }
+        // Endbogen: Viertel-Torus nach unten plus kurzer Abgang.
+        const bogenR = Math.max(r * 2.2, 0.05);
+        return (
+          <group
+            key={`cap-${i}`}
+            position={cap.position}
+            rotation={[0, dirX > 0 ? 0 : Math.PI, 0]}
+          >
+            <mesh position={[0, -bogenR, 0]}>
+              <torusGeometry args={[bogenR, r, 14, 20, Math.PI / 2]} />
+              <meshStandardMaterial color={color} {...METAL} />
+            </mesh>
+            <mesh position={[bogenR, -bogenR - 0.05, 0]}>
+              <cylinderGeometry args={[r, r, 0.1, 14]} />
+              <meshStandardMaterial color={color} {...METAL} />
+            </mesh>
+          </group>
+        );
+      })}
+
       {geometry.ornamentTyp &&
         geometry.ornamentZentren.map((zentrum, i) => (
           <OrnamentMesh

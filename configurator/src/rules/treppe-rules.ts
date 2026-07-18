@@ -175,8 +175,15 @@ export function validateTreppe(
 
   if (mitTreppe) {
     warnings.push(
-      'Tragkonstruktion (Wangen, Stufen, Auflager) wird statisch bemessen – Profile hier sind Vorschau.'
+      inputs.konstruktion === 'mittelholm'
+        ? 'Mittelholmtreppe: Holmquerschnitt und auskragende Stufen werden statisch bemessen – Darstellung ist Vorschau.'
+        : 'Tragkonstruktion (Wangen, Stufen, Auflager) wird statisch bemessen – Profile hier sind Vorschau.'
     );
+    if (inputs.setzstufen === 'offen' && inputs.kinderschutz !== 'nein') {
+      warnings.push(
+        `Offene Steigungen: Öffnungen werden kindersicher begrenzt (BFU, ${BFU_RICHTWERTE.kugelDurchmesserMm}-mm-Kugel) – ggf. mit Blenden.`
+      );
+    }
   }
 
   for (const profile of selectedProfiles) {

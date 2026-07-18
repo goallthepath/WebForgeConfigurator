@@ -101,14 +101,31 @@ export function treppeMaterialAuszug(
   const mitGelaender = inputs.modus !== 'treppe';
 
   if (mitTreppe) {
-    positionen.push(
-      { bezeichnung: 'Wangen', anzahl: 2, laengeMm: derived.schraegeLaengeMm },
-      {
-        bezeichnung: `Trittstufen (${inputs.stufentyp ?? 'Typ offen'})`,
-        anzahl: derived.stufenAnzahl,
+    if (inputs.konstruktion === 'mittelholm') {
+      positionen.push({
+        bezeichnung: 'Mittelholm',
+        anzahl: 1,
+        laengeMm: derived.schraegeLaengeMm,
+      });
+    } else {
+      positionen.push({
+        bezeichnung: 'Wangen',
+        anzahl: 2,
+        laengeMm: derived.schraegeLaengeMm,
+      });
+    }
+    positionen.push({
+      bezeichnung: `Trittstufen (${inputs.stufentyp ?? 'Typ offen'})`,
+      anzahl: derived.stufenAnzahl,
+      laengeMm: inputs.laufbreiteMm,
+    });
+    if (inputs.setzstufen === 'geschlossen') {
+      positionen.push({
+        bezeichnung: 'Setzstufen (geschlossen)',
+        anzahl: derived.steigungenAnzahl,
         laengeMm: inputs.laufbreiteMm,
-      }
-    );
+      });
+    }
   }
   if (mitGelaender && derived.gelaenderSeiten > 0) {
     positionen.push(

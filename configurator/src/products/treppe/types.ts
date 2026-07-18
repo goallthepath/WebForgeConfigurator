@@ -14,6 +14,8 @@ import type {
 export type TreppenModus = 'treppe' | 'gelaender' | 'kombiniert';
 export type TreppenEinbauort = 'innen' | 'aussen';
 export type Stufentyp = 'gitterrost' | 'traenenblech' | 'blech-glatt';
+export type TreppenKonstruktion = 'wangen' | 'mittelholm';
+export type Setzstufen = 'offen' | 'geschlossen';
 export type GelaenderSeite = 'links' | 'rechts' | 'beide';
 export type TreppenFuellung = 'staketen' | 'querstab' | 'geschmiedet';
 
@@ -28,7 +30,9 @@ export interface TreppeInputs {
   /** Manuelle Stufenzahl-Übersteuerung (null = automatisch nach Schrittmass). */
   stufenAnzahlManuell: number | null;
   /** Nur Modus 'treppe'/'kombiniert'. */
+  konstruktion: TreppenKonstruktion;
   stufentyp: Stufentyp | null;
+  setzstufen: Setzstufen;
   wangenProfilId: string | null;
   /** Nur Modus 'gelaender'/'kombiniert'. */
   gelaenderSeite: GelaenderSeite | null;
@@ -76,7 +80,9 @@ export const EMPTY_TREPPE_INPUTS: TreppeInputs = {
   laufbreiteMm: 1000,
   masseUngefaehr: false,
   stufenAnzahlManuell: null,
+  konstruktion: 'wangen',
   stufentyp: null,
+  setzstufen: 'offen',
   wangenProfilId: null,
   gelaenderSeite: null,
   gelaenderHoeheMm: null,

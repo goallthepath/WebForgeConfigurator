@@ -111,14 +111,62 @@ describe('Treppen-Geometrie', () => {
     const d = deriveTreppe(inputs, 12);
     const geo = buildTreppeGeometry(inputs, d, {});
     expect(geo.stufen.length).toBe(d.stufenAnzahl);
-    expect(geo.wangen).toHaveLength(2);
+    expect(geo.traeger).toHaveLength(2); // Wangen
     expect(geo.pfosten.length).toBe(d.pfostenProSeite * 2);
-    // Handlauf + Untergurt je Seite
-    expect(geo.rails.length).toBe(4);
+    // Handlauf + Auslauf oben + Untergurt je Seite
+    expect(geo.rails.length).toBe(6);
     // Oberste Stufe liegt eine Steigung unter der Geschosshöhe.
     const top = Math.max(...geo.stufen.map((s) => s.center[1]));
     expect(top).toBeLessThan(geo.hoeheM);
     expect(geo.dimensions).toHaveLength(2);
+  });
+
+  it('Geländer steht auf der Nasenlinie (nicht auf der Rohlinie)', () => {
+    const inputs = inputsWith({
+      modus: 'kombiniert',
+      geschosshoeheMm: 2800,
+      gelaenderSeite: 'links',
+      gelaenderHoeheMm: 1000,
+      fuellung: 'staketen',
+    });
+    const d = deriveTreppe(inputs, 12);
+    const geo = buildTreppeGeometry(inputs, d, {});
+    const s = d.steigungMm / 1000;
+    // Erster Pfosten am Antritt: Fusspunkt auf der ersten Stufennase (~1 Steigung).
+    expect(geo.pfosten[0].base[1]).toBeCloseTo(s, 2);
+    // Letzter Pfosten oben auf Geschosshöhe.
+    const letzter = geo.pfosten[d.pfostenProSeite - 1];
+    expect(letzter.base[1]).toBeCloseTo(geo.hoeheM, 2);
+    // Handlauf-Auslauf oben ist horizontal.
+    const auslauf = geo.rails[1];
+    expect(auslauf.start[1]).toBeCloseTo(auslauf.end[1], 5);
+    expect(auslauf.end[0]).toBeGreaterThan(geo.lauflaengeM);
+    // Abschlusskappen an beiden freien Enden.
+    expect(geo.endCaps.length).toBe(0); // ohne gewählten Abschluss
+    const mitCap = buildTreppeGeometry(
+      { ...inputs, handlaufAbschluss: 'kugel-drittel' },
+      d,
+      {}
+    );
+    expect(mitCap.endCaps).toHaveLength(2);
+  });
+
+  it('Mittelholm ersetzt die Wangen; geschlossene Setzstufen füllen die Steigungen', () => {
+    const inputs = inputsWith({
+      modus: 'treppe',
+      konstruktion: 'mittelholm',
+      setzstufen: 'geschlossen',
+      geschosshoeheMm: 2800,
+      laufbreiteMm: 1000,
+    });
+    const d = deriveTreppe(inputs, 12);
+    const geo = buildTreppeGeometry(inputs, d, {});
+    expect(geo.traeger).toHaveLength(1);
+    expect(geo.traeger[0].center[2]).toBe(0); // zentral
+    expect(geo.setzstufen.length).toBe(d.stufenAnzahl);
+    const namen = treppeMaterialAuszug(inputs, d).map((m) => m.bezeichnung);
+    expect(namen).toContain('Mittelholm');
+    expect(namen.some((n) => n.includes('Setzstufen'))).toBe(true);
   });
 
   it('Handlauf verläuft parallel zur Schrägen', () => {
@@ -133,7 +181,8 @@ describe('Treppen-Geometrie', () => {
     const geo = buildTreppeGeometry(inputs, d, {});
     const handlauf = geo.rails[0];
     const dy = handlauf.end[1] - handlauf.start[1];
-    expect(dy).toBeCloseTo(geo.hoeheM, 3);
+    // Nasenlinie: von (0, s) nach (L, H) → Δy = H − s.
+    expect(dy).toBeCloseTo(geo.hoeheM - geo.steigungM, 3);
   });
 });
 

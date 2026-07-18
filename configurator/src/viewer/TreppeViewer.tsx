@@ -17,8 +17,10 @@ function supportsWebGL(): boolean {
 
 const VIEWS: { id: ViewPreset | '2d'; label: string }[] = [
   { id: 'perspektive', label: 'Perspektive' },
-  { id: 'seite', label: 'Seite' },
-  { id: 'front', label: 'Front' },
+  // Lauf verläuft entlang X: die klassische Seitenansicht liegt bei +Z
+  // (CameraRig-Preset 'front'); der Blick die Treppe hinauf bei +X.
+  { id: 'front', label: 'Seite' },
+  { id: 'seite', label: 'Antritt' },
   { id: '2d', label: 'Schnitt' },
 ];
 

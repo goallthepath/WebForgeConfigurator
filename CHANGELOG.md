@@ -4,6 +4,25 @@ Alle nennenswerten Änderungen an der WebForge-Plattform werden hier dokumentier
 
 ## [Unreleased]
 
+### Treppen-Modul: Vertiefung und 3D-Bereinigung (2026-07-18)
+
+- 3D-Korrekturen: Geländer (Pfosten, Stäbe, Handlauf, Untergurt) bezieht
+  sich jetzt korrekt auf die **Stufen-Nasenlinie** statt auf die Rohlinie;
+  die Wange liegt mit der Oberkante knapp über den Nasen (senkrechter
+  Versatz zur Schrägen); Ansichts-Presets für Treppen korrekt benannt
+  (Seite = klassische Seitenansicht, Antritt = Blick den Lauf hinauf).
+- Handlauf mit horizontalem **Auslauf am Austritt** (300 mm aufs Podest)
+  und echten Abschlüssen an beiden freien Enden (1/3-Kugel, Kugel,
+  Endbogen-Torus).
+- Neue Konstruktionswahl: **Wangentreppe oder Mittelholmtreppe**
+  (zentraler Holm, auskragende Stufen) mit Statik-Hinweis und eigener
+  Materialposition.
+- **Setzstufen offen/geschlossen**: geschlossene Blech-Setzstufen in 3D
+  und Materialauszug; offene Steigungen erzeugen bei Kindern den
+  BFU-Öffnungshinweis.
+- Tests auf 85 erweitert (Nasenlinie, Auslauf/Endkappen, Mittelholm,
+  Setzstufen).
+
 ### Treppen-Modul: Treppe & Treppengeländer kombiniert (2026-07-18)
 
 - Viertes Produktmodul auf Kundenwunsch: `/konfigurator/treppe/` mit drei
