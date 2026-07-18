@@ -25,6 +25,8 @@ export interface GeoPost {
   z: number;
   /** Abgewickelte Position entlang des Geländerpfads in m (für 2D). */
   tM: number;
+  /** Fusspunkt (0 = Bodenniveau; negativ bei seitlicher/eingelassener Montage). */
+  yBaseM: number;
   heightM: number;
   shape: ProfileShape;
 }
@@ -46,7 +48,17 @@ export interface GeoBar {
   shape: ProfileShape;
 }
 
-/** Glasscheibe (Feld zwischen zwei Pfosten). */
+/** Darstellungsart einer Flächenfüllung. */
+export type PanelFill =
+  | 'glas-klar'
+  | 'glas-satiniert'
+  | 'blech-voll'
+  | 'blech-loch'
+  | 'blech-laser'
+  | 'gitter-streckmetall'
+  | 'gitter-drahtgitter';
+
+/** Flächenfüllung (Feld zwischen zwei Pfosten): Glas, Blech oder Gitter. */
 export interface GeoPanel {
   center: [number, number, number];
   tM: number;
@@ -55,7 +67,22 @@ export interface GeoPanel {
   heightM: number;
   /** Rotation um Y (Laufrichtung). */
   rotY: number;
-  frosted: boolean;
+  fill: PanelFill;
+}
+
+/** Fussplatte oder seitliches Schwert am Pfosten. */
+export interface GeoPlate {
+  center: [number, number, number];
+  /** [entlang Lauf, Höhe, quer zum Lauf] in m. */
+  sizeM: [number, number, number];
+  rotY: number;
+}
+
+/** Baukörper-Andeutung (Betonplatte/Mauerkrone) je Lauf. */
+export interface GeoSlab {
+  center: [number, number, number];
+  sizeM: [number, number, number];
+  rotY: number;
 }
 
 export type EndCap = 'gerade' | 'kugel' | 'endbogen';
@@ -80,6 +107,8 @@ export interface RailingGeometry {
   bars: GeoBar[];
   panels: GeoPanel[];
   endCaps: GeoEndCap[];
+  plates: GeoPlate[];
+  slabs: GeoSlab[];
   dimensions: GeoDimension[];
   /** Für Kamera-Framing. */
   bounds: {
@@ -152,6 +181,7 @@ export function buildRailingGeometry(
     handlauf?: Profile;
     fuellstab?: Profile;
     querstab?: Profile;
+    untergurt?: Profile;
   }
 ): RailingGeometry {
   const heightM = (inputs.hoeheMm ?? 1000) / 1000;
@@ -159,16 +189,46 @@ export function buildRailingGeometry(
   const railShape = shapeFromProfile(profiles.handlauf);
   const barShape = shapeFromProfile(profiles.fuellstab);
   const crossShape = shapeFromProfile(profiles.querstab ?? profiles.fuellstab);
+  const gurtShape: ProfileShape = profiles.untergurt
+    ? shapeFromProfile(profiles.untergurt)
+    : { kind: 'box', wM: 0.03, hM: 0.008 };
   const railThickness = railShape.dM ?? railShape.hM ?? 0.04;
   const bottomM = GELAENDER_RULES_V0.bodenfreiheitMm / 1000;
   const mitHandlauf = !inputs.ohneHandlauf;
+  const mitUntergurt = derived.untergurtLaengenMm.length > 0;
+  const gurtDicke = gurtShape.dM ?? gurtShape.hM ?? 0.02;
+  /** Unterkante der Füllung (über Untergurt, falls vorhanden). */
+  const fillBottomM = mitUntergurt ? bottomM + gurtDicke : bottomM;
+
+  // Pfostenverlängerung/Sockel je Befestigungsart (rein darstellend).
+  const postBaseM =
+    inputs.montageart === 'seite'
+      ? -0.16
+      : inputs.montageart === 'unten'
+        ? -0.24
+        : inputs.montageart === 'eingelassen'
+          ? -0.1
+          : 0;
 
   const posts: GeoPost[] = [];
   const rails: GeoRail[] = [];
   const bars: GeoBar[] = [];
   const panels: GeoPanel[] = [];
   const endCaps: GeoEndCap[] = [];
+  const plates: GeoPlate[] = [];
+  const slabs: GeoSlab[] = [];
   const dimensions: GeoDimension[] = [];
+
+  const panelFill: PanelFill | null =
+    inputs.fuellungsart === 'glas'
+      ? inputs.glasTyp === 'satiniert'
+        ? 'glas-satiniert'
+        : 'glas-klar'
+      : inputs.fuellungsart === 'blech'
+        ? (`blech-${inputs.blechTyp ?? 'voll'}` as PanelFill)
+        : inputs.fuellungsart === 'gitter'
+          ? (`gitter-${inputs.gitterTyp ?? 'streckmetall'}` as PanelFill)
+          : null;
 
   const runDefs = runsFromInputs(inputs);
 
@@ -181,11 +241,59 @@ export function buildRailingGeometry(
       run.origin[1] + run.dir[1] * t,
     ];
 
+    // Normale in der Bodenebene: -n = Masslinien-/Aussenseite, +n = innen.
+    const n: [number, number] = [run.dir[1], -run.dir[0]];
+    const rotY = Math.atan2(run.dir[0], run.dir[1]) - Math.PI / 2;
+    const postW = postShape.dM ?? postShape.wM ?? 0.04;
+
     for (let p = 0; p < nPosts; p++) {
       // Eckpfosten nicht doppelt setzen (stellt der vorherige Lauf).
       if (runIndex > 0 && p === 0) continue;
       const [x, z] = at(spacing * p);
-      posts.push({ x, z, tM: baseT + spacing * p, heightM, shape: postShape });
+      posts.push({
+        x,
+        z,
+        tM: baseT + spacing * p,
+        yBaseM: postBaseM,
+        heightM: heightM - postBaseM,
+        shape: postShape,
+      });
+
+      // Befestigungsdetails am Pfostenfuss (rein darstellend).
+      if (inputs.montageart === 'boden') {
+        plates.push({
+          center: [x, 0.006, z],
+          sizeM: [0.12, 0.012, 0.12],
+          rotY,
+        });
+      } else if (inputs.montageart === 'seite') {
+        plates.push({
+          center: [x - n[0] * (postW / 2 + 0.007), -0.08, z - n[1] * (postW / 2 + 0.007)],
+          sizeM: [0.06, 0.16, 0.012],
+          rotY,
+        });
+      } else if (inputs.montageart === 'unten') {
+        // Kragarm: horizontaler Arm unter der Platte nach innen.
+        plates.push({
+          center: [x + n[0] * 0.15, -0.245, z + n[1] * 0.15],
+          sizeM: [0.05, 0.05, 0.3],
+          rotY,
+        });
+      }
+    }
+
+    // Baukörper-Andeutung (nicht bei Wandmontage).
+    if (inputs.montageart && inputs.montageart !== 'wand') {
+      const [mx, mz] = at(run.lengthM / 2);
+      const innenOffset =
+        inputs.montageart === 'seite' || inputs.montageart === 'unten'
+          ? 0.4 + postW / 2
+          : 0.32;
+      slabs.push({
+        center: [mx + n[0] * innenOffset, -0.11, mz + n[1] * innenOffset],
+        sizeM: [run.lengthM + 0.4, 0.22, 0.8],
+        rotY,
+      });
     }
 
     if (mitHandlauf) {
@@ -196,6 +304,17 @@ export function buildRailingGeometry(
         end: [ex, heightM, ez],
         tRangeM: [baseT, baseT + run.lengthM],
         shape: railShape,
+      });
+    }
+
+    if (mitUntergurt) {
+      const [sx, sz] = at(0);
+      const [ex, ez] = at(run.lengthM);
+      rails.push({
+        start: [sx, bottomM + gurtDicke / 2, sz],
+        end: [ex, bottomM + gurtDicke / 2, ez],
+        tRangeM: [baseT, baseT + run.lengthM],
+        shape: gurtShape,
       });
     }
 
@@ -215,8 +334,8 @@ export function buildRailingGeometry(
             x,
             z,
             tM: baseT + t,
-            yM: bottomM,
-            heightM: barTop - bottomM,
+            yM: fillBottomM,
+            heightM: barTop - fillBottomM,
             shape: barShape,
           });
         }
@@ -239,21 +358,19 @@ export function buildRailingGeometry(
       }
     }
 
-    if (inputs.fuellungsart === 'glas') {
-      const postW = postShape.dM ?? postShape.wM ?? 0.04;
+    if (panelFill) {
       const oben = mitHandlauf ? heightM - railThickness : heightM;
-      const panelH = oben - bottomM;
-      const rotY = Math.atan2(run.dir[0], run.dir[1]) - Math.PI / 2;
+      const panelH = oben - fillBottomM;
       for (let f = 0; f < felder; f++) {
         const tPanel = (f + 0.5) * spacing;
         const [cx, cz] = at(tPanel);
         panels.push({
-          center: [cx, bottomM + panelH / 2, cz],
+          center: [cx, fillBottomM + panelH / 2, cz],
           tM: baseT + tPanel,
           widthM: Math.max(0.1, spacing - postW - 0.04),
           heightM: panelH,
           rotY,
-          frosted: inputs.glasTyp === 'satiniert',
+          fill: panelFill,
         });
       }
     }
@@ -313,6 +430,8 @@ export function buildRailingGeometry(
     bars,
     panels,
     endCaps,
+    plates,
+    slabs,
     dimensions,
     bounds: {
       minX: xs.length ? Math.min(...xs) : 0,

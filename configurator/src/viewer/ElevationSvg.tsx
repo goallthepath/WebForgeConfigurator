@@ -33,28 +33,62 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
         stroke="#6b7178"
         strokeWidth={0.02}
       />
-      {/* Glasfelder */}
-      {geometry.panels.map((panel, i) => (
-        <rect
-          key={`g-${i}`}
-          x={panel.tM - panel.widthM / 2}
-          y={-(panel.center[1] + panel.heightM / 2)}
-          width={panel.widthM}
-          height={panel.heightM}
-          fill={panel.frosted ? '#e3ebec' : '#d3e5e9'}
-          fillOpacity={panel.frosted ? 0.9 : 0.55}
-          stroke="#9db8bd"
-          strokeWidth={0.008}
-        />
-      ))}
-      {/* Pfosten */}
+      {/* Muster für Flächenfüllungen */}
+      <defs>
+        <pattern id="p-loch" width={0.08} height={0.08} patternUnits="userSpaceOnUse">
+          <rect width={0.08} height={0.08} fill="#8a9096" />
+          <circle cx={0.02} cy={0.02} r={0.011} fill="#fff" />
+          <circle cx={0.06} cy={0.06} r={0.011} fill="#fff" />
+        </pattern>
+        <pattern id="p-laser" width={0.16} height={0.16} patternUnits="userSpaceOnUse">
+          <rect width={0.16} height={0.16} fill="#8a9096" />
+          <rect x={0.025} y={0.015} width={0.015} height={0.055} rx={0.0075} fill="#fff" />
+          <rect x={0.075} y={0.045} width={0.015} height={0.055} rx={0.0075} fill="#fff" />
+          <rect x={0.125} y={0.015} width={0.015} height={0.055} rx={0.0075} fill="#fff" />
+          <rect x={0.025} y={0.095} width={0.015} height={0.055} rx={0.0075} fill="#fff" />
+          <rect x={0.125} y={0.095} width={0.015} height={0.055} rx={0.0075} fill="#fff" />
+        </pattern>
+        <pattern id="p-streckmetall" width={0.06} height={0.06} patternUnits="userSpaceOnUse">
+          <rect width={0.06} height={0.06} fill="#fff" />
+          <path d="M0 0 L0.06 0.06 M0.06 0 L0 0.06" stroke="#6b7178" strokeWidth={0.008} />
+        </pattern>
+        <pattern id="p-drahtgitter" width={0.04} height={0.04} patternUnits="userSpaceOnUse">
+          <rect width={0.04} height={0.04} fill="#fff" />
+          <path d="M0.002 0 V0.04 M0 0.002 H0.04" stroke="#6b7178" strokeWidth={0.004} />
+        </pattern>
+      </defs>
+      {/* Flächenfüllungen (Glas, Blech, Gitter) */}
+      {geometry.panels.map((panel, i) => {
+        const fillAttr =
+          panel.fill === 'glas-klar'
+            ? '#d3e5e9'
+            : panel.fill === 'glas-satiniert'
+              ? '#e3ebec'
+              : panel.fill === 'blech-voll'
+                ? '#8a9096'
+                : `url(#p-${panel.fill.replace(/^(blech|gitter)-/, '')})`;
+        return (
+          <rect
+            key={`g-${i}`}
+            x={panel.tM - panel.widthM / 2}
+            y={-(panel.center[1] + panel.heightM / 2)}
+            width={panel.widthM}
+            height={panel.heightM}
+            fill={fillAttr}
+            fillOpacity={panel.fill === 'glas-klar' ? 0.55 : 1}
+            stroke="#6b7178"
+            strokeWidth={0.006}
+          />
+        );
+      })}
+      {/* Pfosten (inkl. Fusspunkt unter Boden bei seitlicher/eingelassener Montage) */}
       {geometry.posts.map((post, i) => {
         const w = post.shape.dM ?? post.shape.wM ?? 0.04;
         return (
           <rect
             key={`p-${i}`}
             x={post.tM - w / 2}
-            y={-post.heightM}
+            y={-(post.yBaseM + post.heightM)}
             width={w}
             height={post.heightM}
             fill="#43484e"

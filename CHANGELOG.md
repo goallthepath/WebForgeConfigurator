@@ -4,6 +4,34 @@ Alle nennenswerten Änderungen an der WebForge-Plattform werden hier dokumentier
 
 ## [Unreleased]
 
+### Geländer-Modul: Fachgrundlagen-Ausbau (2026-07-18, dritter Ausbau)
+
+- Fachgrundlage BFU 2.003 / SIA 358/261 / Metaltec als verbindliche
+  Referenz abgelegt (`docs/gelaender-fachgrundlagen.md`); BFU-Richtwerte
+  als quellenreferenzierte Konstanten (`BFU_RICHTWERTE`) implementiert.
+- Neuer Schritt «Einsatzort» (Balkon, Terrasse, Dachterrasse/Attika,
+  Französischer Balkon, Garten/Stützmauer, Podest/Galerie) mit
+  ortsspezifischen Prüf-Hinweisen; Treppengeländer als KÜNFTIGER EIGENER
+  Konfigurator, Industrie (Suva) und Bestandssanierung via Escape-Hatch.
+- Neuer Schritt «Nutzung und Sicherheit»: Kinderschutz-Frage (12-cm-Kugel
+  bis 750 mm, Kletterwirkung) und Absturzhöhe (≥1 m ⇒ BFU-Mindesthöhe
+  1000 mm wird erzwungen → ROT bei Unterschreitung).
+- Füllungsfamilien erweitert: Blech (Vollblech, Lochblech ≤5 cm-Hinweis,
+  Laserschnitt) und Gitter (Streckmetall, Drahtgitter ≤4 cm-Hinweis);
+  Querstab-Warnung verschärft sich bei Kindern (Leiterwirkung).
+- Konstruktiv korrekte Darstellung: Untergurt (autom. Rahmenprofil,
+  wählbar), Fussplatten (aufgesetzt), Schwerter (seitlich), Kragarme
+  (von unten), eingelassene Pfosten sowie Betonplatte/Baukörper je
+  Befestigungsart in 3D und Pfostenfüsse in der 2D-Zeichnung.
+- Befestigungsarten erweitert: aufgesetzt, seitlich, von unten (Kragarm),
+  eingelassen, Wand/Leibung (für franz. Balkone).
+- 3D-Materialdarstellung: prozedurale Muster ohne externe Dateien
+  (Lochblech-Rundlochung, Laserschlitze, Streckmetall-Rauten,
+  Drahtgitter) als Alpha-Texturen; Farboption «Feuerverzinkt natur».
+- 2D-Zeichnung mit denselben Mustern (SVG-Patterns).
+- Tests auf 39 erweitert (BFU-Regeln, Panels, Untergurt, Befestigungs-
+  darstellung).
+
 ### Geländer-Modul vertieft (2026-07-18, zweiter Ausbau)
 
 - Grundformen erweitert: U-Form innen/aussen (drei Segmente, zwei geteilte

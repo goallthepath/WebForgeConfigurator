@@ -92,10 +92,21 @@ export function deriveGelaender(
         )
       : 0;
 
-  const glasfelderTotal =
-    inputs.fuellungsart === 'glas'
-      ? felderProSegment.reduce((sum, n) => sum + n, 0)
-      : 0;
+  const flaechenFuellung =
+    inputs.fuellungsart === 'glas' ||
+    inputs.fuellungsart === 'blech' ||
+    inputs.fuellungsart === 'gitter';
+  const glasfelderTotal = flaechenFuellung
+    ? felderProSegment.reduce((sum, n) => sum + n, 0)
+    : 0;
+
+  // Untergurt konstruktiv bei Stab- und Flächenfüllungen (nicht bei Glas
+  // zwischen Pfosten und nicht bei Reling – dort übernimmt die unterste Lage).
+  const mitUntergurt =
+    inputs.mitUntergurt &&
+    (inputs.fuellungsart === 'staketen' ||
+      inputs.fuellungsart === 'blech' ||
+      inputs.fuellungsart === 'gitter');
 
   return {
     pfostenProSegment,
@@ -106,6 +117,7 @@ export function deriveGelaender(
     glasfelderTotal,
     gesamtlaengeMm: segmente.reduce((sum, l) => sum + l, 0),
     handlaufLaengenMm: inputs.ohneHandlauf ? [] : segmente,
+    untergurtLaengenMm: mitUntergurt ? segmente : [],
   };
 }
 
@@ -162,9 +174,25 @@ export function materialAuszug(
       }
     });
   }
-  if (derived.glasfelderTotal > 0) {
+  derived.untergurtLaengenMm.forEach((laenge, i) => {
     positionen.push({
-      bezeichnung: `Glasfelder (${inputs.glasTyp === 'satiniert' ? 'satiniert' : 'klar'})`,
+      bezeichnung:
+        derived.untergurtLaengenMm.length > 1
+          ? `Untergurt Segment ${i + 1}`
+          : 'Untergurt',
+      anzahl: 1,
+      laengeMm: laenge,
+    });
+  });
+  if (derived.glasfelderTotal > 0) {
+    const art =
+      inputs.fuellungsart === 'glas'
+        ? `Glasfelder (${inputs.glasTyp === 'satiniert' ? 'satiniert' : 'klar'})`
+        : inputs.fuellungsart === 'blech'
+          ? `Blechfelder (${inputs.blechTyp ?? 'voll'})`
+          : `Gitterfelder (${inputs.gitterTyp ?? 'streckmetall'})`;
+    positionen.push({
+      bezeichnung: art,
       anzahl: derived.glasfelderTotal,
       laengeMm: null,
     });

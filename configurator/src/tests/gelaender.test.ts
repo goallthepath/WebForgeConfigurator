@@ -133,7 +133,8 @@ describe('Pfad und Geometriemodell', () => {
     const derived = deriveGelaender(inputs, 12, PARAMS);
     const geo = buildRailingGeometry(inputs, derived, {});
     expect(geo.posts.length).toBe(derived.pfostenTotal);
-    expect(geo.rails.length).toBe(3); // ein Handlauf je Segment
+    // je Segment ein Handlauf + ein Untergurt (Standard bei Staketen)
+    expect(geo.rails.length).toBe(6);
     expect(geo.dimensions).toHaveLength(4); // 3 Längen + Höhe
   });
 
@@ -163,9 +164,76 @@ describe('Pfad und Geometriemodell', () => {
     const derived = deriveGelaender(inputs, 12, PARAMS);
     const geo = buildRailingGeometry(inputs, derived, {});
     expect(geo.panels.length).toBe(derived.glasfelderTotal);
-    expect(geo.panels[0].frosted).toBe(true);
-    expect(geo.rails).toHaveLength(0);
+    expect(geo.panels[0].fill).toBe('glas-satiniert');
+    expect(geo.rails).toHaveLength(0); // kein Handlauf, kein Untergurt bei Glas
     expect(derived.handlaufLaengenMm).toHaveLength(0);
+  });
+
+  it('Blech- und Gitterfüllungen erzeugen Panels mit Musterkennung', () => {
+    const blech = inputsWith({
+      variante: 'i',
+      fuellungsart: 'blech',
+      blechTyp: 'loch',
+      segmentLaengenMm: [2400],
+      hoeheMm: 1000,
+    });
+    const dBlech = deriveGelaender(blech, 12, PARAMS);
+    const gBlech = buildRailingGeometry(blech, dBlech, {});
+    expect(dBlech.glasfelderTotal).toBeGreaterThan(0);
+    expect(gBlech.panels[0].fill).toBe('blech-loch');
+
+    const gitter = inputsWith({
+      variante: 'i',
+      fuellungsart: 'gitter',
+      gitterTyp: 'streckmetall',
+      segmentLaengenMm: [2400],
+      hoeheMm: 1000,
+    });
+    const dGitter = deriveGelaender(gitter, 12, PARAMS);
+    expect(
+      buildRailingGeometry(gitter, dGitter, {}).panels[0].fill
+    ).toBe('gitter-streckmetall');
+  });
+
+  it('Untergurt erzeugt einen zusätzlichen Gurt und hebt die Füllung an', () => {
+    const mit = inputsWith({
+      variante: 'i',
+      fuellungsart: 'staketen',
+      mitUntergurt: true,
+      segmentLaengenMm: [2000],
+      hoeheMm: 1000,
+    });
+    const ohne = { ...mit, mitUntergurt: false };
+    const dMit = deriveGelaender(mit, 12, PARAMS);
+    const dOhne = deriveGelaender(ohne, 12, PARAMS);
+    expect(dMit.untergurtLaengenMm).toEqual([2000]);
+    expect(dOhne.untergurtLaengenMm).toEqual([]);
+    const gMit = buildRailingGeometry(mit, dMit, {});
+    const gOhne = buildRailingGeometry(ohne, dOhne, {});
+    expect(gMit.rails.length).toBe(gOhne.rails.length + 1);
+    expect(gMit.bars[0].yM).toBeGreaterThan(gOhne.bars[0].yM);
+  });
+
+  it('stellt die Befestigungsart konstruktiv dar (Platten, Schwerter, Baukörper)', () => {
+    const basis = inputsWith({
+      variante: 'i',
+      fuellungsart: 'staketen',
+      segmentLaengenMm: [2000],
+      hoeheMm: 1000,
+    });
+    const derived = deriveGelaender(basis, 12, PARAMS);
+
+    const boden = buildRailingGeometry({ ...basis, montageart: 'boden' }, derived, {});
+    expect(boden.plates.length).toBe(boden.posts.length); // Fussplatten
+    expect(boden.slabs.length).toBe(1);
+    expect(boden.posts[0].yBaseM).toBe(0);
+
+    const seite = buildRailingGeometry({ ...basis, montageart: 'seite' }, derived, {});
+    expect(seite.posts[0].yBaseM).toBeLessThan(0); // Pfosten läuft unter OK Boden
+    expect(seite.plates.length).toBe(seite.posts.length); // Schwerter
+
+    const wand = buildRailingGeometry({ ...basis, montageart: 'wand' }, derived, {});
+    expect(wand.slabs.length).toBe(0);
   });
 
   it('setzt Endkappen nur an den freien Enden', () => {
@@ -234,17 +302,109 @@ describe('Geländer-Regelprüfung', () => {
     expect(result.errors[0]).toContain('individuelle Ausführung');
   });
 
-  it('warnt bei Querstab-Füllung vor Erkletterbarkeit', () => {
-    const result = validateGelaender(
+  it('warnt bei Querstab-Füllung vor Erkletterbarkeit (verschärft bei Kindern)', () => {
+    const ohneKinder = validateGelaender(
       inputsWith({
         variante: 'i',
         fuellungsart: 'querstab',
+        kinderschutz: 'nein',
         segmentLaengenMm: [2500],
         hoeheMm: 1000,
       }),
       []
     );
-    expect(result.warnings.some((w) => w.includes('erkletterbar'))).toBe(true);
+    expect(ohneKinder.warnings.some((w) => w.includes('erkletterbar'))).toBe(true);
+
+    const mitKindern = validateGelaender(
+      inputsWith({
+        variante: 'i',
+        fuellungsart: 'querstab',
+        kinderschutz: 'ja',
+        segmentLaengenMm: [2500],
+        hoeheMm: 1000,
+      }),
+      []
+    );
+    expect(mitKindern.warnings.some((w) => w.includes('Leiter'))).toBe(true);
+  });
+
+  it('BFU: unter 1000 mm Höhe bei über 1 m Absturzhöhe → ROT', () => {
+    const result = validateGelaender(
+      inputsWith({
+        variante: 'i',
+        absturzhoehe: 'ueber-1m',
+        segmentLaengenMm: [2500],
+        hoeheMm: 900,
+      }),
+      []
+    );
+    expect(result.level).toBe('red');
+    expect(result.errors.some((e) => e.includes('BFU'))).toBe(true);
+  });
+
+  it('BFU-Kinderschutz-Hinweise je Füllungsart (12-cm-Kugel, 5-cm-Loch, 4-cm-Masche)', () => {
+    const staketen = validateGelaender(
+      inputsWith({
+        variante: 'i',
+        fuellungsart: 'staketen',
+        kinderschutz: 'ja',
+        segmentLaengenMm: [2500],
+        hoeheMm: 1000,
+      }),
+      []
+    );
+    expect(staketen.warnings.some((w) => w.includes('120-mm-Kugel'))).toBe(true);
+
+    const loch = validateGelaender(
+      inputsWith({
+        variante: 'i',
+        fuellungsart: 'blech',
+        blechTyp: 'loch',
+        kinderschutz: 'unbekannt',
+        segmentLaengenMm: [2500],
+        hoeheMm: 1000,
+      }),
+      []
+    );
+    expect(loch.warnings.some((w) => w.includes('50 mm'))).toBe(true);
+
+    const gitter = validateGelaender(
+      inputsWith({
+        variante: 'i',
+        fuellungsart: 'gitter',
+        gitterTyp: 'drahtgitter',
+        kinderschutz: 'ja',
+        segmentLaengenMm: [2500],
+        hoeheMm: 1000,
+      }),
+      []
+    );
+    expect(gitter.warnings.some((w) => w.includes('40 mm'))).toBe(true);
+  });
+
+  it('Einsatzort-Hinweise: Attika und französischer Balkon', () => {
+    const attika = validateGelaender(
+      inputsWith({
+        variante: 'i',
+        einsatzort: 'attika',
+        segmentLaengenMm: [2500],
+        hoeheMm: 1100,
+      }),
+      []
+    );
+    expect(attika.warnings.some((w) => w.includes('Attika'))).toBe(true);
+
+    const franz = validateGelaender(
+      inputsWith({
+        variante: 'i',
+        einsatzort: 'franz-balkon',
+        montageart: 'boden',
+        segmentLaengenMm: [1400],
+        hoeheMm: 1100,
+      }),
+      []
+    );
+    expect(franz.warnings.some((w) => w.includes('Wand-'))).toBe(true);
   });
 
   it('warnt bei Glas ohne Handlauf doppelt (Glasaufbau + Zulässigkeit)', () => {

@@ -22,12 +22,17 @@ import type { Profile, ProfileRole } from '../types';
 import { deriveGelaender, materialAuszug } from './derive';
 import { buildRailingGeometry } from './geometry';
 import {
+  ABSTURZ_OPTIONEN,
+  BLECHTYPEN,
   EINBAUORTE,
+  EINSATZORTE,
   FARBEN,
   farbHex,
   FUELLUNGSARTEN,
+  GITTERTYPEN,
   GLASTYPEN,
   HANDLAUF_ABSCHLUESSE,
+  KINDERSCHUTZ_OPTIONEN,
   MONTAGE_SERVICES,
   MONTAGEARTEN,
   UNTERGRUENDE,
@@ -58,10 +63,14 @@ function reducer(state: GelaenderInputs, action: Action): GelaenderInputs {
           (_, i) => state.segmentLaengenMm[i] ?? 0
         );
       }
-      // «Ohne Handlauf» gibt es nur bei Glasfüllung.
-      if (action.patch.fuellungsart && action.patch.fuellungsart !== 'glas') {
-        next.ohneHandlauf = false;
-        next.glasTyp = null;
+      // Füllungswechsel räumt nicht mehr passende Unterauswahlen auf.
+      if (action.patch.fuellungsart) {
+        if (action.patch.fuellungsart !== 'glas') {
+          next.ohneHandlauf = false;
+          next.glasTyp = null;
+        }
+        if (action.patch.fuellungsart !== 'blech') next.blechTyp = null;
+        if (action.patch.fuellungsart !== 'gitter') next.gitterTyp = null;
       }
       return next;
     }
@@ -158,6 +167,12 @@ export function GelaenderConfigurator() {
     [inputs, stabBreite]
   );
 
+  // Untergurt nutzt automatisch das freigegebene Rahmenprofil des Katalogs.
+  const untergurtProfil = useMemo(
+    () => profilesForUse(PROFILES, 'gelaender', 'rahmen')[0],
+    []
+  );
+
   const geometry = useMemo(
     () =>
       buildRailingGeometry(inputs, derived, {
@@ -173,8 +188,9 @@ export function GelaenderConfigurator() {
         querstab: inputs.querstabProfilId
           ? getProfile(inputs.querstabProfilId)
           : undefined,
+        untergurt: untergurtProfil,
       }),
-    [inputs, derived]
+    [inputs, derived, untergurtProfil]
   );
 
   const validation = useMemo(
@@ -189,11 +205,21 @@ export function GelaenderConfigurator() {
   );
 
   // Freischaltlogik der Schritte
+  const sicherheitOk =
+    inputs.kinderschutz !== null &&
+    inputs.absturzhoehe !== null &&
+    inputs.einbauort !== null;
   const masseOk =
     inputs.segmentLaengenMm.length > 0 &&
     inputs.segmentLaengenMm.every((l) => l > 0) &&
     inputs.hoeheMm !== null &&
     inputs.hoeheMm > 0;
+  const typOk =
+    inputs.fuellungsart === 'blech'
+      ? inputs.blechTyp !== null
+      : inputs.fuellungsart === 'gitter'
+        ? inputs.gitterTyp !== null
+        : inputs.fuellungsart !== null;
   const fuellungOk =
     inputs.fuellungsart === 'staketen'
       ? Boolean(inputs.fuellstabProfilId)
@@ -201,7 +227,7 @@ export function GelaenderConfigurator() {
         ? Boolean(inputs.querstabProfilId)
         : inputs.fuellungsart === 'glas'
           ? Boolean(inputs.glasTyp)
-          : false;
+          : true; // Blech/Gitter brauchen kein zusätzliches Stabprofil
   const profileOk = Boolean(
     inputs.pfostenProfilId &&
       (inputs.ohneHandlauf || inputs.handlaufProfilId) &&
@@ -209,13 +235,14 @@ export function GelaenderConfigurator() {
   );
   const ausfuehrungOk = inputs.ohneHandlauf || inputs.handlaufAbschluss !== null;
   const steps = {
-    s2: inputs.variante !== null,
-    s3: inputs.einbauort !== null,
-    s4: inputs.montageart !== null && inputs.untergrund !== null,
-    s5: masseOk,
-    s6: inputs.fuellungsart !== null,
-    s7: profileOk,
-    s8: ausfuehrungOk && Boolean(inputs.finishId && inputs.farbe),
+    s2: inputs.einsatzort !== null,
+    s3: sicherheitOk,
+    s4: inputs.variante !== null,
+    s5: inputs.montageart !== null && inputs.untergrund !== null,
+    s6: masseOk,
+    s7: typOk,
+    s8: profileOk,
+    s9: ausfuehrungOk && Boolean(inputs.finishId && inputs.farbe),
   };
   const geometryReady = masseOk && inputs.variante !== null;
 
@@ -232,6 +259,11 @@ export function GelaenderConfigurator() {
     window.setTimeout(() => setShareState('idle'), 6000);
   };
 
+  const zeigeUntergurt =
+    inputs.fuellungsart === 'staketen' ||
+    inputs.fuellungsart === 'blech' ||
+    inputs.fuellungsart === 'gitter';
+
   return (
     <div className="configurator">
       <p>
@@ -241,12 +273,61 @@ export function GelaenderConfigurator() {
       <p className="lead">
         Stellen Sie Ihr Geländer Schritt für Schritt zusammen – mit
         3D-Vorschau und Masszeichnung. Am Ende senden Sie eine unverbindliche
-        Offertanfrage; unser Meister prüft jede Konfiguration persönlich.
+        Offertanfrage; unser Meister prüft jede Konfiguration persönlich
+        (Sicherheit nach BFU/SIA gehört zur fachlichen Prüfung).
       </p>
 
       <div className="configurator-layout">
         <div className="configurator-steps">
-          <StepSection number={1} title="Form wählen" unlocked done={steps.s2}>
+          <StepSection number={1} title="Einsatzort" unlocked done={steps.s2}>
+            <OptionCardGroup
+              legend="Wo kommt das Geländer zum Einsatz?"
+              name="einsatzort"
+              options={EINSATZORTE}
+              value={inputs.einsatzort}
+              onChange={(einsatzort) => set({ einsatzort })}
+            />
+            <p className="escape-hatch">
+              <strong>Treppengeländer?</strong> Dafür entsteht ein eigener
+              Konfigurator (Stufenverlauf, Podeste, Handlaufführung) – bis
+              dahin: <a href="/projekt-starten/">Anfrage für Treppengeländer</a>.
+              Ebenfalls persönlich geplant:{' '}
+              <a href="/projekt-starten/">Industriegeländer</a> (Suva-Regelwerk)
+              und <a href="/projekt-starten/">Bestandssanierung/Erhöhung</a>.
+            </p>
+          </StepSection>
+
+          <StepSection
+            number={2}
+            title="Nutzung und Sicherheit"
+            hint="Diese Angaben steuern die Sicherheitsprüfung nach BFU-Richtwerten – die verbindliche Beurteilung erfolgt fachlich am Objekt."
+            unlocked={steps.s2}
+            done={steps.s3}
+          >
+            <OptionCardGroup
+              legend="Sind Kinder zu erwarten?"
+              name="kinderschutz"
+              options={KINDERSCHUTZ_OPTIONEN}
+              value={inputs.kinderschutz}
+              onChange={(kinderschutz) => set({ kinderschutz })}
+            />
+            <OptionCardGroup
+              legend="Wie hoch ist die Absturzhöhe hinter dem Geländer?"
+              name="absturzhoehe"
+              options={ABSTURZ_OPTIONEN}
+              value={inputs.absturzhoehe}
+              onChange={(absturzhoehe) => set({ absturzhoehe })}
+            />
+            <OptionCardGroup
+              legend="Innen- oder Aussenbereich?"
+              name="einbauort"
+              options={EINBAUORTE}
+              value={inputs.einbauort}
+              onChange={(einbauort) => set({ einbauort })}
+            />
+          </StepSection>
+
+          <StepSection number={3} title="Form wählen" unlocked={steps.s3} done={steps.s4}>
             <OptionCardGroup
               legend="Welchen Grundriss hat Ihr Geländer?"
               name="variante"
@@ -255,35 +336,20 @@ export function GelaenderConfigurator() {
               onChange={(variante) => set({ variante })}
             />
             <p className="escape-hatch">
-              Mehr Ecken, Winkel ≠ 90°, geschwungene oder Treppenläufe?{' '}
+              Mehr Ecken, Winkel ≠ 90° oder geschwungene Verläufe?{' '}
               <a href="/projekt-starten/">Individuelle Ausführung anfragen</a> –
               Unser Meister plant sie persönlich mit Ihnen.
             </p>
           </StepSection>
 
           <StepSection
-            number={2}
-            title="Einbausituation"
-            unlocked={steps.s2}
-            done={steps.s3}
+            number={4}
+            title="Befestigung und Untergrund"
+            unlocked={steps.s4}
+            done={steps.s5}
           >
             <OptionCardGroup
-              legend="Wo wird das Geländer montiert?"
-              name="einbauort"
-              options={EINBAUORTE}
-              value={inputs.einbauort}
-              onChange={(einbauort) => set({ einbauort })}
-            />
-          </StepSection>
-
-          <StepSection
-            number={3}
-            title="Montage und Untergrund"
-            unlocked={steps.s3}
-            done={steps.s4}
-          >
-            <OptionCardGroup
-              legend="Wie werden die Pfosten befestigt?"
+              legend="Wie soll befestigt werden? (Wunsch – die definitive Verankerung wird statisch geprüft)"
               name="montageart"
               options={MONTAGEARTEN}
               value={inputs.montageart}
@@ -299,11 +365,11 @@ export function GelaenderConfigurator() {
           </StepSection>
 
           <StepSection
-            number={4}
+            number={5}
             title="Masse"
-            hint="Messen Sie entlang der Vorderkante, bei Ecken jedes Segment einzeln. Bei Wandanschluss bis zur Wand messen – den Wandabstand berücksichtigen wir bei der Planung."
-            unlocked={steps.s4}
-            done={steps.s5}
+            hint="Messen Sie entlang der Vorderkante, bei Ecken jedes Segment einzeln. Achtung Messbezug: massgebend ist die begehbare bzw. besteigbare Fläche (Bank, Kiste oder späterer Belag zählt mit)."
+            unlocked={steps.s5}
+            done={steps.s6}
           >
             {inputs.segmentLaengenMm.map((laenge, i) => (
               <NumberField
@@ -330,7 +396,7 @@ export function GelaenderConfigurator() {
               value={inputs.hoeheMm}
               min={GELAENDER_RULES_V0.minHoeheMm}
               max={GELAENDER_RULES_V0.maxHoeheMm}
-              hint="Übliche Geländerhöhen liegen um 1000 mm. Die verbindliche Höhe wird bei der fachlichen Prüfung nach Norm festgelegt."
+              hint="BFU-Richtwert bei Absturzsicherung: mindestens 1000 mm. Die verbindliche Höhe wird fachlich am Objekt festgelegt."
               onChange={(hoeheMm) => set({ hoeheMm })}
             />
             <label className="check-row">
@@ -344,10 +410,10 @@ export function GelaenderConfigurator() {
           </StepSection>
 
           <StepSection
-            number={5}
+            number={6}
             title="Geländertyp"
-            unlocked={steps.s5}
-            done={steps.s6}
+            unlocked={steps.s6}
+            done={steps.s7}
           >
             <OptionCardGroup
               legend="Welche Füllung wünschen Sie?"
@@ -356,8 +422,36 @@ export function GelaenderConfigurator() {
               value={inputs.fuellungsart}
               onChange={(fuellungsart) => set({ fuellungsart })}
             />
+            {inputs.fuellungsart === 'blech' && (
+              <OptionCardGroup
+                legend="Blechausführung"
+                name="blechTyp"
+                options={BLECHTYPEN}
+                value={inputs.blechTyp}
+                onChange={(blechTyp) => set({ blechTyp })}
+              />
+            )}
+            {inputs.fuellungsart === 'gitter' && (
+              <OptionCardGroup
+                legend="Gitterausführung"
+                name="gitterTyp"
+                options={GITTERTYPEN}
+                value={inputs.gitterTyp}
+                onChange={(gitterTyp) => set({ gitterTyp })}
+              />
+            )}
+            {zeigeUntergurt && (
+              <label className="check-row">
+                <input
+                  type="checkbox"
+                  checked={inputs.mitUntergurt}
+                  onChange={(e) => set({ mitUntergurt: e.target.checked })}
+                />
+                Mit Untergurt (unterer Rahmengurt – konstruktiv üblich)
+              </label>
+            )}
             <p className="escape-hatch">
-              Schmiedeeiserne Ornamente, Zierelemente oder historische
+              Schmiedeeiserne Ornamente, Voluten, Rosetten oder historische
               Nachbildungen?{' '}
               <a href="/projekt-starten/">Individuelle Ausführung anfragen</a> –
               das ist das Kernhandwerk der Kunstschlosserei.
@@ -365,11 +459,11 @@ export function GelaenderConfigurator() {
           </StepSection>
 
           <StepSection
-            number={6}
+            number={7}
             title="Profile wählen"
-            hint="Alle Profile stammen aus dem WebForge-Standardkatalog. Aktuell Testkatalog – das definitive Sortiment wird fachlich freigegeben."
-            unlocked={steps.s6}
-            done={steps.s7}
+            hint="Alle Profile stammen aus dem WebForge-Standardkatalog. Aktuell Testkatalog – definitive Querschnitte werden statisch bemessen und fachlich freigegeben."
+            unlocked={steps.s7}
+            done={steps.s8}
           >
             <OptionCardGroup
               legend="Pfosten"
@@ -401,7 +495,7 @@ export function GelaenderConfigurator() {
             )}
             {inputs.fuellungsart === 'staketen' && (
               <OptionCardGroup
-                legend="Füllstäbe"
+                legend="Füllstäbe (Staketen)"
                 name="fuellstabProfil"
                 options={profileOptions('fuellstab')}
                 value={inputs.fuellstabProfilId}
@@ -432,10 +526,10 @@ export function GelaenderConfigurator() {
           </StepSection>
 
           <StepSection
-            number={7}
+            number={8}
             title="Ausführung, Oberfläche und Farbe"
-            unlocked={steps.s7}
-            done={steps.s8}
+            unlocked={steps.s8}
+            done={steps.s9}
           >
             {!inputs.ohneHandlauf && (
               <OptionCardGroup
@@ -494,15 +588,16 @@ export function GelaenderConfigurator() {
               </div>
               <p className="field-hint">
                 Bildschirmfarben sind Näherungswerte – verbindlich ist die
-                RAL-Karte. Standardfarben-Sortiment in fachlicher Freigabe.
+                RAL-Karte. Duplex-System (verzinkt + beschichtet) empfiehlt
+                sich aussen; Details klärt die fachliche Prüfung.
               </p>
             </fieldset>
           </StepSection>
 
           <StepSection
-            number={8}
+            number={9}
             title="Montage"
-            unlocked={steps.s8}
+            unlocked={steps.s9}
             done={inputs.montageService !== null}
           >
             <OptionCardGroup
@@ -549,7 +644,7 @@ export function GelaenderConfigurator() {
                   )}
                   {derived.glasfelderTotal > 0 && (
                     <li>
-                      Glasfelder: <strong>{derived.glasfelderTotal}</strong>
+                      Füllfelder: <strong>{derived.glasfelderTotal}</strong>
                       <span className="provisional"> provisorisch</span>
                     </li>
                   )}
@@ -579,7 +674,7 @@ export function GelaenderConfigurator() {
                     </table>
                     <p className="field-hint">
                       Basis TESTDATEN-Regeln – verbindliche Stückliste erst
-                      nach fachlicher Freigabe und Prüfung.
+                      nach statischer Bemessung und fachlicher Freigabe.
                     </p>
                   </details>
                 )}

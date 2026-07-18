@@ -1,9 +1,14 @@
 import type {
+  Absturzhoehe,
+  BlechTyp,
   Einbauort,
+  Einsatzort,
   Fuellungsart,
   GelaenderVariante,
+  GitterTyp,
   GlasTyp,
   HandlaufAbschluss,
+  Kinderschutz,
   Montageart,
   MontageService,
   Untergrund,
@@ -18,6 +23,81 @@ export interface OptionDef<T extends string> {
   /** Inline-SVG-Piktogramm (viewBox 0 0 48 48), optional. */
   icon?: string;
 }
+
+export const EINSATZORTE: OptionDef<Einsatzort>[] = [
+  {
+    id: 'balkon',
+    label: 'Balkon / Loggia',
+    description: 'Absturzsicherung am Balkon – Kinderschutz und Befestigung im Fokus.',
+    icon: '<rect x="8" y="22" width="32" height="4"/><line x1="10" y1="22" x2="10" y2="10"/><line x1="24" y1="22" x2="24" y2="10"/><line x1="38" y1="22" x2="38" y2="10"/><line x1="8" y1="10" x2="40" y2="10"/>',
+  },
+  {
+    id: 'terrasse',
+    label: 'Terrasse / Sitzplatz',
+    description: 'Geländer an Terrasse oder erhöhtem Sitzplatz.',
+    icon: '<line x1="6" y1="36" x2="42" y2="36"/><line x1="10" y1="36" x2="10" y2="16"/><line x1="24" y1="36" x2="24" y2="16"/><line x1="38" y1="36" x2="38" y2="16"/><line x1="8" y1="16" x2="40" y2="16"/>',
+  },
+  {
+    id: 'attika',
+    label: 'Dachterrasse / Attika',
+    description: 'Auf dem Flachdach – Dachhaut, Abdichtung und Wind werden speziell geprüft.',
+    icon: '<polyline points="6,38 6,26 42,26 42,38"/><line x1="12" y1="26" x2="12" y2="12"/><line x1="24" y1="26" x2="24" y2="12"/><line x1="36" y1="26" x2="36" y2="12"/><line x1="10" y1="12" x2="38" y2="12"/>',
+  },
+  {
+    id: 'franz-balkon',
+    label: 'Französischer Balkon',
+    description: 'Vor bodentiefem Fenster – Befestigung an Fassade oder Leibung.',
+    icon: '<rect x="14" y="8" width="20" height="32"/><line x1="10" y1="24" x2="10" y2="40"/><line x1="38" y1="24" x2="38" y2="40"/><line x1="10" y1="26" x2="38" y2="26"/>',
+  },
+  {
+    id: 'garten',
+    label: 'Garten / Stützmauer',
+    description: 'Auf Mauer oder Böschung – Terrainverlauf und Fundament beachten.',
+    icon: '<polyline points="6,40 20,40 20,30 42,30"/><line x1="24" y1="30" x2="24" y2="16"/><line x1="34" y1="30" x2="34" y2="16"/><line x1="22" y1="16" x2="36" y2="16"/>',
+  },
+  {
+    id: 'podest',
+    label: 'Podest / Galerie',
+    description: 'Innenpodest, Galerie oder Laubengang.',
+    icon: '<line x1="6" y1="38" x2="42" y2="38"/><rect x="14" y="30" width="20" height="8"/><line x1="16" y1="30" x2="16" y2="14"/><line x1="32" y1="30" x2="32" y2="14"/><line x1="14" y1="14" x2="34" y2="14"/>',
+  },
+];
+
+export const KINDERSCHUTZ_OPTIONEN: OptionDef<Kinderschutz>[] = [
+  {
+    id: 'ja',
+    label: 'Ja',
+    description: 'Kinder sind zu erwarten – BFU-Kinderschutz (12-cm-Regel, Kletterschutz) fliesst in die Prüfung ein.',
+  },
+  {
+    id: 'nein',
+    label: 'Nein',
+    description: 'Keine Kinder zu erwarten (z. B. reiner Betriebsbereich).',
+  },
+  {
+    id: 'unbekannt',
+    label: 'Weiss ich nicht',
+    description: 'Im Zweifel wird kindersicher geplant.',
+  },
+];
+
+export const ABSTURZ_OPTIONEN: OptionDef<Absturzhoehe>[] = [
+  {
+    id: 'ueber-1m',
+    label: 'Mehr als 1 m',
+    description: 'Absturzsicherung erforderlich (BFU-Richtwert: Geländerhöhe ≥ 1.00 m).',
+  },
+  {
+    id: 'unter-1m',
+    label: 'Weniger als 1 m',
+    description: 'Geringe Höhe – Geländer dient primär als Abgrenzung.',
+  },
+  {
+    id: 'unbekannt',
+    label: 'Weiss ich nicht',
+    description: 'Wird beim Aufmass gemessen.',
+  },
+];
 
 export const VARIANTEN: OptionDef<GelaenderVariante>[] = [
   {
@@ -70,11 +150,59 @@ export const FUELLUNGSARTEN: OptionDef<Fuellungsart>[] = [
     icon: '<line x1="6" y1="12" x2="42" y2="12"/><line x1="6" y1="20" x2="42" y2="20"/><line x1="6" y1="28" x2="42" y2="28"/><line x1="6" y1="36" x2="42" y2="36"/><line x1="10" y1="8" x2="10" y2="40"/><line x1="38" y1="8" x2="38" y2="40"/>',
   },
   {
+    id: 'blech',
+    label: 'Blechfüllung',
+    description:
+      'Vollblech, Lochblech oder Laserschnitt – flächig, robust, gestaltbar.',
+    icon: '<rect x="10" y="10" width="28" height="28"/><circle cx="18" cy="18" r="1.5"/><circle cx="26" cy="18" r="1.5"/><circle cx="34" cy="18" r="1.5"/><circle cx="18" cy="26" r="1.5"/><circle cx="26" cy="26" r="1.5"/><circle cx="34" cy="26" r="1.5"/><circle cx="18" cy="34" r="1.5"/><circle cx="26" cy="34" r="1.5"/>',
+  },
+  {
+    id: 'gitter',
+    label: 'Gitter / Streckmetall',
+    description:
+      'Transparente Flächenfüllung aus Streckmetall oder Drahtgitter.',
+    icon: '<rect x="10" y="10" width="28" height="28"/><line x1="10" y1="20" x2="38" y2="10"/><line x1="10" y1="30" x2="38" y2="20"/><line x1="10" y1="38" x2="38" y2="30"/><line x1="20" y1="10" x2="10" y2="38"/><line x1="30" y1="10" x2="20" y2="38"/><line x1="38" y1="12" x2="30" y2="38"/>',
+  },
+  {
     id: 'glas',
     label: 'Glasfüllung',
     description:
       'Sicherheitsglas zwischen Metallpfosten – maximale Transparenz und Windschutz.',
     icon: '<rect x="10" y="10" width="28" height="28"/><line x1="14" y1="34" x2="34" y2="14"/>',
+  },
+];
+
+export const BLECHTYPEN: OptionDef<BlechTyp>[] = [
+  {
+    id: 'voll',
+    label: 'Vollblech',
+    description: 'Geschlossene Fläche – maximaler Sicht- und Windschutz.',
+  },
+  {
+    id: 'loch',
+    label: 'Lochblech',
+    description:
+      'Rundlochung – halbtransparent. BFU-Richtwert: Öffnungen ≤ ca. 5 cm.',
+  },
+  {
+    id: 'laser',
+    label: 'Laserschnitt-Motiv',
+    description:
+      'Individuelle Ausschnitte – Kletterwirkung und Kanten werden fachlich geprüft.',
+  },
+];
+
+export const GITTERTYPEN: OptionDef<GitterTyp>[] = [
+  {
+    id: 'streckmetall',
+    label: 'Streckmetall',
+    description: 'Rautenstruktur – robust und industriell-elegant.',
+  },
+  {
+    id: 'drahtgitter',
+    label: 'Drahtgitter',
+    description:
+      'Geschweisstes Gitter – BFU-Richtwert: Maschenweite ≤ ca. 4 cm.',
   },
 ];
 
@@ -128,16 +256,38 @@ export const EINBAUORTE: OptionDef<Einbauort>[] = [
 export const MONTAGEARTEN: OptionDef<Montageart>[] = [
   {
     id: 'boden',
-    label: 'Auf dem Boden',
-    description: 'Pfosten werden von oben auf Beton, Holz oder Stahl montiert.',
-    icon: '<line x1="8" y1="38" x2="40" y2="38"/><line x1="24" y1="38" x2="24" y2="10"/><line x1="14" y1="10" x2="34" y2="10"/>',
+    label: 'Aufgesetzt (Fussplatte)',
+    description:
+      'Fussplatte steht auf Boden- oder Mauerkante – einfacher Kraftfluss, wirtschaftlich.',
+    icon: '<line x1="8" y1="38" x2="40" y2="38"/><rect x="18" y="34" width="12" height="4"/><line x1="24" y1="34" x2="24" y2="10"/><line x1="14" y1="10" x2="34" y2="10"/>',
   },
   {
     id: 'seite',
     label: 'Seitlich (stirnseitig)',
     description:
-      'Pfosten werden seitlich an der Betonkante oder Balkonplatte befestigt.',
-    icon: '<line x1="14" y1="42" x2="14" y2="20"/><line x1="14" y1="20" x2="24" y2="20"/><line x1="24" y1="42" x2="24" y2="8"/><line x1="16" y1="8" x2="34" y2="8"/>',
+      'Pfosten oder Schwert seitlich an Platte/Mauer – volle Nutzfläche, schlanke Optik.',
+    icon: '<line x1="14" y1="42" x2="14" y2="20"/><rect x="14" y="26" width="6" height="12"/><line x1="24" y1="42" x2="24" y2="8"/><line x1="16" y1="8" x2="34" y2="8"/>',
+  },
+  {
+    id: 'unten',
+    label: 'Von unten (Kragarm)',
+    description:
+      'Konsolen an der Plattenunterseite – elegant, aber höhere Hebelarme (Fachprüfung).',
+    icon: '<line x1="8" y1="24" x2="32" y2="24"/><line x1="30" y1="24" x2="30" y2="34"/><line x1="30" y1="34" x2="38" y2="34"/><line x1="38" y1="34" x2="38" y2="6"/><line x1="30" y1="6" x2="46" y2="6"/>',
+  },
+  {
+    id: 'eingelassen',
+    label: 'Eingelassen / einbetoniert',
+    description:
+      'Pfosten oder Einbauteile im Rohbau – statisch günstig, braucht Koordination mit dem Baumeister.',
+    icon: '<line x1="8" y1="30" x2="40" y2="30"/><line x1="8" y1="38" x2="40" y2="38"/><line x1="24" y1="38" x2="24" y2="8"/><line x1="14" y1="8" x2="34" y2="8"/>',
+  },
+  {
+    id: 'wand',
+    label: 'An der Wand / Leibung',
+    description:
+      'Für französische Balkone und kurze Felder – Befestigung an Fassade oder Fensterleibung.',
+    icon: '<line x1="10" y1="6" x2="10" y2="42"/><line x1="10" y1="14" x2="20" y2="14"/><line x1="10" y1="34" x2="20" y2="34"/><line x1="20" y1="8" x2="20" y2="40"/>',
   },
 ];
 
@@ -177,6 +327,7 @@ export interface FarbOption {
 }
 
 export const FARBEN: FarbOption[] = [
+  { id: 'verzinkt-natur', label: 'Feuerverzinkt natur (ohne Beschichtung)', hex: '#b9bec1' },
   { id: 'ral-9005', label: 'RAL 9005 Tiefschwarz', hex: '#0b0b0d' },
   { id: 'ral-7016', label: 'RAL 7016 Anthrazitgrau', hex: '#373f43' },
   { id: 'ral-9010', label: 'RAL 9010 Reinweiss', hex: '#f1efe6' },

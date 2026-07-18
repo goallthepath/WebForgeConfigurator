@@ -32,6 +32,8 @@ export interface GelaenderRuleParams {
 export const GELAENDER_RULES_V0: GelaenderRuleParams = {
   approval: 'fachliche Freigabe erforderlich',
   // TESTDATEN – dienen nur der Plausibilisierung und 3D-Vorschau.
+  // Statikabhängige Werte (Abstände, Querschnitte) dürfen gemäss
+  // Fachgrundlage NIE allein aus Konfigurator-Tabellen stammen.
   maxPfostenabstandMm: 1500,
   maxStabAbstandMm: 110,
   maxQuerstabAbstandMm: 120,
@@ -42,6 +44,27 @@ export const GELAENDER_RULES_V0: GelaenderRuleParams = {
   minHoeheMm: 800,
   maxHoeheMm: 1300,
 };
+
+/**
+ * BFU-Richtwerte aus der Fachdokumentation 2.003 «Geländer und Brüstungen»
+ * (Ausgabe 2020) – quellenreferenzierte Planungsgrundsätze, KEINE
+ * pauschale Objektfreigabe (docs/gelaender-fachgrundlagen.md).
+ * Kantonales/kommunales Baurecht kann strenger sein → Ampel bleibt
+ * maximal GELB, die Objektfreigabe ist immer fachlich.
+ */
+export const BFU_RICHTWERTE = {
+  /** Ab dieser Absturzhöhe ist ein Schutzelement erforderlich. */
+  schutzAbAbsturzhoeheMm: 1000,
+  /** Geländerhöhe im Regelfall (Treppenlauf: 900 – eigener Konfigurator). */
+  minGelaenderhoeheMm: 1000,
+  /** Bis zu dieser Höhe darf die 12-cm-Kugel nicht durch Öffnungen passen. */
+  kinderschutzZoneMm: 750,
+  kugelDurchmesserMm: 120,
+  /** Lochfüllungen schwer bekletterbar: Öffnungen ≤ ca. 5 cm. */
+  maxLochblechOeffnungMm: 50,
+  /** Netze/Gitter schwer bekletterbar: Maschenweite ≤ ca. 4 cm. */
+  maxMaschenweiteMm: 40,
+} as const;
 
 export const RULE_APPROVAL_WARNING =
   'Die technischen Produktregeln (Abstände, Grenzmasse) sind noch nicht fachlich freigegeben – ' +
@@ -74,6 +97,46 @@ export function validateGelaender(
         `Höhe ${inputs.hoeheMm} mm liegt ausserhalb des zulässigen Bereichs (${params.minHoeheMm}–${params.maxHoeheMm} mm).`
       );
     }
+    // BFU: Regelfall ≥ 1.00 m Geländerhöhe bei Absturzsicherung.
+    if (
+      inputs.absturzhoehe === 'ueber-1m' &&
+      inputs.hoeheMm < BFU_RICHTWERTE.minGelaenderhoeheMm
+    ) {
+      errors.push(
+        `Bei über 1 m Absturzhöhe gilt der BFU-Richtwert von mindestens ${BFU_RICHTWERTE.minGelaenderhoeheMm} mm Geländerhöhe – bitte Höhe anpassen oder individuell prüfen lassen.`
+      );
+    }
+  }
+
+  if (inputs.absturzhoehe === 'unbekannt') {
+    warnings.push(
+      'Absturzhöhe unbekannt: Sie wird beim Aufmass gemessen – massgebend ist die begehbare bzw. besteigbare Fläche (BFU).'
+    );
+  }
+
+  // Kinderschutz (BFU): 12-cm-Kugel bis 75 cm, Kletterwirkung.
+  const kindersicherPlanen = inputs.kinderschutz !== 'nein';
+  if (kindersicherPlanen) {
+    if (inputs.fuellungsart === 'staketen') {
+      warnings.push(
+        `Kinderschutz: Bis ${BFU_RICHTWERTE.kinderschutzZoneMm} mm Höhe darf die ${BFU_RICHTWERTE.kugelDurchmesserMm}-mm-Kugel nicht durch Öffnungen passen – die definitive Stabteilung wird danach geprüft.`
+      );
+    }
+    if (inputs.fuellungsart === 'blech' && inputs.blechTyp === 'loch') {
+      warnings.push(
+        `Kinderschutz: Lochblech gilt bis ca. ${BFU_RICHTWERTE.maxLochblechOeffnungMm} mm Öffnung als schwer bekletterbar (BFU) – Lochbild wird entsprechend gewählt.`
+      );
+    }
+    if (inputs.fuellungsart === 'blech' && inputs.blechTyp === 'laser') {
+      warnings.push(
+        'Kinderschutz: Laserschnitt-Ausschnitte werden auf Kletterwirkung und Öffnungsgrössen fachlich geprüft; Kanten werden entgratet/abgedeckt (BFU).'
+      );
+    }
+    if (inputs.fuellungsart === 'gitter') {
+      warnings.push(
+        `Kinderschutz: Maschenweite bis ca. ${BFU_RICHTWERTE.maxMaschenweiteMm} mm gilt als schwer bekletterbar (BFU) – wird bei der Gitterwahl berücksichtigt.`
+      );
+    }
   }
 
   for (const profile of selectedProfiles) {
@@ -102,7 +165,47 @@ export function validateGelaender(
 
   if (inputs.fuellungsart === 'querstab') {
     warnings.push(
-      'Querstäbe (Reling) gelten als erkletterbar – die Eignung Ihrer Einbausituation wird fachlich geprüft.'
+      kindersicherPlanen
+        ? 'Querstäbe (Reling) wirken als Leiter – in Bereichen mit Kindern wird das Schutzziel damit oft nicht erreicht (BFU). Wir prüfen Alternativen (Staketen, Glas, vorgesetzte Füllung) oder sehr enge Abstände.'
+        : 'Querstäbe (Reling) gelten als erkletterbar – die Eignung Ihrer Einbausituation wird fachlich geprüft (BFU).'
+    );
+  }
+
+  if (inputs.fuellungsart === 'blech' && inputs.blechTyp === 'voll') {
+    warnings.push(
+      'Vollblech: Windlast, Wasserablauf und Befestigung der Füllung werden fachlich dimensioniert.'
+    );
+  }
+
+  // Einsatzort-spezifische Hinweise (Fachgrundlage Abschnitt 1).
+  if (inputs.einsatzort === 'attika') {
+    warnings.push(
+      'Dachterrasse/Attika: Dachhaut, Abdichtung, Entwässerung und Windexposition erfordern eine Detailabklärung vor Ort.'
+    );
+  }
+  if (inputs.einsatzort === 'franz-balkon') {
+    warnings.push(
+      'Französischer Balkon: Befestigung an Fassade/Leibung und Fensteröffnung werden objektspezifisch geplant.'
+    );
+    if (inputs.montageart && inputs.montageart !== 'wand' && inputs.montageart !== 'seite') {
+      warnings.push(
+        'Hinweis: Für französische Balkone ist üblicherweise die Wand- oder seitliche Befestigung geeignet.'
+      );
+    }
+  }
+  if (inputs.einsatzort === 'garten') {
+    warnings.push(
+      'Garten/Stützmauer: Terrainverlauf, Absturzhöhe und Fundament/Mauerkrone werden beim Aufmass geprüft.'
+    );
+  }
+  if (inputs.montageart === 'unten') {
+    warnings.push(
+      'Befestigung von unten (Kragarm): höhere Hebelarme und Zugänglichkeit – wird statisch und montagetechnisch geprüft.'
+    );
+  }
+  if (inputs.montageart === 'eingelassen') {
+    warnings.push(
+      'Eingelassene Befestigung: Einbauteile müssen früh mit dem Baumeister koordiniert werden (Höhen, Toleranzen, Bauphasenschutz).'
     );
   }
 
