@@ -1,3 +1,9 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Für Kinder erklärt: Diese Datei ist wie die Speisekarte im Restaurant.
+// Für jede Frage im Geländer-Assistenten steht hier, welche Antworten man
+// antippen kann – mit Namen, einem kurzen Erklärsatz und manchmal einem
+// kleinen Bildchen (Piktogramm). Hier wird nichts gerechnet, nur aufgezählt.
+// ─────────────────────────────────────────────────────────────────────────
 import type {
   Absturzhoehe,
   BlechTyp,
@@ -17,8 +23,14 @@ import type {
   Untergrund,
 } from './types';
 
+// 🤧 Schnupfspruch: Uf de Charte stoht vill, doch s Gländer bliibt still –
+//    wähl was d wotsch, gäll, und dänn e Prise schnäll!
 /** Optionslisten des Geländer-Assistenten (Texte, keine Fachlogik). */
 
+// Kinder-Erklärung: So sieht EIN Knopf auf der Speisekarte aus – er hat
+// einen Namen im Computer (id), eine Beschriftung (label), einen Erklärsatz
+// (description) und vielleicht ein Bildchen (icon), das mit Strichen und
+// Kreisen gezeichnet wird wie mit einem Lineal auf Häuschenpapier.
 export interface OptionDef<T extends string> {
   id: T;
   label: string;
@@ -27,6 +39,8 @@ export interface OptionDef<T extends string> {
   icon?: string;
 }
 
+// Wo steht das Geländer? Jede Antwort hat ein kleines Strich-Bildchen:
+// z. B. «line» ist ein Strich von einem Punkt zum anderen, «rect» ein Rechteck.
 export const EINSATZORTE: OptionDef<Einsatzort>[] = [
   {
     id: 'balkon',
@@ -66,6 +80,8 @@ export const EINSATZORTE: OptionDef<Einsatzort>[] = [
   },
 ];
 
+// Sind Kinder da? Ja, nein, oder «weiss ich nicht» – im Zweifel planen
+// wir immer so, dass Kinder sicher sind.
 export const KINDERSCHUTZ_OPTIONEN: OptionDef<Kinderschutz>[] = [
   {
     id: 'ja',
@@ -84,6 +100,8 @@ export const KINDERSCHUTZ_OPTIONEN: OptionDef<Kinderschutz>[] = [
   },
 ];
 
+// Wie tief könnte man fallen? Mehr als 1 Meter ist so hoch wie ein
+// Küchentisch plus noch ein bisschen – da muss ein richtiges Geländer hin.
 export const ABSTURZ_OPTIONEN: OptionDef<Absturzhoehe>[] = [
   {
     id: 'ueber-1m',
@@ -102,6 +120,10 @@ export const ABSTURZ_OPTIONEN: OptionDef<Absturzhoehe>[] = [
   },
 ];
 
+// Die Grundformen von oben gesehen: gerade wie ein I, mit einer Ecke wie
+// ein L oder mit zwei Ecken wie ein U. Die Bildchen zeigen genau das.
+// 🤧 Schnupfspruch: I, L oder U – s Gländer hebt, und du?
+//    Mit eme Schnupf i de Nase stahsch du wie en Pfoste im Rase.
 export const VARIANTEN: OptionDef<GelaenderVariante>[] = [
   {
     id: 'i',
@@ -137,6 +159,8 @@ export const VARIANTEN: OptionDef<GelaenderVariante>[] = [
   },
 ];
 
+// Was kommt zwischen die Pfosten? Stäbe, Querstangen, Blech, Gitter, Glas
+// oder kunstvoll geschmiedete Schnörkel – die grosse Auswahl der Füllungen.
 export const FUELLUNGSARTEN: OptionDef<Fuellungsart>[] = [
   {
     id: 'staketen',
@@ -182,6 +206,10 @@ export const FUELLUNGSARTEN: OptionDef<Fuellungsart>[] = [
   },
 ];
 
+// Muster für das Laserblech: Schlitze, Kreise, Quadrate oder Blumen –
+// wie Guetzli-Förmchen, aber aus Licht.
+// 🤧 Schnupfspruch: De Laser schnidet Blüemli, de Schmied schlaat Funke –
+//    und mir händ nach em Schnupf fröhlich gwunke.
 export const LASER_MOTIVE: OptionDef<LaserMotiv>[] = [
   {
     id: 'schlitze',
@@ -209,6 +237,8 @@ export const LASER_MOTIVE: OptionDef<LaserMotiv>[] = [
   },
 ];
 
+// Die geschmiedeten Verzierungen: Ringe, Schnecken-Schnörkel oder Körbe
+// (gedrehte Stäbe, die sich wie ein kleiner Käfig aufblähen).
 export const ORNAMENT_TYPEN: OptionDef<OrnamentTyp>[] = [
   {
     id: 'ringe',
@@ -230,6 +260,7 @@ export const ORNAMENT_TYPEN: OptionDef<OrnamentTyp>[] = [
   },
 ];
 
+// Wie gross, wo und wie oft kommen die Verzierungen ins Geländer?
 export const ORNAMENT_GROESSEN: OptionDef<'klein' | 'mittel' | 'gross'>[] = [
   { id: 'klein', label: 'Dezent', description: 'Kleine Elemente – zurückhaltend.' },
   { id: 'mittel', label: 'Ausgewogen', description: 'Mittlere Grösse – der Klassiker.' },
@@ -251,6 +282,8 @@ export const ORNAMENT_DICHTEN: OptionDef<'alle' | 'jedes-zweite'>[] = [
   },
 ];
 
+// Liegt der Handlauf OBEN auf den Pfosten (wie ein Deckel) oder
+// DAZWISCHEN (wie eine Brücke von Pfosten zu Pfosten)?
 export const HANDLAUF_POSITIONEN: OptionDef<HandlaufPosition>[] = [
   {
     id: 'aufgesetzt',
@@ -266,6 +299,7 @@ export const HANDLAUF_POSITIONEN: OptionDef<HandlaufPosition>[] = [
   },
 ];
 
+// Die drei Blech-Sorten: ganz zu, mit Löchern oder mit Laser-Muster.
 export const BLECHTYPEN: OptionDef<BlechTyp>[] = [
   {
     id: 'voll',
@@ -286,6 +320,10 @@ export const BLECHTYPEN: OptionDef<BlechTyp>[] = [
   },
 ];
 
+// Die zwei Gitter-Sorten: Streckmetall (Rauten, wie ein Fischernetz aus
+// Metall) oder geschweisstes Drahtgitter.
+// 🤧 Schnupfspruch: Streckmetall und Drahtgitter, s Schweisse isch nöd bitter –
+//    es zischt und es spritzt, und de Schnupf dä sitzt.
 export const GITTERTYPEN: OptionDef<GitterTyp>[] = [
   {
     id: 'streckmetall',
@@ -300,6 +338,8 @@ export const GITTERTYPEN: OptionDef<GitterTyp>[] = [
   },
 ];
 
+// Wie hört der Handlauf am Ende auf? Mit einem Kügeli, einer Kappe oder
+// einem Bogen nach unten – damit niemand mit dem Ärmel hängen bleibt.
 export const HANDLAUF_ABSCHLUESSE: OptionDef<HandlaufAbschluss>[] = [
   {
     id: 'kugel-drittel',
@@ -327,6 +367,7 @@ export const HANDLAUF_ABSCHLUESSE: OptionDef<HandlaufAbschluss>[] = [
   },
 ];
 
+// Glas: ganz durchsichtig oder milchig wie ein Badezimmerfenster.
 export const GLASTYPEN: OptionDef<GlasTyp>[] = [
   {
     id: 'klar',
@@ -340,6 +381,7 @@ export const GLASTYPEN: OptionDef<GlasTyp>[] = [
   },
 ];
 
+// Drinnen oder draussen? Draussen muss alles Regen und Schnee aushalten.
 export const EINBAUORTE: OptionDef<Einbauort>[] = [
   {
     id: 'innen',
@@ -353,6 +395,11 @@ export const EINBAUORTE: OptionDef<Einbauort>[] = [
   },
 ];
 
+// Wie wird das Geländer festgemacht? Auf den Boden gestellt, seitlich
+// angeschraubt, von unten gehalten, einbetoniert oder an die Wand –
+// wie man ein Bild auf den Tisch stellen oder an die Wand hängen kann.
+// 🤧 Schnupfspruch: Obe, unde, siitlich, a de Wand –
+//    es Gländer ohni Dübel isch e Schand. Schnupf!
 export const MONTAGEARTEN: OptionDef<Montageart>[] = [
   {
     id: 'boden',
@@ -391,6 +438,8 @@ export const MONTAGEARTEN: OptionDef<Montageart>[] = [
   },
 ];
 
+// Worauf wird geschraubt? Beton, Holz oder Stahl – jedes braucht andere
+// Schrauben, so wie man Nägel nicht in Glas schlagen kann.
 export const UNTERGRUENDE: OptionDef<Untergrund>[] = [
   { id: 'beton', label: 'Beton', description: 'Betondecke, Betonmauer oder Fundament.' },
   { id: 'holz', label: 'Holz', description: 'Holzbalken, Holzterrasse oder Holztreppe.' },
@@ -402,6 +451,7 @@ export const UNTERGRUENDE: OptionDef<Untergrund>[] = [
   },
 ];
 
+// Wer baut es ein? Die Werkstatt oder der Kunde selbst?
 export const MONTAGE_SERVICES: OptionDef<MontageService>[] = [
   {
     id: 'webforge',
@@ -415,6 +465,8 @@ export const MONTAGE_SERVICES: OptionDef<MontageService>[] = [
   },
 ];
 
+// Kinder-Erklärung: Die Farbpalette – wie der Malkasten. Jede Farbe hat
+// einen Namen und einen Farbcode (hex), damit der Bildschirm sie malen kann.
 /**
  * Farbauswahl. Die Hex-Werte dienen nur der Bildschirmdarstellung
  * (TESTDATEN) – verbindliche Farbtöne nach RAL-Karte.
@@ -436,6 +488,10 @@ export const FARBEN: FarbOption[] = [
   { id: 'individuell', label: 'Andere Farbe (individuelle Anfrage)', hex: null },
 ];
 
+// Sucht zu einem Farbnamen den Farbcode. Findet sie keinen, nimmt sie ein
+// neutrales Grau – wie wenn du im Malkasten nach Gold suchst und keines hast.
+// 🤧 Schnupfspruch: Anthrazit, Schwarz oder Moosgrüen – Rost wott nieme gseh blüeh.
+//    Drum pulverbeschichte und schnupfe, statt über de Rost z lupfe!
 export function farbHex(farbId: string | null): string {
   const farbe = FARBEN.find((f) => f.id === farbId);
   return farbe?.hex ?? '#6b7178';

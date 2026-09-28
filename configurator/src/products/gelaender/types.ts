@@ -1,8 +1,20 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Für Kinder erklärt: Diese Datei ist wie das Inhaltsverzeichnis einer
+// Lego-Schachtel. Hier steht noch nicht, WIE man ein Geländer baut, sondern
+// nur, WELCHE Teile und Wünsche es überhaupt gibt: wie lang, wie hoch,
+// welche Stäbe, welche Farbe. Alle anderen Dateien schauen hier nach,
+// damit alle dieselben Wörter für dieselben Dinge benutzen.
+// ─────────────────────────────────────────────────────────────────────────
+// 🤧 Schnupfspruch: Es Geländer ohni Plan isch wie Chäs ohni Löcher –
+//    mer merkt's erscht, wenn's z spat isch. Schnupf!
 /**
  * Zentrale Typen des Geländer-Moduls.
  * Reine Datentypen – keine Regel-, Preis- oder 3D-Logik (Ebenentrennung).
  */
 
+// Die Grundform des Geländers, von oben angeschaut – wie ein Buchstabe:
+// 'i' = ein gerader Strich, 'l' = eine Ecke (wie ein L), 'u' = zwei Ecken
+// (wie ein U). «innen» und «aussen» sagen, auf welcher Seite die Ecke liegt.
 export type GelaenderVariante =
   | 'i'
   | 'l-innen'
@@ -10,6 +22,8 @@ export type GelaenderVariante =
   | 'u-innen'
   | 'u-aussen';
 
+// Wie viele gerade Stücke hat jede Form? Ein I hat 1 Stück, ein L hat 2,
+// ein U hat 3 – zähl einfach die Striche, wenn du den Buchstaben malst.
 /** Anzahl gerader Segmente je Grundform. */
 export const SEGMENTE_PRO_VARIANTE: Record<GelaenderVariante, number> = {
   i: 1,
@@ -19,6 +33,8 @@ export const SEGMENTE_PRO_VARIANTE: Record<GelaenderVariante, number> = {
   'u-aussen': 3,
 };
 
+// Wo kommt das Geländer hin? Auf den Balkon, die Terrasse, das Dach,
+// in den Garten … Je nach Ort gelten andere Sicherheitsregeln.
 /**
  * Einsatzorte gemäss Fachgrundlage (docs/gelaender-fachgrundlagen.md).
  * Treppen, Industrie und Bestandssanierung sind bewusst KEINE Optionen –
@@ -33,9 +49,14 @@ export type Einsatzort =
   | 'garten'
   | 'podest';
 
+// Drei kleine Fragen mit «ja / nein / weiss nicht»: Spielen hier Kinder?
+// Und wie tief könnte man hinunterfallen? Das ist wichtig für die Sicherheit.
 export type Kinderschutz = 'ja' | 'nein' | 'unbekannt';
 export type Absturzhoehe = 'unter-1m' | 'ueber-1m' | 'unbekannt';
 
+// Die Füllung ist das, was zwischen den Pfosten sitzt – wie die Latten in
+// einem Gartenzaun. Es gibt senkrechte Stäbe (Staketen), waagrechte Stäbe,
+// Blech, Gitter, Glas oder kunstvoll geschmiedete Eisen-Schnörkel.
 export type Fuellungsart =
   | 'staketen'
   | 'querstab'
@@ -44,9 +65,13 @@ export type Fuellungsart =
   | 'glas'
   | 'geschmiedet';
 export type BlechTyp = 'voll' | 'loch' | 'laser';
+// Beim Laserblech schneidet ein Laser Muster hinein – wie beim
+// Guetzli-Ausstechen, nur mit Licht statt mit Förmchen.
 /** Vordefinierte Laserschnitt-Motive (Grundauswahl). */
 export type LaserMotiv = 'schlitze' | 'kreise' | 'quadrate' | 'floral';
 export type GitterTyp = 'streckmetall' | 'drahtgitter';
+// Die geschmiedeten Verzierungen: Ringe, Schnecken (Voluten) oder Körbe.
+// Man kann aussuchen, wie gross, wo und wie viele es davon gibt.
 /**
  * Ornament-Grundauswahl der Charakter-Familie (geschmiedet).
  * Die definitive handwerkliche Ausarbeitung bleibt individuelle Planung.
@@ -55,15 +80,25 @@ export type OrnamentTyp = 'ringe' | 'voluten' | 'koerbe';
 export type OrnamentGroesse = 'klein' | 'mittel' | 'gross';
 export type OrnamentLage = 'oben' | 'mitte' | 'unten';
 export type OrnamentDichte = 'alle' | 'jedes-zweite';
+// Wie hört der Handlauf am Ende auf? Gerade abgeschnitten, mit einer
+// Kugel oder mit einem schönen Bogen – wie der Punkt am Ende eines Satzes.
 export type HandlaufAbschluss = 'gerade' | 'kugel-drittel' | 'kugel' | 'endbogen';
 /** Handlauf aufgesetzt auf die Pfosten oder zwischen den Pfosten bündig. */
 export type HandlaufPosition = 'aufgesetzt' | 'zwischen';
+// Noch mehr kleine Auswahllisten: welches Glas, drinnen oder draussen,
+// wie das Geländer festgeschraubt wird, worauf es steht (Beton, Holz …)
+// und ob man es selbst montiert oder die Schlosserei das macht.
+// 🤧 Schnupfspruch: Beton, Holz oder Stahl – ghebt muess es allemal.
+//    Schnupf druf, gäll!
 export type GlasTyp = 'klar' | 'satiniert';
 export type Einbauort = 'innen' | 'aussen';
 export type Montageart = 'boden' | 'seite' | 'unten' | 'eingelassen' | 'wand';
 export type Untergrund = 'beton' | 'holz' | 'stahl' | 'unbekannt';
 export type MontageService = 'selbst' | 'webforge';
 
+// Das ist der grosse Einkaufszettel: Alles, was sich der Kunde wünscht,
+// steht hier drin – jede Zeile ist ein Wunsch. Steht «null» da, hat der
+// Kunde diese Frage noch nicht beantwortet (das Kästchen ist noch leer).
 export interface GelaenderInputs {
   einsatzort: Einsatzort | null;
   /** Sind Kinder zu erwarten? Steuert BFU-Kinderschutz-Hinweise. */
@@ -78,6 +113,8 @@ export interface GelaenderInputs {
    * Befestigungs-Wunschmasse in mm je Montageart (Vorschau/Anfrage;
    * die definitive Ausführung und Verankerung werden statisch bemessen).
    */
+  // Die Masse der Befestigungsteile (Fussplatte, Schwert, Kragarm …) –
+  // das sind die «Füsse» des Geländers, mit denen es am Haus festhält.
   fussplatteLaengeMm: number;
   fussplatteBreiteMm: number;
   fussplatteDickeMm: number;
@@ -91,11 +128,13 @@ export interface GelaenderInputs {
   wandlascheHoeheMm: number;
   wandlascheBreiteMm: number;
   wandlascheDickeMm: number;
+  // Wie lang jedes gerade Stück ist und wie hoch das Geländer wird.
   /** Segmentlängen in mm gemäss SEGMENTE_PRO_VARIANTE. */
   segmentLaengenMm: number[];
   hoeheMm: number | null;
   /** true = Masse sind ungefähr → Preisspanne/Prüfpflicht statt Richtpreis. */
   masseUngefaehr: boolean;
+  // Ab hier: Was kommt zwischen die Pfosten? (die «Füllung»)
   fuellungsart: Fuellungsart | null;
   /** Nur bei Füllungsart 'blech'. */
   blechTyp: BlechTyp | null;
@@ -110,6 +149,10 @@ export interface GelaenderInputs {
   ornamentDichte: OrnamentDichte;
   /** Zwei Ornamente übereinander je Feld. */
   ornamentDoppelt: boolean;
+  // Gurte sind waagrechte Stangen, die alles zusammenhalten – wie die
+  // Querlatten bei einer Leiter.
+  // 🤧 Schnupfspruch: Obergurt, Untergurt, Knieleischte –
+  //    mit eme Schnupf bisch de Gröschte.
   /** Unterer Rahmengurt (konstruktiv üblich bei Stab-/Flächenfüllungen). */
   mitUntergurt: boolean;
   /** Höhe der Untergurt-Achse über Boden in mm. */
@@ -124,6 +167,8 @@ export interface GelaenderInputs {
   /** Knieleiste (mittlerer Gurt). */
   mitKnieleiste: boolean;
   knieleisteHoeheMm: number | null;
+  // Ab hier: Material, Profile (die Form der Stangen), Glas, Handlauf,
+  // Oberfläche und Farbe – quasi die «Kleider» des Geländers.
   /** Werkstoff (Katalogverweis materials/*.json). */
   materialId: string | null;
   pfostenProfilId: string | null;
@@ -152,6 +197,9 @@ export interface GelaenderInputs {
   montageService: MontageService | null;
 }
 
+// Kleine Frage-Funktion: Gibt es einen Obergurt? Ja, wenn der Handlauf
+// OBEN auf den Pfosten liegt. Liegt er dazwischen, spielt er selbst den
+// Obergurt – dann braucht es keinen zweiten.
 /**
  * Obergurt-Logik (konstruktiv): Bei aufgesetztem Handlauf existiert
  * automatisch ein Obergurt (Rahmenbauweise). Ist der Handlauf «zwischen»
@@ -161,15 +209,23 @@ export function obergurtAktiv(inputs: GelaenderInputs): boolean {
   return !inputs.ohneHandlauf && inputs.handlaufPosition === 'aufgesetzt';
 }
 
+// Wenn niemand etwas sagt, liegt der Obergurt 60 mm (etwa 6 cm, so breit
+// wie drei Finger) unter der Oberkante.
 /** Standardabstand der Obergurt-Achse unter der Geländeroberkante (mm, visuell). */
 export const OBERGURT_STANDARD_ABSTAND_MM = 60;
 
+// Rechnet aus, auf welcher Höhe der Obergurt wirklich sitzt: Hat der Kunde
+// eine Höhe gewünscht, nehmen wir die. Sonst nehmen wir die Geländerhöhe
+// (oder 1000 mm, falls die fehlt) minus die 60 mm von oben.
 export function obergurtHoeheEff(inputs: GelaenderInputs): number | null {
   if (!obergurtAktiv(inputs)) return null;
   const hoehe = inputs.hoeheMm ?? 1000;
   return inputs.obergurtHoeheMm ?? hoehe - OBERGURT_STANDARD_ABSTAND_MM;
 }
 
+// Das «Ausgerechnete»: Aus dem Wunschzettel oben rechnet das Programm
+// Zahlen aus – wie viele Pfosten, wie viele Stäbe, wie lang jede Stange
+// zugeschnitten werden muss. Wie eine Stückliste für die Werkstatt.
 export interface GelaenderDerived {
   /** Pfosten je Segment (Eckpfosten werden zwischen Segmenten geteilt). */
   pfostenProSegment: number[];
@@ -192,6 +248,10 @@ export interface GelaenderDerived {
   knieleisteLaengenMm: number[];
 }
 
+// Ein ganz leerer Wunschzettel: Fast alles ist noch «null» (unbeantwortet).
+// Nur ein paar vernünftige Grundmasse sind schon eingetragen.
+// 🤧 Schnupfspruch: Es leers Formular isch wie en chalte Amboss –
+//    zerscht mues d Esse füre, dänn gits Funke. Schnupf!
 export const EMPTY_GELAENDER_INPUTS: GelaenderInputs = {
   einsatzort: null,
   kinderschutz: null,
@@ -245,6 +305,8 @@ export const EMPTY_GELAENDER_INPUTS: GelaenderInputs = {
   montageService: null,
 };
 
+// Kinder-Erklärung: Das ist der «Beispiel-Zettel», den man beim Öffnen
+// schon sieht – wie das Foto auf der Lego-Schachtel. Man darf alles ändern.
 /**
  * Startkonfiguration: ein gerades, 3 m langes Balkongeländer (1000 mm hoch)
  * aus Stahl mit senkrechten Staketen, aufgesetzt auf Beton, pulverbeschichtet

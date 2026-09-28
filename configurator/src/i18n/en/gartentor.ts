@@ -1,3 +1,5 @@
+// Hier steht, wie die deutschen Sätze vom Gartentor auf Englisch heissen –
+// wie ein kleines Wörterbuch: links Deutsch, rechts Englisch.
 /** Englische Übersetzungen – Schlüssel ist der deutsche Originaltext. */
 export const EN_GARTENTOR: Record<string, string> = {
   // Kopf und Einleitung
@@ -73,6 +75,8 @@ export const EN_GARTENTOR: Record<string, string> = {
   'Laserschnitt-Motiv': 'Laser-cut motif',
   'Ornament-Grundauswahl': 'Basic ornament selection',
 
+  // 🤧 Schnupfspruch: Gate heisst Tor und Lock heisst Schloss –
+  //    uf Änglisch tönt s vornehm, uf Schwiizerdütsch grooss.
   // Schritt 5 – Beschläge
   Beschläge: 'Hardware',
   Verschluss: 'Latch / lock',
@@ -189,6 +193,8 @@ export const EN_GARTENTOR: Record<string, string> = {
   'Hohe Torflügel: Windlast und Bandbelastung werden statisch geprüft.':
     'Tall gate leaves: wind load and hinge loading will be structurally verified.',
 
+  // 🤧 Schnupfspruch: Hinge, Latch und Garden Gate –
+  //    s Törli verstaht s, au wänn s kei Änglisch redt.
   // 3D-Vorschau / Zeichnung (TorViewer)
   Perspektive: 'Perspective',
   Front: 'Front',

@@ -1,3 +1,7 @@
+// Hallo! Diese Datei ist der Bestellzettel für ein Fenstergitter.
+// Ein Fenstergitter ist wie ein Zaun vor dem Fenster – zum Beispiel am
+// Kellerfenster, damit niemand hineinklettern kann, aber trotzdem Licht hineinkommt.
+// Hier steht nur, welche Fragen es gibt und welche Antworten erlaubt sind.
 /**
  * Fenstergitter-Modul: Eingaben und abgeleitete Werte.
  * Rechteckige, fest montierte Gitter (GRID-001/002) – Rundbogen,
@@ -6,14 +10,22 @@
 
 import type { OrnamentLage, OrnamentTyp } from '../gelaender/types';
 
+// Auswahlkästchen: Kommt das Gitter innen oder aussen ans Fenster?
 export type GitterEinbauort = 'innen' | 'aussen';
 /** Ist das Fenster ein Fluchtweg? Feste Gitter sind dann nicht zulässig. */
 export type Fluchtweg = 'ja' | 'nein' | 'unbekannt';
+// Weitere Auswahlkästchen: Wird das Gitter IN die Fensternische gesetzt
+// (Leibung) oder VOR die Wand geschraubt (Vorwand)? Hat man das Loch in der Wand
+// gemessen (Lichtmass) oder das fertige Gitter (Aussenmass)? Nur senkrechte
+// Stäbe oder zusätzlich waagrechte «Gurte»? Und woraus ist die Wand?
 export type GitterMontage = 'leibung' | 'vorwand';
 export type GitterMasstyp = 'lichtmass' | 'aussenmass';
 export type Stabanordnung = 'vertikal' | 'vertikal-quergurt';
 export type GitterUntergrund = 'beton' | 'backstein' | 'holz' | 'unbekannt';
 
+// FenstergitterInputs = alle Antworten der Kundin. «null» heisst: noch offen.
+// 🤧 Schnupfspruch: Es Gitter vor em Chällerfäischter, starch und fin –
+//    da chunnt nume d Sunne und de Mond no ine.
 export interface FenstergitterInputs {
   einbauort: GitterEinbauort | null;
   fluchtweg: Fluchtweg | null;
@@ -40,6 +52,8 @@ export interface FenstergitterInputs {
   montageService: 'selbst' | 'webforge' | null;
 }
 
+// FenstergitterDerived = was wir aus den Antworten ausrechnen:
+// Wie gross wird das Gitter wirklich, wie viele Stäbe, wie viele Befestigungen?
 export interface FenstergitterDerived {
   /** Gitter-Aussenmasse in mm (aus Masstyp und Montageart abgeleitet). */
   rahmenBreiteMm: number;
@@ -51,6 +65,7 @@ export interface FenstergitterDerived {
   laschenTotal: number;
 }
 
+// Ein ganz leeres Formular – alle Fragen noch offen.
 export const EMPTY_FENSTERGITTER_INPUTS: FenstergitterInputs = {
   einbauort: null,
   fluchtweg: null,
@@ -73,6 +88,9 @@ export const EMPTY_FENSTERGITTER_INPUTS: FenstergitterInputs = {
   montageService: null,
 };
 
+// Ein fertig ausgefülltes Beispiel-Gitter, damit man sofort etwas sieht.
+// 🤧 Schnupfspruch: Tuusig breit und zwölfhundert hoch –
+//    de Einbrächer lueget und findet kei Loch.
 /**
  * Startkonfiguration: ein realistisches, vollständiges Fenstergitter
  * (Kellerfenster ca. 1000 × 1200 mm, Leibungsmontage, Vierkantstäbe mit

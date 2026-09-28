@@ -1,3 +1,6 @@
+// Das sind die Tests fürs Gartentor. Ein Test ist wie eine kleine Prüfungsfrage:
+// «Wenn ich ein 1000 mm breites Tor bestelle, kommt dann das Richtige heraus?»
+// Der Computer beantwortet alle Fragen automatisch. Sind alle grün, ist alles gut.
 import { describe, expect, it } from 'vitest';
 import {
   deriveGartentor,
@@ -23,13 +26,18 @@ import {
   validateGartentor,
 } from '../rules/gartentor-rules';
 
+// P = die Regeln (Grenzwerte), kurz geschrieben, damit die Tests schön kurz bleiben.
 const P = GARTENTOR_RULES_V0;
 
+// inputsWith: Nimmt ein leeres Formular und füllt nur die Felder aus,
+// die ein Test gerade braucht – wie ein Ausmalbild, bei dem man nur ein paar Felder anmalt.
 function inputsWith(patch: Partial<GartentorInputs>): GartentorInputs {
   return { ...EMPTY_GARTENTOR_INPUTS, ...patch };
 }
 
+// Erste Gruppe: Stimmen die ausgerechneten Werte?
 describe('Gartentor-Ableitung', () => {
+  // Ein Flügel: Öffnung minus zwei Spalten (links und rechts).
   it('einflügelig: Flügel = Öffnung − 2×Spalt', () => {
     const d = deriveGartentor(
       inputsWith({ fluegelart: 'ein', oeffnungBreiteMm: 1000, hoeheMm: 1200 }),
@@ -38,6 +46,7 @@ describe('Gartentor-Ableitung', () => {
     expect(d.fluegelBreitenMm).toEqual([1000 - 2 * P.spaltMm]);
   });
 
+  // Zwei Flügel: beide gleich breit, und es gibt drei Spalten (links, Mitte, rechts).
   it('zweiflügelig: symmetrische Teilung mit drei Spalten', () => {
     const d = deriveGartentor(
       inputsWith({ fluegelart: 'zwei', oeffnungBreiteMm: 2400, hoeheMm: 1200 }),
@@ -48,6 +57,7 @@ describe('Gartentor-Ableitung', () => {
     expect(d.fluegelBreitenMm[0]).toBe(Math.round((2400 - 3 * P.spaltMm) / 2));
   });
 
+  // Ein 1000 mm hohes Tor hat 2 Scharniere, ein 1500 mm hohes Tor hat 3.
   it('hohe Tore erhalten drei Bänder je Flügel', () => {
     expect(
       deriveGartentor(
@@ -63,6 +73,7 @@ describe('Gartentor-Ableitung', () => {
     ).toBe(3);
   });
 
+  // Die Lücken zwischen den Stäben dürfen nicht zu gross sein.
   it('Staketen-Füllung: Teilung hält den lichten Maximalabstand ein', () => {
     const d = deriveGartentor(
       inputsWith({
@@ -74,10 +85,15 @@ describe('Gartentor-Ableitung', () => {
       12
     );
     const b = d.fluegelBreitenMm[0];
+    // Lücke = (Flügelbreite − alle Stäbe zusammen) ÷ (Anzahl Lücken).
+    // Bei 8 Stäben gibt es 9 Lücken – eine mehr als Stäbe, wie bei Zaunlatten.
+    // 🤧 Schnupfspruch: Zell d Stäb und zell d Lugge,
+    //    und wänn s stimmt, dörf s Tor sich stolz bugge.
     const licht = (b - d.staebeProFluegel * 12) / (d.staebeProFluegel + 1);
     expect(licht).toBeLessThanOrEqual(P.maxStabLichtMm + 0.001);
   });
 
+  // Neue Pfosten gibt es nur ohne Mauer.
   it('neue Torpfosten nur bei freistehender Ausführung', () => {
     expect(
       deriveGartentor(
@@ -94,7 +110,11 @@ describe('Gartentor-Ableitung', () => {
   });
 });
 
+// Zweite Gruppe: Sagt der Prüfer das Richtige?
+// 🤧 Schnupfspruch: De Test isch grüen, s Tor isch zue –
+//    jetzt gönnt sich de Programmierer e churzi Rueh.
 describe('Gartentor-Regeln', () => {
+  // Zu breit für einen Flügel? Dann rot, mit dem Tipp «nimm zwei Flügel».
   it('einflügelig über Maximalbreite ⇒ ROT mit Hinweis auf zweiflügelig', () => {
     const result = validateGartentor(
       inputsWith({ fluegelart: 'ein', oeffnungBreiteMm: 1600, hoeheMm: 1200 }),
@@ -104,6 +124,7 @@ describe('Gartentor-Regeln', () => {
     expect(result.errors[0]).toContain('zweiflügelig');
   });
 
+  // Motor-Vorbereitung: nur ein gelber Hinweis, kein Fehler.
   it('Antriebs-Vorbereitung erzeugt Prüf-Hinweis', () => {
     const result = validateGartentor(
       inputsWith({
@@ -119,7 +140,9 @@ describe('Gartentor-Regeln', () => {
   });
 });
 
+// Dritte Gruppe: Steht im 3D-Bauplan alles am richtigen Ort?
 describe('Gartentor-Geometrie', () => {
+  // Zwei Flügel: Sie gehen in entgegengesetzte Richtungen, und nur einer hat das Schloss.
   it('zweiflügelig: zwei Flügel mit gegenläufigen Bandseiten, Schloss am Gehflügel', () => {
     const inputs = inputsWith({
       fluegelart: 'zwei',
@@ -138,6 +161,7 @@ describe('Gartentor-Geometrie', () => {
     expect(geo.fluegel[0].bandYs).toHaveLength(derived.baenderProFluegel);
   });
 
+  // Ein Flügel: Scharnier links heisst x kleiner als 0, rechts heisst grösser als 0.
   it('einflügelig: Anschlagseite steuert die Bandachse', () => {
     const basis = inputsWith({
       fluegelart: 'ein',
@@ -154,6 +178,9 @@ describe('Gartentor-Geometrie', () => {
     expect(links.seiten.every((s) => s.kind === 'mauer')).toBe(true);
   });
 
+  // Steht auf dem Einkaufszettel alles Wichtige drauf?
+  // 🤧 Schnupfspruch: Rahme, Bänder, Pfoste und Schloss –
+  //    de Zettel isch voll, jetzt gaht s los!
   it('Materialauszug enthält Rahmen, Bänder und Pfosten', () => {
     const inputs = inputsWith({
       fluegelart: 'zwei',
@@ -172,14 +199,17 @@ describe('Gartentor-Geometrie', () => {
   });
 });
 
+// Vierte Gruppe: Funktioniert das fertige Beispiel-Tor, das man zuerst sieht?
 describe('Gartentor-Startkonfiguration', () => {
   const d = DEFAULT_GARTENTOR_INPUTS;
+  // Die Profile des Beispiel-Tors aus dem Katalog holen.
   const profile = {
     rahmen: getProfile(d.rahmenProfilId!),
     stab: getProfile(d.fuellstabProfilId!),
     pfosten: getProfile(d.pfostenProfilId!),
   };
 
+  // Gibt es alle Dinge, die im Beispiel stehen, auch wirklich im Katalog?
   it('verwendet nur existierende Katalog- und Options-IDs', () => {
     expect(MATERIALS.some((m) => m.materialId === d.materialId && m.active)).toBe(true);
     expect(profilesForUse(PROFILES, 'gartentor', 'torrahmen').map((p) => p.profileId)).toContain(d.rahmenProfilId);
@@ -194,6 +224,7 @@ describe('Gartentor-Startkonfiguration', () => {
     expect(MONTAGE_SERVICES.some((m) => m.id === d.montageService)).toBe(true);
   });
 
+  // Das Beispiel-Tor muss sich ausrechnen, bauen und prüfen lassen – ohne rote Ampel.
   it('liefert gültige Ableitung, vollständige Geometrie und keine rote Ampel', () => {
     const derived = deriveGartentor(d, profilBreiteMm(profile.stab!));
     expect(derived.fluegelBreitenMm).toEqual([1000 - 2 * P.spaltMm]);
@@ -209,6 +240,7 @@ describe('Gartentor-Startkonfiguration', () => {
     expect(geo.seiten).toHaveLength(2);
     expect(torMaterialAuszug(d, derived).length).toBeGreaterThan(0);
 
+    // Und der Prüfer darf nicht rot zeigen.
     const result = validateGartentor(
       d,
       [profile.rahmen!, profile.stab!, profile.pfosten!]

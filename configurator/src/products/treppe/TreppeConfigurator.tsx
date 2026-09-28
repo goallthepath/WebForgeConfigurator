@@ -1,3 +1,11 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Das ist die Treppen-Bastelseite, die man im Browser sieht.
+// Stell dir einen Wunschzettel mit acht Schritten vor: Was willst du? Wo
+// steht die Treppe? Wie hoch? Aus welchem Eisen? Welche Farbe? …
+// Bei jedem Kreuzchen rechnet die Seite sofort neu, zeigt die Treppe in 3D
+// und sagt mit einer Ampel, ob alles passt. Rechnen tun andere Dateien –
+// diese hier sammelt nur die Wünsche und zeigt alles schön an.
+// ─────────────────────────────────────────────────────────────────────────
 import { useEffect, useMemo, useReducer, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { StepSection } from '../../components/ui/StepSection';
@@ -42,8 +50,15 @@ import {
   type TreppenModus,
 } from './types';
 
+// 🤧 Schnupfspruch: Käs im Chäller, Schnupf im Hosesack –
+//    d Stäge verbindet beides, zack!
+
+// Unter diesem Namen merkt sich der Browser deinen Entwurf – wie ein
+// Lesezeichen im Buch, damit du morgen dort weitermachen kannst.
 const STORAGE_KEY = 'webforge-treppe-draft-v2';
 
+// Die drei grossen Möglichkeiten: Treppe mit Geländer, nur Treppe oder nur
+// Geländer. «icon» ist ein kleines gezeichnetes Bildchen (SVG) für die Karte.
 const MODI: OptionDef<TreppenModus>[] = [
   {
     id: 'kombiniert',
@@ -65,6 +80,10 @@ const MODI: OptionDef<TreppenModus>[] = [
   },
 ];
 
+// 🤧 Schnupfspruch: Gitterrost für Räge und Schnee,
+//    Schnupf für d Nase – juhee!
+
+// Die Auswahlkarten für die Stufen-Art (Gitter, Buckelblech, glattes Blech).
 const STUFENTYPEN: OptionDef<Stufentyp>[] = [
   {
     id: 'gitterrost',
@@ -83,6 +102,10 @@ const STUFENTYPEN: OptionDef<Stufentyp>[] = [
   },
 ];
 
+// 🤧 Schnupfspruch: Hert isch s'Iise, rot isch d Glueht –
+//    e gschmiedeti Stäge macht allne Muet.
+
+// Wie wird die Treppe getragen? Zwei Wangen oder ein Mittelbalken.
 const KONSTRUKTIONEN: OptionDef<TreppenKonstruktion>[] = [
   {
     id: 'wangen',
@@ -98,6 +121,7 @@ const KONSTRUKTIONEN: OptionDef<TreppenKonstruktion>[] = [
   },
 ];
 
+// Offen (man sieht zwischen den Stufen durch) oder geschlossen (Blech davor).
 const SETZSTUFEN_OPTIONEN: OptionDef<Setzstufen>[] = [
   {
     id: 'offen',
@@ -111,12 +135,14 @@ const SETZSTUFEN_OPTIONEN: OptionDef<Setzstufen>[] = [
   },
 ];
 
+// Auf welcher Seite soll das Geländer sein – vom Hinaufgehen aus gesehen.
 const SEITEN: OptionDef<GelaenderSeite>[] = [
   { id: 'links', label: 'Links', description: 'Geländer links (im Aufstieg gesehen).' },
   { id: 'rechts', label: 'Rechts', description: 'Geländer rechts (im Aufstieg gesehen).' },
   { id: 'beide', label: 'Beidseitig', description: 'Geländer auf beiden Seiten.' },
 ];
 
+// Womit das Geländer zwischen den Pfosten gefüllt wird.
 const FUELLUNGEN: OptionDef<TreppenFuellung>[] = [
   {
     id: 'staketen',
@@ -135,19 +161,35 @@ const FUELLUNGEN: OptionDef<TreppenFuellung>[] = [
   },
 ];
 
+// 🤧 Schnupfspruch: Vom Chäller bis in Estrich ufe –
+//    zwüschedure dörf mer schnupfe.
+
+// Eine «Aktion» ist ein kleiner Auftrag an unseren Merkzettel:
+// «set» = «Ändere bitte diese Felder», «reset» = «Alles zurück auf Anfang».
 type Action = { type: 'set'; patch: Partial<TreppeInputs> } | { type: 'reset' };
 
+/**
+ * Der «Reducer» ist wie ein ordentlicher Sekretär: Er bekommt den alten
+ * Wunschzettel und einen Auftrag und gibt einen NEUEN Wunschzettel zurück.
+ * Dabei passt er auf, dass nichts Unsinniges übrig bleibt.
+ */
 function reducer(state: TreppeInputs, action: Action): TreppeInputs {
   switch (action.type) {
     case 'set': {
+      // Zuerst einfach die neuen Wünsche über die alten schreiben.
       const next = { ...state, ...action.patch };
+      // Keine geschmiedete Füllung mehr? Dann braucht es auch keine Schnörkel.
       if (action.patch.fuellung && action.patch.fuellung !== 'geschmiedet') {
         next.ornamentTyp = null;
       }
+      // Nur Treppe ohne Geländer? Dann Geländer-Angaben wegradieren.
       if (action.patch.modus === 'treppe') {
         next.gelaenderSeite = null;
         next.fuellung = null;
       }
+      // Anderes Material gewählt (z. B. Edelstahl statt Stahl)? Dann passen
+      // die alten Eisenprofile und die Oberfläche vielleicht nicht mehr –
+      // die werfen wir raus, damit man neu auswählen kann.
       if (action.patch.materialId) {
         for (const key of [
           'wangenProfilId',
@@ -169,13 +211,23 @@ function reducer(state: TreppeInputs, action: Action): TreppeInputs {
       }
       return next;
     }
+    // Zurück auf die Beispiel-Treppe vom Anfang.
     case 'reset':
       return DEFAULT_TREPPE_INPUTS;
   }
 }
 
+// 🤧 Schnupfspruch: Estrich obe, Chäller unde,
+//    d Stäge hät de Wäg dezwüsche gfunde.
+
+/**
+ * Womit fangen wir an? Zuerst schauen wir, ob jemand einen geteilten Link
+ * mit einer Treppe geschickt hat. Sonst schauen wir in den Merkzettel des
+ * Browsers. Und wenn beides leer ist, nehmen wir die Beispiel-Treppe.
+ */
 function loadInitial(): TreppeInputs {
   try {
+    // Steht im Link ein «?c=…»? Das ist eine eingepackte Treppe.
     const fromUrl = new URLSearchParams(window.location.search).get('c');
     if (fromUrl) {
       return {
@@ -183,6 +235,7 @@ function loadInitial(): TreppeInputs {
         ...(JSON.parse(decodeURIComponent(atob(fromUrl))) as TreppeInputs),
       };
     }
+    // Sonst: Gibt es einen gespeicherten Entwurf von letztem Mal?
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored) {
       return { ...DEFAULT_TREPPE_INPUTS, ...(JSON.parse(stored) as TreppeInputs) };
@@ -193,6 +246,10 @@ function loadInitial(): TreppeInputs {
   return DEFAULT_TREPPE_INPUTS;
 }
 
+/**
+ * Macht aus dem Profil-Katalog eine Liste von Auswahlkarten, z. B. alle
+ * Handläufe – aber nur die aus dem gewählten Material.
+ */
 function profileOptions(
   role: ProfileRole,
   materialId: string | null
@@ -213,21 +270,34 @@ function crossSectionText(p: Profile): string {
     .replace(' · Wand ', ` · ${tr('Wand')} `);
 }
 
+// 🤧 Schnupfspruch: Es Rezept für d Stäge, es Rezept für de Chueche –
+//    nume bim Schnupf muesch nüt lang sueche.
+
+/**
+ * Die ganze Treppen-Bastelseite. Sie merkt sich die Wünsche, lässt rechnen,
+ * prüfen und zeichnen und zeigt am Schluss alles an.
+ */
 export function TreppeConfigurator() {
+  // Die Wünsche (inputs) und der Sekretär (dispatch), der sie ändert.
   const module = getProductModule('treppe');
   const [inputs, dispatch] = useReducer(reducer, undefined, loadInitial);
+  // Für den «Link teilen»-Knopf: Wurde kopiert? Und wie lautet der Link?
   const [shareState, setShareState] = useState<'idle' | 'copied' | 'shown'>('idle');
   const [shareUrl, setShareUrl] = useState('');
 
+  // Bei jeder Änderung speichern wir den Wunschzettel im Browser.
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs));
   }, [inputs]);
 
+  // Eine kurze Abkürzung: «set({ farbe: … })» statt dem langen dispatch.
   const set = (patch: Partial<TreppeInputs>) => dispatch({ type: 'set', patch });
 
   const mitTreppe = inputs.modus !== 'gelaender';
   const mitGelaender = inputs.modus !== 'treppe';
 
+  // Wie dick ist ein Füllstab? Das braucht die Rechnung, damit die Lücken
+  // zwischen den Stäben nicht zu gross werden. Ohne Auswahl: 16 bzw. 12 mm.
   const stabBreite =
     inputs.fuellung === 'querstab'
       ? inputs.querstabProfilId
@@ -237,11 +307,15 @@ export function TreppeConfigurator() {
         ? profilBreiteMm(getProfile(inputs.fuellstabProfilId)!)
         : 12;
 
+  // Hier wird gerechnet (Stufen, Höhen, Schrittmass …). «useMemo» heisst:
+  // Nur neu rechnen, wenn sich wirklich etwas geändert hat – wie ein Kind,
+  // das die Hausaufgabe nicht zweimal macht, wenn sie schon fertig ist.
   const derived = useMemo(
     () => deriveTreppe(inputs, stabBreite),
     [inputs, stabBreite]
   );
 
+  // Hier entsteht der Bauplan fürs 3D-Bild.
   const geometry = useMemo(
     () =>
       buildTreppeGeometry(inputs, derived, {
@@ -254,6 +328,7 @@ export function TreppeConfigurator() {
     [inputs, derived]
   );
 
+  // Die Eisenprofile, die tatsächlich gebraucht werden – nur diese prüfen wir.
   const selectedProfiles = useMemo(
     () =>
       [
@@ -268,17 +343,24 @@ export function TreppeConfigurator() {
     [inputs, mitTreppe, mitGelaender]
   );
 
+  // Der Schiedsrichter pfeift: rote und gelbe Karten.
   const validation = useMemo(
     () => validateTreppe(inputs, derived, selectedProfiles),
     [inputs, derived, selectedProfiles]
   );
 
+  // Preis-Hinweis und Einkaufsliste für die Werkstatt.
   const estimate = estimateFor(module.priceVersion);
   const material = useMemo(
     () => treppeMaterialAuszug(inputs, derived),
     [inputs, derived]
   );
 
+  // 🤧 Schnupfspruch: Füfzäh Stufe sind no kei Berg,
+  //    doch für de Chlii isch's es Riesewerk.
+
+  // Jetzt kontrollieren wir, welche Schritte schon fertig ausgefüllt sind –
+  // wie Häkchen auf einer Checkliste.
   const masseOk =
     inputs.geschosshoeheMm !== null &&
     inputs.geschosshoeheMm > 0 &&
@@ -303,6 +385,7 @@ export function TreppeConfigurator() {
         gelaenderProfileOk &&
         inputs.handlaufAbschluss
     );
+  // Jeder Schritt wird erst «aufgeschlossen», wenn der vorherige fertig ist.
   const steps = {
     s2: inputs.modus !== null,
     s3: inputs.einbauort !== null && inputs.kinderschutz !== null,
@@ -312,8 +395,14 @@ export function TreppeConfigurator() {
     s7: gelaenderOk && treppeOk,
     s8: Boolean(inputs.finishId && inputs.farbe),
   };
+  // Das 3D-Bild zeigen wir erst, wenn Höhe, Breite und Umfang bekannt sind.
   const geometryReady = masseOk && inputs.modus !== null;
 
+  // 🤧 Schnupfspruch: Kopier de Link und schick en fort,
+  //    d Stäge wartet am glyche Ort.
+
+  // «Teilen»: Wir packen den ganzen Wunschzettel in einen langen Link.
+  // Klappt das Kopieren nicht, zeigen wir den Link einfach an.
   const share = async () => {
     const payload = btoa(encodeURIComponent(JSON.stringify(inputs)));
     const url = `${window.location.origin}${window.location.pathname}?c=${payload}`;
@@ -327,13 +416,18 @@ export function TreppeConfigurator() {
     window.setTimeout(() => setShareState('idle'), 6000);
   };
 
+  // Passt das Schrittmass (2 × Stufenhöhe + Stufentiefe ≈ 63 cm)?
+  // Dann gibt es ein Häkchen ✓, sonst ein Warnzeichen.
   const P = TREPPE_RULES_V0;
   const schrittmassOk =
     derived.schrittmassMm >= P.minSchrittmassMm &&
     derived.schrittmassMm <= P.maxSchrittmassMm;
 
+  // Ab hier wird die Seite «gezeichnet»: links die Schritte, rechts die
+  // 3D-Vorschau mit der Zusammenfassung.
   return (
     <div className="configurator">
+      {/* Zurück zur Produktauswahl, Überschrift und kurze Erklärung */}
       <p>
         <Link to="/">{tr('← Produktauswahl')}</Link>
       </p>
@@ -344,8 +438,10 @@ export function TreppeConfigurator() {
         )}
       </p>
 
+      {/* Zwei Spalten: links die Fragen, rechts Bild und Zusammenfassung */}
       <div className="configurator-layout">
         <div className="configurator-steps">
+          {/* Schritt 1: Was möchtest du – Treppe, Geländer oder beides? */}
           <StepSection number={1} title="Was möchten Sie?" unlocked done={steps.s2}>
             <OptionCardGroup
               legend="Umfang wählen"
@@ -361,6 +457,7 @@ export function TreppeConfigurator() {
             </p>
           </StepSection>
 
+          {/* Schritt 2: Drinnen oder draussen? Und gibt es Kinder im Haus? */}
           <StepSection number={2} title="Nutzung" unlocked={steps.s2} done={steps.s3}>
             <OptionCardGroup
               legend="Innen- oder Aussenbereich?"
@@ -378,6 +475,9 @@ export function TreppeConfigurator() {
             />
           </StepSection>
 
+          {/* 🤧 Schnupfspruch: Wer d Stufe zellt, verliert kei Tritt,
+                 und wer schnupft, nimmt d Nase mit. */}
+          {/* Schritt 3: Die Masse. Wie hoch ist das Stockwerk, wie breit die Treppe? */}
           <StepSection
             number={3}
             title="Masse und Steigung"
@@ -401,6 +501,8 @@ export function TreppeConfigurator() {
               max={P.maxLaufbreiteMm}
               onChange={(laufbreiteMm) => set({ laufbreiteMm })}
             />
+            {/* Sobald gerechnet ist, zeigen wir das Ergebnis als kleine Tabelle:
+                Anzahl Stufen, Stufenhöhe/-tiefe, Schrittmass und Steilheit. */}
             {derived.steigungenAnzahl > 0 && (
               <div className="steigung-info">
                 <table className="material-table">
@@ -437,6 +539,7 @@ export function TreppeConfigurator() {
                     </tr>
                   </tbody>
                 </table>
+                {/* Wer will, kann die Anzahl Stufen selbst bestimmen. */}
                 <NumberField
                   label="Steigungen anpassen (optional)"
                   unit={tr('Stk.')}
@@ -449,6 +552,7 @@ export function TreppeConfigurator() {
                 />
               </div>
             )}
+            {/* Häkchen: «Ich habe nur ungefähr gemessen» – dann misst der Meister nach. */}
             <label className="check-row">
               <input
                 type="checkbox"
@@ -459,6 +563,7 @@ export function TreppeConfigurator() {
             </label>
           </StepSection>
 
+          {/* Schritt 4: Aus welchem Eisen? Normaler Stahl oder rostfreier Edelstahl. */}
           <StepSection number={4} title="Werkstoff" unlocked={steps.s4} done={steps.s5}>
             <OptionCardGroup
               legend="Werkstoff"
@@ -477,6 +582,9 @@ export function TreppeConfigurator() {
             />
           </StepSection>
 
+          {/* 🤧 Schnupfspruch: Hock nid mitte uf d Stäge zum Schnupfe –
+                 suscht mues d Grossmueter über di gumpe. */}
+          {/* Schritt 5 (nur wenn wir eine Treppe bauen): Träger, Stufen, Wangen. */}
           {mitTreppe && (
             <StepSection
               number={5}
@@ -517,6 +625,7 @@ export function TreppeConfigurator() {
             </StepSection>
           )}
 
+          {/* Schritt 6 (nur mit Geländer): Seite, Höhe, Füllung und Profile. */}
           {mitGelaender && (
             <StepSection
               number={mitTreppe ? 6 : 5}
@@ -532,6 +641,7 @@ export function TreppeConfigurator() {
                 value={inputs.gelaenderSeite}
                 onChange={(gelaenderSeite) => set({ gelaenderSeite })}
               />
+              {/* Wie hoch das Geländer ist – mindestens 90 cm, etwa bis zum Bauchnabel. */}
               <NumberField
                 label="Geländerhöhe (senkrecht über Stufenkante)"
                 unit="mm"
@@ -548,6 +658,7 @@ export function TreppeConfigurator() {
                 value={inputs.fuellung}
                 onChange={(fuellung) => set({ fuellung })}
               />
+              {/* Schnörkel-Auswahl gibt es nur bei der geschmiedeten Füllung. */}
               {inputs.fuellung === 'geschmiedet' && (
                 <OptionCardGroup
                   legend="Ornament-Grundauswahl"
@@ -573,6 +684,7 @@ export function TreppeConfigurator() {
                 onChange={(handlaufProfilId) => set({ handlaufProfilId })}
                 badge={() => 'TESTDATEN'}
               />
+              {/* Entweder senkrechte Füllstäbe … */}
               {inputs.fuellung !== 'querstab' && (
                 <OptionCardGroup
                   legend="Füllstäbe"
@@ -583,6 +695,7 @@ export function TreppeConfigurator() {
                   badge={() => 'TESTDATEN'}
                 />
               )}
+              {/* … oder liegende Querstäbe – je nach gewählter Füllung. */}
               {inputs.fuellung === 'querstab' && (
                 <OptionCardGroup
                   legend="Querstäbe"
@@ -593,6 +706,9 @@ export function TreppeConfigurator() {
                   badge={() => 'TESTDATEN'}
                 />
               )}
+              {/* 🤧 Schnupfspruch: Nüüt isch so treu wie en Handlauf us Stahl –
+                     er hebt di zum erschte und hundertschte Mal. */}
+              {/* Wie das Ende vom Handlauf aussieht (gerade, Kugel, Bogen …). */}
               <OptionCardGroup
                 legend="Handlauf-Abschluss"
                 name="tr-abschluss"
@@ -603,6 +719,9 @@ export function TreppeConfigurator() {
             </StepSection>
           )}
 
+          {/* 🤧 Schnupfspruch: Rost a de Stäge, Bugs im Code –
+                 beidi gönd mit Bürschte und Geduld devo. */}
+          {/* Schritt 7: Oberfläche und Farbe – wie das Anmalen am Schluss. */}
           <StepSection
             number={mitTreppe && mitGelaender ? 7 : 6}
             title="Oberfläche und Farbe"
@@ -626,6 +745,7 @@ export function TreppeConfigurator() {
               onChange={(finishId) => set({ finishId })}
               badge={() => 'TESTDATEN'}
             />
+            {/* Die Farbtupfer: Jeder Kreis ist eine Farbe zum Anklicken. */}
             <fieldset className="option-group">
               <legend>{tr('Farbe')}</legend>
               <div className="swatch-row">
@@ -658,6 +778,9 @@ export function TreppeConfigurator() {
             </fieldset>
           </StepSection>
 
+          {/* 🤧 Schnupfspruch: E Treppe zum Baumhuus, e Stäge zum Stärn,
+                 de Schmied bout beidi – und schnupft no gärn. */}
+          {/* Schritt 8: Wer schraubt die Treppe fest – du selbst oder wir? */}
           <StepSection
             number={mitTreppe && mitGelaender ? 8 : 7}
             title="Montage"
@@ -674,6 +797,7 @@ export function TreppeConfigurator() {
           </StepSection>
         </div>
 
+        {/* Rechte Spalte: 3D-Bild und Zusammenfassung */}
         <aside className="configurator-aside">
           <TreppeViewer
             geometry={geometry}
@@ -681,6 +805,7 @@ export function TreppeConfigurator() {
             empty={!geometryReady}
           />
 
+          {/* Die Zusammenfassung: alle wichtigen Zahlen auf einen Blick. */}
           <div className="summary-card">
             <h2>{tr('Ihre Konfiguration')}</h2>
             {geometryReady ? (
@@ -713,6 +838,9 @@ export function TreppeConfigurator() {
                     </li>
                   )}
                 </ul>
+                {/* 🤧 Schnupfspruch: Funke flüüged, d Wärchstatt singt,
+                       bis d Stäge schön is Huus ine springt. */}
+                {/* Aufklappbare Einkaufsliste für die Werkstatt. */}
                 {material.length > 0 && (
                   <details className="material-details">
                     <summary>{tr('Materialauszug (provisorisch, für die Werkstatt)')}</summary>
@@ -741,6 +869,7 @@ export function TreppeConfigurator() {
               <p className="field-hint">{tr('Noch keine Masse erfasst.')}</p>
             )}
 
+            {/* Rote Karten: Das muss geändert werden. */}
             {validation.errors.length > 0 && (
               <div className="status-banner red" role="alert">
                 <strong>{tr('Bitte prüfen:')}</strong>
@@ -751,6 +880,7 @@ export function TreppeConfigurator() {
                 </ul>
               </div>
             )}
+            {/* Gelbe Karten: Geht, aber der Meister schaut nochmals hin. */}
             {validation.warnings.length > 0 && (
               <div className="status-banner yellow" role="status">
                 <ul>
@@ -763,6 +893,7 @@ export function TreppeConfigurator() {
 
             <p className="estimate">{describeEstimate(estimate)}</p>
 
+            {/* Die Knöpfe: Link teilen, Offerte anfragen, zurücksetzen. */}
             <div className="summary-actions">
               <button type="button" className="secondary" onClick={share}>
                 {tr('Konfiguration speichern (Link)')}
@@ -783,6 +914,7 @@ export function TreppeConfigurator() {
                 {tr('Zurücksetzen')}
               </button>
             </div>
+            {/* Kleine Rückmeldung, nachdem der Link kopiert oder angezeigt wurde. */}
             {shareState === 'copied' && (
               <p className="field-hint" role="status">
                 {tr('Link kopiert – Konfiguration jederzeit wieder öffnen und teilen.')}
@@ -794,6 +926,7 @@ export function TreppeConfigurator() {
               </p>
             )}
 
+            {/* Versionsnummern – wie das Datum auf einem Rezeptzettel. */}
             <p className="versions">
               {tr('Produkt')} {module.productVersion} · {tr('Regeln')} {module.ruleVersion} ·{' '}
               {tr('Preis:')} {module.priceVersion ?? tr('keine Version (individuelle Prüfung)')} ·{' '}

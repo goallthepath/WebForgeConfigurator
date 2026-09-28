@@ -9,3 +9,10 @@ Requires PHP: 8.1
 License: proprietary
 Text Domain: webforge
 */
+
+/* Kinder-Erklärung: Der Kommentar ganz oben ist das Namensschild des
+   Themes – WordPress liest es und zeigt «WebForge» in der Theme-Liste.
+   Darum muss er immer zuoberst stehen und darf nicht verändert werden.
+   Die eigentlichen Farben und Schriften (die «Kleider») kommen bei
+   einem Block-Theme aus theme.json, darum ist diese Datei fast leer. */
+/* 🤧 Schnupfspruch: S Theme-Chärtli obe isch heilig wie de Stammtisch am Mäntig – nöd dra rüttle, süsch wird WordPress grantig. */

@@ -6,11 +6,28 @@
  * Themewechsel überleben.
  */
 
+// ----------------------------------------------------------------
+// Kinder-Erklärung: In diesem Heft bauen wir SCHUBLADEN für WordPress.
+// Ein «Inhaltstyp» (Post Type) ist wie eine beschriftete Schublade im
+// grossen WordPress-Schrank: eine für Leistungen, eine für Referenzen,
+// eine für Wissensartikel – und ein paar geheime im Hinterzimmer.
+// ----------------------------------------------------------------
+
+// Türsteher: ABSPATH gibt es nur, wenn WordPress selber diese Datei öffnet.
+// Will jemand die Datei direkt im Browser aufrufen, sagt der Türsteher
+// «Stopp!» (exit) – so kann niemand an WordPress vorbei hineinschleichen.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// Diese Funktion ist der Schreiner: Sie baut alle Schubladen auf einmal.
+// «: void» heisst: Sie baut nur und gibt nichts zurück.
+// 🤧 Schnupfspruch: Leistig, Referenz und Wüsse – drei Schublade im Schrank;
+//    wer weiss, wo s Züüg liit, dä isch nie chrank.
 function webforge_core_register_post_types(): void {
+	// Die ÖFFENTLICHEN Schubladen: Alle Besucher dürfen hineinschauen.
+	// Jede hat einen Namen (labels), eine Web-Adresse (rewrite/slug)
+	// und eine Liste, was hinein darf (supports: Titel, Text, Bild …).
 	$public_types = array(
 		'webforge_leistung' => array(
 			'labels'   => array(
@@ -38,6 +55,9 @@ function webforge_core_register_post_types(): void {
 		),
 	);
 
+	// Jetzt bauen wir jede öffentliche Schublade wirklich. array_merge
+	// mischt die Grundregeln (öffentlich, im Briefkasten sichtbar, mit
+	// Archiv-Seite und Hammer-Symbol) mit den besonderen Angaben von oben.
 	foreach ( $public_types as $type => $args ) {
 		register_post_type(
 			$type,
@@ -54,6 +74,13 @@ function webforge_core_register_post_types(): void {
 	}
 
 	// Nicht öffentliche Typen: nur Backend und (teils) REST.
+	// Kinder-Erklärung: Diese Schubladen stehen im Hinterzimmer der
+	// Werkstatt. Nur das Team sieht sie im Adminbereich. Kundenanfragen
+	// und gespeicherte Konfigurationen sind privat – darum steht dort
+	// «false» und sie kommen NICHT in den Briefkasten (REST).
+	// Die Reihenfolge in jeder Zeile: Mehrzahl, Einzahl, im Briefkasten ja/nein.
+	// 🤧 Schnupfspruch: Hinder de Theke liit de Schnupf und s Material –
+	//    de Chund gseht nume s Schaufänschter, und das isch ganz normal.
 	$internal_types = array(
 		'webforge_material'      => array( __( 'Materialien', 'webforge-core' ), __( 'Material', 'webforge-core' ), true ),
 		'webforge_oberflaeche'   => array( __( 'Oberflächen', 'webforge-core' ), __( 'Oberfläche', 'webforge-core' ), true ),
@@ -61,6 +88,8 @@ function webforge_core_register_post_types(): void {
 		'webforge_konfiguration' => array( __( 'Konfigurationen', 'webforge-core' ), __( 'Konfiguration', 'webforge-core' ), false ),
 	);
 
+	// Für jede geheime Schublade: auspacken (list) und bauen – nicht
+	// öffentlich, nicht in der Suche, aber im Adminbereich sichtbar.
 	foreach ( $internal_types as $type => list( $plural, $singular, $in_rest ) ) {
 		register_post_type(
 			$type,
@@ -81,4 +110,6 @@ function webforge_core_register_post_types(): void {
 	}
 }
 
+// Hook-Anmeldung: «Liebes WordPress, wenn du am Morgen aufwachst (init),
+// ruf bitte unseren Schreiner, damit alle Schubladen bereitstehen.»
 add_action( 'init', 'webforge_core_register_post_types' );

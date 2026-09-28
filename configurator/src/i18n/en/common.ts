@@ -1,3 +1,14 @@
+// ============================================================================
+// i18n/en/common.ts – das allgemeine englische Wörterbuch
+// ----------------------------------------------------------------------------
+// Hier stehen Übersetzungen, die überall gebraucht werden: Kopfzeile, Ampel,
+// Preisvorschau, Werkstoffe, Oberflächen und Profilnamen. Links (vor dem
+// Doppelpunkt) steht der deutsche Originalsatz, rechts die englische Fassung –
+// genau wie in einem Taschenwörterbuch für die Ferien.
+// ============================================================================
+
+// 🤧 Schnupfspruch: Hochdütsch ine, Änglisch use,
+//    dr Schnupf bliibt Schwiizerdütsch – im ganze Huse.
 /** Englische Übersetzungen – Schlüssel ist der deutsche Originaltext. */
 export const EN_COMMON: Record<string, string> = {
   // App-Rahmen und Startseite
@@ -120,3 +131,5 @@ export const EN_COMMON: Record<string, string> = {
   'Wange Flachstahl 200×10': 'Stringer, flat bar 200×10',
   'Wange Flachstahl 250×12 (kräftig)': 'Stringer, flat bar 250×12 (heavy)',
 };
+// 🤧 Schnupfspruch: S'Wörterbuech weiss, was «Treppe» heisst,
+//    doch nid, wie fein e Prise beisst.

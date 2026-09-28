@@ -1,12 +1,22 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Das ist das Schaufenster für die Treppe. Oben sind Knöpfe, mit denen man
+// wählt, von wo man schaut (schräg, von der Seite, von unten, als Zeichnung).
+// Kann der Computer kein 3D, zeigen wir eine einfache Strich-Zeichnung –
+// wie wenn man die Treppe mit dem Bleistift von der Seite abmalt.
+// ─────────────────────────────────────────────────────────────────────────
 import { lazy, Suspense, useMemo, useState } from 'react';
 import type { TreppeGeometry } from '../products/treppe/geometry';
 import type { ViewPreset } from './scene-shared';
 import { tr } from '../i18n';
 
+// Die 3D-Szene ist gross und schwer. Darum laden wir sie erst, wenn man sie
+// wirklich braucht («lazy» = faul) – wie ein Buch, das man erst aus dem
+// Regal holt, wenn man es lesen will.
 const TreppeSceneLazy = lazy(() =>
   import('./TreppeScene').then((m) => ({ default: m.TreppeScene }))
 );
 
+// Fragt den Computer: «Kannst du 3D zeichnen (WebGL)?» – Ja oder Nein.
 function supportsWebGL(): boolean {
   try {
     const canvas = document.createElement('canvas');
@@ -16,6 +26,10 @@ function supportsWebGL(): boolean {
   }
 }
 
+// 🤧 Schnupfspruch: Im 3D dräiht sich d Stäge im Kreis,
+//    mir luege zue und schnupfe liis.
+
+// Die Ansichts-Knöpfe: jeder hat eine Nummer (id) und eine Beschriftung.
 const VIEWS: { id: ViewPreset | '2d'; label: string }[] = [
   { id: 'perspektive', label: 'Perspektive' },
   // Lauf verläuft entlang X: die klassische Seitenansicht liegt bei +Z
@@ -27,6 +41,9 @@ const VIEWS: { id: ViewPreset | '2d'; label: string }[] = [
 
 /** 2D-Seitenansicht (Treppenschnitt) – Fallback und PDF-Basis. */
 function TreppeSchnitt({ geometry }: { geometry: TreppeGeometry }) {
+  // Wir malen die Treppe von der Seite als Zickzack-Linie: ein Strich hoch
+  // (Stufenhöhe s), ein Strich nach vorne (Stufentiefe a), wieder hoch …
+  // Im Bild zeigt minus-y nach oben, darum stehen überall Minuszeichen.
   const { hoeheM: H, lauflaengeM: L } = geometry;
   if (H <= 0) return null;
   const gh = geometry.pfosten[0]?.hoeheM ?? 0;
@@ -39,8 +56,11 @@ function TreppeSchnitt({ geometry }: { geometry: TreppeGeometry }) {
     stufenPfad.push(`L ${(k - 1) * a} ${-k * s}`);
     if (k < n) stufenPfad.push(`L ${k * a} ${-k * s}`);
   }
+  // Bestehende Treppen malen wir hellgrau, neue Treppen dunkel.
   const bestandFarbe = geometry.treppeBestand ? '#b3b8bc' : '#1f2124';
 
+  // 🤧 Schnupfspruch: Ohni 3D gaht's au uf Papier –
+  //    e Stäge im Schnitt, und en Schnupf defür.
   return (
     <svg
       viewBox={`${-pad} ${-(H + Math.max(gh, 0.3)) - pad} ${L + 2 * pad + 0.8} ${H + Math.max(gh, 0.3) + 2 * pad}`}
@@ -64,6 +84,8 @@ function TreppeSchnitt({ geometry }: { geometry: TreppeGeometry }) {
         strokeWidth={0.09}
         strokeOpacity={geometry.treppeBestand ? 0.6 : 1}
       />
+      {/* Das Geländer: eine schräge Linie oben und senkrechte Striche als Pfosten.
+          Wir nehmen nur die Pfosten einer Seite, sonst lägen sie doppelt. */}
       {/* Geländer */}
       {gh > 0 && (
         <g stroke="#43484e" strokeWidth={0.025}>
@@ -81,6 +103,7 @@ function TreppeSchnitt({ geometry }: { geometry: TreppeGeometry }) {
             ))}
         </g>
       )}
+      {/* Masse: die Zahlen für Höhe und Länge, wie auf einem Bauplan. */}
       {/* Masse */}
       <g stroke="#a8763e" strokeWidth={0.015}>
         <line x1={L + 0.3} y1={0} x2={L + 0.3} y2={-H} />
@@ -104,6 +127,10 @@ function TreppeSchnitt({ geometry }: { geometry: TreppeGeometry }) {
   );
 }
 
+/**
+ * Das ganze Schaufenster: Ansichts-Knöpfe, Masslinien-Schalter und darunter
+ * entweder das 3D-Bild oder die Zeichnung.
+ */
 export function TreppeViewer({
   geometry,
   color,
@@ -113,14 +140,17 @@ export function TreppeViewer({
   color: string;
   empty: boolean;
 }) {
+  // Einmal nachfragen, ob 3D geht und ob wir auf einem kleinen Handy sind.
   const webgl = useMemo(supportsWebGL, []);
   const mobile = useMemo(
     () => typeof window !== 'undefined' && window.innerWidth < 700,
     []
   );
+  // Welche Ansicht ist gerade gewählt? Und sollen Masslinien sichtbar sein?
   const [view, setView] = useState<ViewPreset | '2d'>('perspektive');
   const [showDims, setShowDims] = useState(true);
 
+  // Noch keine Höhe eingegeben? Dann gibt es nur einen freundlichen Hinweis.
   if (empty) {
     return (
       <div className="viewer-shell" role="img" aria-label={tr('Produktvorschau')}>
@@ -131,10 +161,12 @@ export function TreppeViewer({
     );
   }
 
+  // 3D nur, wenn der Computer es kann UND nicht «Schnitt» gewählt ist.
   const show3d = webgl && view !== '2d';
 
   return (
     <div className="viewer-block">
+      {/* Die Knopfleiste. Ohne 3D bleibt nur der Knopf für die Zeichnung. */}
       <div className="viewer-toolbar" role="toolbar" aria-label={tr('Ansicht wählen')}>
         {VIEWS.filter((v) => webgl || v.id === '2d').map((v) => (
           <button
@@ -155,6 +187,7 @@ export function TreppeViewer({
           {tr('Masslinien')}
         </label>
       </div>
+      {/* Das eigentliche Bild: 3D (mit Ladeanzeige) oder die Zeichnung. */}
       <div className="viewer-shell">
         {show3d ? (
           <Suspense fallback={<p className="viewer-empty">{tr('3D-Vorschau wird geladen …')}</p>}>
@@ -170,6 +203,8 @@ export function TreppeViewer({
           <TreppeSchnitt geometry={geometry} />
         )}
       </div>
+      {/* 🤧 Schnupfspruch: Flach isch de Bildschirm, höch isch d Stäge –
+             en Schnupf druf, und alles isch im Säge. */}
       {!webgl && (
         <p className="field-hint">
           {tr(

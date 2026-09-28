@@ -1,28 +1,43 @@
+# Kinder-Erklärung: Das ist die Liste «bitte nicht einpacken».
+# Git packt das Projekt in Kisten, um es zu speichern und zu teilen.
+# Alles, was hier steht, bleibt draussen: zu gross, selbst gebaut,
+# geheim oder einfach Krümel vom Computer.
+# 🤧 Schnupfspruch: node_modules isch schwerer als de Amboss vom Schmied –
+#    drum bliibt s dihei, und de Zügelwage singt es Lied.
+
 # Abhängigkeiten
+# Heruntergeladene Bausteine – die kann man jederzeit neu holen.
 node_modules/
 vendor/
 
 # Builds
+# Selbst gebaute Sachen – die entstehen neu, wenn man «build» macht.
 configurator/dist/
 wordpress/wp-content/plugins/webforge-core/configurator/
 design-tokens/generated/
 
 # Umgebungen / Geheimnisse
+# Geheimzettel mit Passwörtern – die gehören nie in die Kiste!
 .env
 .env.local
 *.local.php
 
 # WordPress-Laufzeitdaten (liegen im Docker-Volume, nicht im Repo)
+# WordPress selber und hochgeladene Bilder wohnen in der Docker-Kiste.
 wordpress/core/
 wordpress/wp-content/uploads/
 
+# 🤧 Schnupfspruch: Thumbs.db und .DS_Store sind wie Brosme uf em Tisch –
+#    me wüscht s ab, bevor me packt, dänn isch alles früsch.
 # Betriebssystem / Editor
+# Krümel, die Betriebssystem und Editor von selbst hinterlassen.
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/
 
 # Logs & Temporäres
+# Tagebücher (Logs) und Schmierzettel, die nur kurz gebraucht werden.
 *.log
 .tmp/
 coverage/

@@ -1,3 +1,5 @@
+// Das Wörterbuch fürs Fenstergitter: deutscher Satz links, englischer rechts.
+// So kann auch jemand aus England sein Kellerfenster vergittern lassen.
 /** Englische Übersetzungen – Schlüssel ist der deutsche Originaltext. */
 export const EN_FENSTERGITTER: Record<string, string> = {
   // Kopf
@@ -6,6 +8,8 @@ export const EN_FENSTERGITTER: Record<string, string> = {
   'Fest montiertes, rechteckiges Fenstergitter – mit 3D-Vorschau am Fenster und Masszeichnung. Unser Meister prüft jede Konfiguration persönlich (Einbruchhemmung, Befestigung, Baurecht).':
     'Fixed, rectangular window grille – with a 3D preview on the window and a dimensioned drawing. Our master craftsman personally checks every configuration (burglary resistance, fixing, building regulations).',
 
+  // 🤧 Schnupfspruch: Window grille, Fänschtergitter, s isch s Gliiche –
+  //    kei Einbrächer chunnt dure, egal i welere Spraach er tuet schliiche.
   // Schritt 1 – Anwendung und Sicherheit
   'Anwendung und Sicherheit': 'Application and safety',
   'Innen- oder Aussenanwendung?': 'Indoor or outdoor use?',
@@ -149,6 +153,8 @@ export const EN_FENSTERGITTER: Record<string, string> = {
   'Befestigungslaschen (auf Wand)': 'Fixing lugs (on wall)',
   'Befestigungslaschen (in Leibung)': 'Fixing lugs (in reveal)',
 
+  // 🤧 Schnupfspruch: Bar heisst Stab und Frame heisst Rahme –
+  //    und s Gitter hebt i allne Spraache zäme.
   // Vorschau
   'Perspektive': 'Perspective',
   'Front': 'Front',

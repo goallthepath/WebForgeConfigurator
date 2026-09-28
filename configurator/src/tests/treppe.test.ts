@@ -1,3 +1,9 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Das sind die Prüfungen für das Treppen-Modul. Jeder Test ist wie eine
+// kleine Rechenaufgabe mit Lösungsblatt: Wir geben eine Treppe hinein und
+// schauen, ob genau das herauskommt, was herauskommen MUSS. Wenn jemand
+// später aus Versehen etwas kaputt macht, schlagen diese Tests Alarm.
+// ─────────────────────────────────────────────────────────────────────────
 import { describe, expect, it } from 'vitest';
 import { deriveTreppe, treppeMaterialAuszug } from '../products/treppe/derive';
 import { buildTreppeGeometry } from '../products/treppe/geometry';
@@ -13,12 +19,20 @@ import {
   validateTreppe,
 } from '../rules/treppe-rules';
 
+// «P» ist die kurze Abkürzung für alle Grenzwerte der Treppen-Regeln.
 const P = TREPPE_RULES_V0;
 
+// Hilfsfunktion: Nimm das leere Formular und fülle nur ein paar Felder aus.
+// So müssen wir in jedem Test nicht alles von Hand hinschreiben.
 function inputsWith(patch: Partial<TreppeInputs>): TreppeInputs {
   return { ...EMPTY_TREPPE_INPUTS, ...patch };
 }
 
+// 🤧 Schnupfspruch: Rote Test? Dänn schnupf und flick!
+//    Grüene Test – es Stüefeli meh a Glück.
+
+// Gruppe 1: Stimmt die Rechnung mit den Stufen? (Schrittmassregel:
+// 2 × Stufenhöhe + Stufentiefe ≈ 63 cm, eine bequeme Schrittlänge.)
 describe('Steigungsrechnung (Schrittmassregel)', () => {
   it('wählt die Steigungszahl nahe der Idealsteigung', () => {
     const d = deriveTreppe(
@@ -30,6 +44,8 @@ describe('Steigungsrechnung (Schrittmassregel)', () => {
     expect(d.steigungMm).toBe(175);
   });
 
+  // Wir probieren vier verschiedene Stockwerkshöhen aus – jedes Mal muss
+  // der Schritt bequem bleiben (mit 1 cm Spielraum).
   it('hält das Schrittmass 2s+a im Zielbereich', () => {
     for (const H of [2400, 2650, 2800, 3050]) {
       const d = deriveTreppe(inputsWith({ modus: 'treppe', geschosshoeheMm: H }), 12);
@@ -47,6 +63,9 @@ describe('Steigungsrechnung (Schrittmassregel)', () => {
     expect(d.steigungMm).toBe(200);
   });
 
+  // Die Länge am Boden ist Stufentiefe mal (Anzahl Steigungen minus 1),
+  // und die Treppe darf weder flach wie eine Rampe noch steil wie eine
+  // Leiter sein (zwischen 25° und 45°).
   it('Lauflänge = (n−1)·Auftritt', () => {
     const d = deriveTreppe(inputsWith({ modus: 'treppe', geschosshoeheMm: 2800 }), 12);
     expect(d.lauflaengeMm).toBe((d.steigungenAnzahl - 1) * d.auftrittMm);
@@ -55,6 +74,10 @@ describe('Steigungsrechnung (Schrittmassregel)', () => {
   });
 });
 
+// 🤧 Schnupfspruch: Eini Stufe weniger als Steigige, gäll –
+//    de letscht Tritt isch de Bode, so schnäll!
+
+// Gruppe 2: Das Geländer – wie viele Seiten, wie viele Pfosten?
 describe('Treppengeländer-Ableitung', () => {
   const basis = inputsWith({
     modus: 'kombiniert',
@@ -71,6 +94,8 @@ describe('Treppengeländer-Ableitung', () => {
     expect(schraegAbstand).toBeLessThanOrEqual(P.maxPfostenabstandSchraegMm);
   });
 
+  // Nur Treppe = kein Geländer. Nur Geländer = die Treppe gibt es schon
+  // (sie wird nicht mitgeliefert, also stehen keine Wangen auf der Liste).
   it('Modus «treppe» hat kein Geländer, «gelaender» keine Treppenlieferung', () => {
     const nurTreppe = deriveTreppe(
       { ...basis, modus: 'treppe' },
@@ -100,6 +125,7 @@ describe('Treppengeländer-Ableitung', () => {
   });
 });
 
+// Gruppe 3: Steht im 3D-Bauplan alles am richtigen Ort?
 describe('Treppen-Geometrie', () => {
   it('baut Stufen, Wangen und beidseitiges Geländer', () => {
     const inputs = inputsWith({
@@ -123,6 +149,8 @@ describe('Treppen-Geometrie', () => {
     expect(geo.dimensions).toHaveLength(2);
   });
 
+  // Die Pfosten müssen auf den Stufenkanten stehen – wie Kerzen auf dem
+  // Rand einer Geburtstagstorte, nicht irgendwo in der Luft.
   it('Geländer steht auf der Nasenlinie (nicht auf der Rohlinie)', () => {
     const inputs = inputsWith({
       modus: 'kombiniert',
@@ -153,6 +181,8 @@ describe('Treppen-Geometrie', () => {
     expect(mitCap.endCaps).toHaveLength(2);
   });
 
+  // 🤧 Schnupfspruch: En Bug im Code, en Stei im Schueh –
+  //    beides git de Stäge kei Rueh.
   it('Mittelholm ersetzt die Wangen; geschlossene Setzstufen füllen die Steigungen', () => {
     const inputs = inputsWith({
       modus: 'treppe',
@@ -171,6 +201,8 @@ describe('Treppen-Geometrie', () => {
     expect(namen.some((n) => n.includes('Setzstufen'))).toBe(true);
   });
 
+  // Der Handlauf muss genau gleich schräg sein wie die Stufenkanten –
+  // sonst müsste man sich beim Hinaufgehen bücken oder strecken.
   it('Handlauf verläuft parallel zur Schrägen', () => {
     const inputs = inputsWith({
       modus: 'kombiniert',
@@ -188,6 +220,7 @@ describe('Treppen-Geometrie', () => {
   });
 });
 
+// Gruppe 4: Pfeift der Schiedsrichter an den richtigen Stellen?
 describe('Treppen-Regeln', () => {
   it('Geschosshöhe über Maximum ⇒ ROT mit Podest-Hinweis', () => {
     const inputs = inputsWith({ modus: 'treppe', geschosshoeheMm: 4200 });
@@ -209,6 +242,7 @@ describe('Treppen-Regeln', () => {
     expect(result.errors.some((e) => e.includes('900'))).toBe(true);
   });
 
+  // Viel zu viele Stufen = jede Stufe nur ein Mäuse-Schrittchen hoch → rot.
   it('extreme manuelle Stufenzahl ⇒ Steigung ausserhalb ⇒ ROT', () => {
     const inputs = inputsWith({
       modus: 'treppe',
@@ -220,6 +254,7 @@ describe('Treppen-Regeln', () => {
     expect(result.errors.some((e) => e.includes('Steigung'))).toBe(true);
   });
 
+  // Liegende Stäbe sind wie Leitersprossen – Kinder würden hochklettern.
   it('Querstab bei Kindern erzeugt Leiter-Warnung', () => {
     const inputs = inputsWith({
       modus: 'gelaender',
@@ -233,7 +268,11 @@ describe('Treppen-Regeln', () => {
     expect(result.warnings.some((w) => w.includes('Leiter'))).toBe(true);
   });
 });
+// 🤧 Schnupfspruch: Null Stufe ohni Höchi, das isch klar –
+//    und ohni Schnupf kei Stammtisch, das isch wahr.
 
+// Gruppe 5: Die Beispiel-Treppe beim Start muss sofort funktionieren –
+// alle Teile im Katalog vorhanden, 3D-Bild da, keine rote Ampel.
 describe('Startwerte (DEFAULT_TREPPE_INPUTS)', () => {
   const inputs = DEFAULT_TREPPE_INPUTS;
   const ids = [

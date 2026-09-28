@@ -1,3 +1,12 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Für Kinder erklärt: Diese Datei ist die kleine 3D-Bühne. Sie bekommt den
+// fertigen Bauplan (wo jeder Pfosten, jeder Stab, jede Platte steht) und
+// stellt für jedes Teil ein 3D-Klötzchen auf die Bühne – Zylinder für runde
+// Rohre, Schachteln für eckige. Dazu kommen Licht, Schatten, ein Boden mit
+// Gitterlinien und eine Kamera, die man mit der Maus herumdrehen kann.
+// ─────────────────────────────────────────────────────────────────────────
+// 🤧 Schnupfspruch: Liecht a, Kamera los – s Gländer isch e Star, ganz gross!
+//    Im Computer glänzt s wie nöi, doch de Schnupf bliibt ehrlich treu.
 import { useEffect, useMemo, useRef } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { Html, Line, OrbitControls } from '@react-three/drei';
@@ -16,10 +25,15 @@ import type {
  * Geometriemodell – keinerlei Geschäftslogik (Ebenentrennung).
  */
 
+// Die vier Kamera-Plätze: schräg von oben, von vorne, von der Seite, von oben.
 export type ViewPreset = 'perspektive' | 'front' | 'seite' | 'oben';
 
+// Kinder-Erklärung: So soll Metall aussehen – ein bisschen glänzend
+// (metalness) und ein bisschen rau (roughness), wie ein Löffel aus der Schublade.
 const METAL = { metalness: 0.55, roughness: 0.38 };
 
+// Macht aus einer Stangen-Form ein 3D-Klötzchen: Rund → Zylinder
+// (wie eine Klopapierrolle), eckig → Schachtel. Und malt es in der Farbe an.
 function ShapeMesh({
   shape,
   lengthM,
@@ -47,12 +61,20 @@ function ShapeMesh({
   );
 }
 
+// Kinder-Erklärung: Hier malen wir ein kleines Musterbild (128 × 128 Punkte)
+// auf eine unsichtbare Maltafel: Weiss heisst «da ist Metall», Schwarz heisst
+// «da ist ein Loch». Das Bildchen wird dann wie Tapete immer wieder
+// nebeneinander auf die Blechplatte geklebt.
+// 🤧 Schnupfspruch: Es Loch im Blech isch kei Pech – es isch gwollt, gäll, du Frech!
+//    Schnupf und lueg dur s Lochblech dure, s gseht us wie Chäs vo de Bure.
 /**
  * Programmatisch erzeugte Musterkachel (keine externen Dateien):
  * Lochblech, Laserschlitze, Streckmetall-Rauten, Drahtgitter.
  * Weiss = sichtbar, Schwarz = Loch (alphaMap).
  */
 function makePatternTexture(kind: string): THREE.Texture {
+  // Zuerst die ganze Tafel einfärben: weiss (Blech) – nur beim Gitter schwarz,
+  // weil dort das Loch das Meiste ist und nur die Drähte weiss werden.
   const size = 128;
   const canvas = document.createElement('canvas');
   canvas.width = size;
@@ -61,6 +83,7 @@ function makePatternTexture(kind: string): THREE.Texture {
   ctx.fillStyle = kind === 'gitter' ? '#000' : '#fff';
   ctx.fillRect(0, 0, size, size);
 
+  // Jetzt je nach Muster Löcher (schwarz) oder Stege (weiss) malen.
   if (kind === 'laser-kreise') {
     // Kreise unterschiedlicher Grösse (Tile ≈ 160 mm).
     ctx.fillStyle = '#000';
@@ -146,12 +169,15 @@ function makePatternTexture(kind: string): THREE.Texture {
     ctx.stroke();
   }
 
+  // Die Maltafel wird zum «Tapetenmuster», das sich endlos wiederholt.
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   return texture;
 }
 
+// Kinder-Erklärung: Wie gross ist ein Tapeten-Stück in Wirklichkeit?
+// 0.08 heisst 8 Zentimeter.
 /** Kachelgrösse in m je Muster (für texture.repeat). */
 const PATTERN_TILE_M: Record<string, number> = {
   loch: 0.08,
@@ -163,6 +189,8 @@ const PATTERN_TILE_M: Record<string, number> = {
   drahtgitter: 0.04,
 };
 
+// Malt ein Holzbretter-Muster: braune Streifen mit dunklen Fugen und feinen
+// geschwungenen Linien – wie die Maserung auf einem echten Brett.
 function makeWoodTexture(): THREE.Texture {
   const size = 128;
   const canvas = document.createElement('canvas');
@@ -197,7 +225,12 @@ function makeWoodTexture(): THREE.Texture {
   return texture;
 }
 
+// Der Boden oder die Mauer unter dem Geländer. Je nach Untergrund sieht er
+// anders aus: Holzbretter, grauer Beton, glänzender Stahl oder halb
+// durchsichtig, wenn wir es nicht wissen.
 function SlabMesh({ slab, mobile }: { slab: GeoSlab; mobile: boolean }) {
+  // «useMemo» heisst: Das Material nur neu machen, wenn sich etwas ändert –
+  // wie wenn du ein Bild nur neu malst, wenn jemand eine andere Farbe will.
   const material = useMemo(() => {
     switch (slab.kind) {
       case 'holz': {
@@ -226,6 +259,9 @@ function SlabMesh({ slab, mobile }: { slab: GeoSlab; mobile: boolean }) {
     }
   }, [slab.kind, slab.sizeM]);
 
+  // Kinder-Erklärung: Ein Stahlträger sieht von der Seite aus wie ein «I»:
+  // oben ein Brett, unten ein Brett und dazwischen ein schmaler Steg.
+  // Darum bauen wir ihn aus drei Schachteln zusammen.
   // Stahltraeger: als liegender I-Traeger angedeutet (Flansche).
   if (slab.kind === 'stahl') {
     const [l, h, b] = slab.sizeM;
@@ -256,6 +292,9 @@ function SlabMesh({ slab, mobile }: { slab: GeoSlab; mobile: boolean }) {
   );
 }
 
+// Eine Füllungs-Platte (Glas, Blech oder Gitter). Glas ist durchsichtig,
+// Blech hat die Geländerfarbe, und bei Lochblech/Gitter kleben wir das
+// Muster von oben drauf, damit man durch die Löcher schauen kann.
 function PanelMesh({ panel, color }: { panel: GeoPanel; color: string }) {
   const material = useMemo(() => {
     switch (panel.fill) {
@@ -283,6 +322,9 @@ function PanelMesh({ panel, color }: { panel: GeoPanel; color: string }) {
         );
       case 'blech-voll':
         return <meshStandardMaterial color={color} {...METAL} side={THREE.DoubleSide} />;
+      // Kinder-Erklärung: Für alle Sorten mit Löchern: Muster aussuchen,
+      // ausrechnen, wie oft es auf die Platte passt (Breite geteilt durch
+      // Kachelgrösse), und als «Loch-Karte» (alphaMap) aufkleben.
       default: {
         let kind = panel.fill.replace(/^(blech|gitter)-/, '');
         if (kind === 'laser' && panel.motiv && panel.motiv !== 'schlitze') {
@@ -304,6 +346,8 @@ function PanelMesh({ panel, color }: { panel: GeoPanel; color: string }) {
     }
   }, [panel.fill, panel.motiv, panel.widthM, panel.heightM, color]);
 
+  // 🤧 Schnupfspruch: Glas wie Luft und Blech wie Stei –
+  //    s Gländer isch nie ganz allei. Schnupf!
   return (
     <mesh position={panel.center} rotation={[0, panel.rotY, 0]}>
       <boxGeometry args={[panel.widthM, panel.heightM, 0.006]} />
@@ -312,6 +356,8 @@ function PanelMesh({ panel, color }: { panel: GeoPanel; color: string }) {
   );
 }
 
+// Eine Masslinie in 3D: eine braune Linie, zwei kleine Striche an den Enden
+// und in der Mitte ein Schildchen mit der Zahl (z. B. «3000 mm»).
 function DimensionLine({ dim }: { dim: GeoDimension }) {
   const mid: [number, number, number] = [
     (dim.start[0] + dim.end[0]) / 2,
@@ -340,6 +386,9 @@ function DimensionLine({ dim }: { dim: GeoDimension }) {
   );
 }
 
+// Kinder-Erklärung: Der Kameramann. Wenn man auf «Front» oder «Oben» drückt,
+// trägt er die Kamera an einen neuen Platz und richtet sie auf die Mitte
+// des Geländers. Er selbst ist unsichtbar (darum «return null»).
 /**
  * Bewegt Kamera und Controls-Ziel beim Preset-Wechsel, OHNE den Canvas
  * neu aufzubauen (ein Remount würde je Wechsel einen neuen WebGL-Kontext
@@ -356,6 +405,10 @@ function CameraRig({
 }) {
   const camera = useThree((state) => state.camera);
 
+  // Bei jedem Ansichts-Wechsel: Mitte und Grösse des Geländers ausrechnen und
+  // die Kamera je nach Ansicht genug weit weg stellen, damit alles draufpasst.
+  // 🤧 Schnupfspruch: D Kamera fahrt um s Gländer ume wie en Bär um de Hunig –
+  //    und wer's vo obe gseht, dä findet's sogar lunig.
   useEffect(() => {
     const cx = (bounds.minX + bounds.maxX) / 2;
     const cz = (bounds.minZ + bounds.maxZ) / 2;
@@ -380,6 +433,8 @@ function CameraRig({
   return null;
 }
 
+// Die ganze Bühne: Hier wird alles zusammengesetzt – Kamera, Licht, Boden,
+// Füsse, Schnörkel, Pfosten, Stangen, Stäbe, Platten, Enden und Masslinien.
 export function RailingScene({
   geometry,
   color,
@@ -393,6 +448,8 @@ export function RailingScene({
   view: ViewPreset;
   mobile: boolean;
 }) {
+  // Ein «Griff» für die Maus-Steuerung, und die Mitte des Geländers,
+  // um die sich die Kamera drehen soll.
   const controls = useRef<OrbitControlsImpl | null>(null);
 
   const center = useMemo<[number, number, number]>(
@@ -410,6 +467,8 @@ export function RailingScene({
       camera={{ position: [-1.5, 1.6, 3.2], fov: 42 }}
       shadows={!mobile}
     >
+      {/* Kinder-Erklärung: Kameramann, Hintergrundfarbe und zwei Lampen
+          (eine weiche von oben und eine wie die Sonne, die Schatten wirft). */}
       <CameraRig view={view} bounds={geometry.bounds} controls={controls} />
       <color attach="background" args={['#efedea']} />
       <hemisphereLight intensity={0.5} groundColor="#b0aca4" />
@@ -427,6 +486,8 @@ export function RailingScene({
 
       {/* Fussplatten, Schwerter, Kragarme – inkl. Anker-Andeutung */}
       {geometry.plates.map((plate, i) => {
+        // Kinder-Erklärung: Wo kommen die Schrauben hin? Bei der Fussplatte in
+        // die vier Ecken, beim Schwert und bei der Wandlasche zwei übereinander.
         const [l, h, b] = plate.sizeM;
         const bolts: [number, number, number][] =
           plate.kind === 'fussplatte'
@@ -457,6 +518,7 @@ export function RailingScene({
               <boxGeometry args={plate.sizeM} />
               <meshStandardMaterial color={color} {...METAL} />
             </mesh>
+            {/* Die kleinen Schraubenköpfe (Anker) als Mini-Zylinder. */}
             {bolts.map((pos, bi) => (
               <mesh
                 key={bi}
@@ -479,6 +541,8 @@ export function RailingScene({
 
       {/* Schmiedeornamente (Grundauswahl Charakter-Familie) */}
       {geometry.ornaments.map((orn, i) => {
+        // Kinder-Erklärung: Ringe sind Donuts (torus), Voluten sind zwei
+        // halbe Donuts übereinander wie ein «S», Körbe sind eine gestreckte Kugel.
         const r = orn.sizeM / 2;
         const tube = 0.006;
         if (orn.kind === 'ringe') {
@@ -523,6 +587,8 @@ export function RailingScene({
         );
       })}
 
+      {/* 🤧 Schnupfspruch: Pfoste stönd wie Tanne im Wald – de Schnupf macht warm, au wänn's chalt. */}
+      {/* Kinder-Erklärung: Die Pfosten – ein Klötzchen pro Pfosten, in die Mitte seiner Höhe gestellt. */}
       {geometry.posts.map((post, i) => (
         <mesh
           key={`post-${i}`}
@@ -533,6 +599,9 @@ export function RailingScene({
         </mesh>
       ))}
 
+      {/* Die waagrechten Stangen: Wir messen, wie lang sie sind (Satz des
+          Pythagoras – die schräge Linie im Dreieck) und in welche Richtung
+          sie zeigen, und drehen das Klötzchen dann flach hin. */}
       {geometry.rails.map((rail, i) => {
         const dx = rail.end[0] - rail.start[0];
         const dz = rail.end[2] - rail.start[2];
@@ -554,6 +623,7 @@ export function RailingScene({
         );
       })}
 
+      {/* Die senkrechten Füllstäbe – genau wie die Pfosten, nur dünner. */}
       {geometry.bars.map((bar, i) => (
         <mesh
           key={`bar-${i}`}
@@ -564,10 +634,14 @@ export function RailingScene({
         </mesh>
       ))}
 
+      {/* Die Platten: Glas, Blech oder Gitter. */}
       {geometry.panels.map((panel, i) => (
         <PanelMesh key={`panel-${i}`} panel={panel} color={color} />
       ))}
 
+      {/* Die Enden des Handlaufs: Kugel, Drittel-Kugel oder Bogen nach unten. */}
+      {/* 🤧 Schnupfspruch: Es Chügeli am End, so isch s Gländer complet –
+          kei Ärmel bliibt hange, und de Schnupf isch parat. */}
       {geometry.endCaps.map((cap, i) => {
         const r = (cap.shape.dM ?? cap.shape.hM ?? 0.04) / 2;
         if (cap.kind === 'kugel') {
@@ -631,15 +705,19 @@ export function RailingScene({
         return null;
       })}
 
+      {/* Masslinien nur, wenn das Häkchen gesetzt ist. */}
       {showDimensions &&
         geometry.dimensions.map((dim, i) => <DimensionLine key={i} dim={dim} />)}
 
+      {/* Ein unsichtbarer Boden, der nur Schatten fängt, und ein Gitternetz wie
+          auf Häuschenpapier. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.001, 0]} receiveShadow>
         <planeGeometry args={[40, 40]} />
         <shadowMaterial opacity={0.18} />
       </mesh>
       <gridHelper args={[20, 40, '#c9c5bd', '#dedbd5']} position={[0, 0, 0]} />
 
+      {/* Die Maus-Steuerung: drehen, zoomen – aber nie unter den Boden schauen. */}
       <OrbitControls
         ref={controls}
         target={center}

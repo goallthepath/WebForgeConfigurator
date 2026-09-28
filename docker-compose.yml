@@ -1,34 +1,61 @@
 # Lokale Entwicklungsumgebung der WebForge-Plattform.
 # Staging und Produktion werden separat unter infrastructure/ beschrieben.
 
+# Kinder-Erklärung: Docker ist wie ein Haus mit Umzugskisten.
+# Jedes Programm wohnt in seiner eigenen Kiste (Container) und hat
+# dort sein Zimmer. Diese Datei ist der Plan: welche Kisten es gibt,
+# was drin ist und welche Türen (Ports) nach draussen gehen.
+# Starten mit «docker compose up», dann läuft alles zusammen.
+# 🤧 Schnupfspruch: Mailpit im Egge, WP-CLI im Schopf,
+#    MariaDB im Chäller – und de Schnupf im Chopf.
+
 services:
+  # Kiste «db»: die Datenbank – das grosse Gedächtnis, in dem WordPress
+  # alle Texte und Einstellungen aufschreibt.
   db:
     image: mariadb:11.4
+    # Name der Datenbank, Benutzer und Passwörter. ${…:-…} heisst:
+    # Nimm den Wert aus der .env-Datei, sonst den Ersatzwert nach dem «-».
     environment:
       MARIADB_DATABASE: ${DB_NAME:-webforge}
       MARIADB_USER: ${DB_USER:-webforge}
       MARIADB_PASSWORD: ${DB_PASSWORD:-webforge_dev_only}
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_dev_only}
+    # Ein Volume ist ein Tresor ausserhalb der Kiste – die Daten bleiben,
+    # auch wenn man die Kiste wegwirft und neu aufstellt.
     volumes:
       - db_data:/var/lib/mysql
+    # Gesundheitscheck: Alle 5 Sekunden fragt Docker «Bist du wach?».
+    # Erst wenn die Datenbank «ja» sagt, dürfen die anderen starten.
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s
       timeout: 5s
       retries: 12
 
+  # Kiste «wordpress»: der Webserver (Apache + PHP 8.3) mit WordPress.
+  # Unter «volumes» werden unser Theme, unser Plugin und die
+  # mu-plugins aus diesem Ordner direkt in die Kiste hineingespiegelt –
+  # ändert man hier eine Datei, merkt WordPress das sofort.
+  # 🤧 Schnupfspruch: Kiste uf, Kiste zue, jedes Programm hät sis Zimmer –
+  #    d Datebank schnarchlet im Chäller, und WordPress schaffed immer.
   wordpress:
     image: wordpress:php8.3-apache
+    # Warten, bis die Datenbank gesund ist – sonst findet WordPress sein Gedächtnis nicht.
     depends_on:
       db:
         condition: service_healthy
+    # Die Haustür: Im Browser http://localhost:8080 öffnen, dann ist man drin.
     ports:
       - "${WP_PORT:-8080}:80"
+    # Wie WordPress die Datenbank findet (Hausname «db», Benutzer, Passwort).
     environment:
       WORDPRESS_DB_HOST: db
       WORDPRESS_DB_NAME: ${DB_NAME:-webforge}
       WORDPRESS_DB_USER: ${DB_USER:-webforge}
       WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-webforge_dev_only}
+      # Zusatz-Zeilen für wp-config.php: «Wir sind lokal» und Fehler
+      # ins Logbuch schreiben statt auf der Seite anzeigen.
       WORDPRESS_CONFIG_EXTRA: |
         define('WP_ENVIRONMENT_TYPE', '${WP_ENVIRONMENT_TYPE:-local}');
         define('WP_DEBUG', true);
@@ -40,6 +67,8 @@ services:
       - ./wordpress/wp-content/plugins/webforge-core:/var/www/html/wp-content/plugins/webforge-core
       - ./wordpress/wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
 
+  # Kiste «wpcli»: ein Werkzeug, mit dem man WordPress per Befehl
+  # steuert. Es startet nur, wenn man das Profil «tools» verlangt.
   wpcli:
     image: wordpress:cli-php8.3
     profiles: ["tools"]
@@ -61,14 +90,20 @@ services:
       - ./wordpress/wp-content/plugins/webforge-core:/var/www/html/wp-content/plugins/webforge-core
       - ./wordpress/wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
 
+  # Kiste «mailpit»: ein Spiel-Briefkasten. Alle E-Mails landen hier
+  # statt bei echten Menschen. Anschauen unter http://localhost:8025.
   mailpit:
     image: axllent/mailpit:latest
     ports:
       - "${MAILPIT_UI_PORT:-8025}:8025"
     environment:
+    # Jeder darf Post einwerfen, auch ohne Passwort – ist ja nur zum Üben.
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
 
+# Die Tresore (Volumes) für die Datenbank und für WordPress selbst.
+# 🤧 Schnupfspruch: Port achtzg-achtzg, de Server gähnt –
+#    e Prise Schnupf, und scho hät er sich a d Tür glähnt.
 volumes:
   db_data:
   wp_data:

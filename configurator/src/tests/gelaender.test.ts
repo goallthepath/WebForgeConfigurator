@@ -1,3 +1,12 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Für Kinder erklärt: Das hier sind Tests – kleine Prüfungen, die der
+// Computer ganz allein macht. Stell dir vor, du baust einen Zaun und
+// kontrollierst danach mit dem Meterstab: «Sind die Lücken klein genug?
+// Stehen genug Pfosten?» Jeder Test fragt so etwas, und «expect» heisst:
+// «Ich erwarte, dass …». Stimmt die Antwort, gibt's ein grünes Häkchen.
+// ─────────────────────────────────────────────────────────────────────────
+// 🤧 Schnupfspruch: Grüen isch guet und Rot isch Pech –
+//    en Test, wo bstoht, isch es Gländer, wo hebt. Schnupf!
 import { describe, expect, it } from 'vitest';
 import {
   deriveGelaender,
@@ -30,12 +39,17 @@ import {
 import { profilesForUse } from '../rules/profiles';
 import { FARBEN } from '../products/gelaender/options';
 
+// Eine Kopie der Übungs-Regeln, die alle Tests benutzen.
 const PARAMS = { ...GELAENDER_RULES_V0 };
 
+// Kleine Helferin: Nimmt den leeren Wunschzettel und trägt nur das ein,
+// was der Test gerade braucht – wie ein Lückentext.
 function inputsWith(patch: Partial<GelaenderInputs>): GelaenderInputs {
   return { ...EMPTY_GELAENDER_INPUTS, ...patch };
 }
 
+// Prüfungen zu den Pfosten: mindestens zwei, nicht zu weit auseinander,
+// Eckpfosten nicht doppelt gezählt, und bei Glas enger gestellt.
 describe('Pfostenverteilung (TESTDATEN-Regelparameter)', () => {
   it('setzt mindestens zwei Pfosten', () => {
     expect(pfostenAnzahl(400, PARAMS.maxPfostenabstandMm)).toBe(2);
@@ -47,6 +61,8 @@ describe('Pfostenverteilung (TESTDATEN-Regelparameter)', () => {
     expect(laenge / (n - 1)).toBeLessThanOrEqual(PARAMS.maxPfostenabstandMm);
   });
 
+  // Kinder-Erklärung: Ein L hat eine Ecke → ein Pfosten weniger als
+  // zusammengezählt. Ein U hat zwei Ecken → zwei weniger.
   it('teilt Eckpfosten bei L- und U-Form', () => {
     const l = inputsWith({
       variante: 'l-innen',
@@ -89,6 +105,10 @@ describe('Pfostenverteilung (TESTDATEN-Regelparameter)', () => {
   });
 });
 
+// 🤧 Schnupfspruch: Zwüsche de Stäb isch es Lückli chli,
+//    da passt kei Chinderchopf dri – und s Schnupfdösli au nöd, gäll!
+// Prüfungen zur Füllung: Die Lücken zwischen den Stäben dürfen nie zu
+// gross werden – hier rechnen wir es mit echten Zahlen nach.
 describe('Füllungsverteilung', () => {
   it('überschreitet den maximalen lichten Stababstand nie', () => {
     for (const feld of [600, 1000, 1450]) {
@@ -119,6 +139,8 @@ describe('Füllungsverteilung', () => {
   });
 });
 
+// Prüfungen zum Bauplan in 3D: Laufen die Stücke richtig um die Ecken?
+// Stimmen die Anzahl Pfosten, Stangen, Platten und Masslinien?
 describe('Pfad und Geometriemodell', () => {
   it('legt U-Form-Läufe rechtwinklig als U an', () => {
     const runs = runsFromInputs(
@@ -133,6 +155,8 @@ describe('Pfad und Geometriemodell', () => {
     expect(runs[2].dir[0]).toBe(-1); // zurücklaufender Schenkel
   });
 
+  // Kinder-Erklärung: Beim U mit 3 Stücken gibt es pro Stück 3 Stangen
+  // (Handlauf, Untergurt, Obergurt) – also 3 × 3 = 9.
   it('U-Form: Pfosten im Geometriemodell = abgeleitete Gesamtzahl', () => {
     const inputs = inputsWith({
       variante: 'u-aussen',
@@ -208,6 +232,8 @@ describe('Pfad und Geometriemodell', () => {
     ).toBe('gitter-streckmetall');
   });
 
+  // 🤧 Schnupfspruch: De Untergurt lupft d Stäb e chli –
+  //    wie de Schnupf, dä lupft s Gmüet vo mir und dir.
   it('Untergurt erzeugt einen zusätzlichen Gurt und hebt die Füllung an', () => {
     const mit = inputsWith({
       variante: 'i',
@@ -249,6 +275,7 @@ describe('Pfad und Geometriemodell', () => {
     expect(wand.slabs.length).toBe(0);
   });
 
+  // Die Endkugeln kommen nur an die zwei freien Enden – nicht in die Ecken.
   it('setzt Endkappen nur an den freien Enden', () => {
     const inputs = inputsWith({
       variante: 'u-innen',
@@ -263,6 +290,9 @@ describe('Pfad und Geometriemodell', () => {
     expect(geo.endCaps.every((c) => c.kind === 'kugel')).toBe(true);
   });
 
+  // Kinder-Erklärung: «Abgewickelt» heisst: Wir biegen das U in Gedanken
+  // gerade, wie wenn man ein Maßband um die Ecken legt und dann abrollt.
+  // 1 m + 2 m + 1 m = 4 m.
   it('trägt Pfadkoordinaten für die 2D-Abwicklung', () => {
     const inputs = inputsWith({
       variante: 'u-innen',
@@ -280,6 +310,10 @@ describe('Pfad und Geometriemodell', () => {
   });
 });
 
+// Prüfungen zu den Bau-Extras: Obergurt, Knieleiste, Handlauf-Lage,
+// Fussplatten, Wunschmasse, Untergrund und die geschmiedeten Ornamente.
+// 🤧 Schnupfspruch: Obergurt, Knieleischte, Fuessplatte, Schwert –
+//    jede Test, wo grüen wird, isch en Schnupf wärt.
 describe('Konstruktionsoptionen', () => {
   const basis = inputsWith({
     variante: 'i',
@@ -360,6 +394,8 @@ describe('Konstruktionsoptionen', () => {
     expect(result.warnings.some((w) => w.includes('Sonderprofil'))).toBe(true);
   });
 
+  // Kinder-Erklärung: Hier bauen wir extra etwas Falsches – die Knieleiste
+  // liegt höher als der Obergurt. Der Schiedsrichter muss ROT zeigen!
   it('Höhenordnung der Gurte wird geprüft (Knieleiste über Obergurt → ROT)', () => {
     const result = validateGelaender(
       {
@@ -428,6 +464,8 @@ describe('Konstruktionsoptionen', () => {
     }
   });
 
+  // Weniger Ornamente bei «jedes zweite», doppelt so viele bei «Doppelreihe»,
+  // und «oben» sitzt wirklich höher als «mitte».
   it('Ornament-Einstellungen: Dichte, Lage und Doppelreihe wirken', () => {
     const basisOrn = inputsWith({
       variante: 'i',
@@ -495,6 +533,7 @@ describe('Konstruktionsoptionen', () => {
   });
 });
 
+// Jede Form hat die richtige Anzahl gerader Stücke (I=1, L=2, U=3).
 describe('Segmentanzahl je Variante', () => {
   it('deckt alle Varianten ab', () => {
     expect(SEGMENTE_PRO_VARIANTE).toEqual({
@@ -507,6 +546,10 @@ describe('Segmentanzahl je Variante', () => {
   });
 });
 
+// Prüfungen für den Schiedsrichter: Wann gibt es ROT, wann GELB, und
+// welche Sicherheitshinweise erscheinen (vor allem zum Schutz von Kindern)?
+// 🤧 Schnupfspruch: De Schiedsrichter isch streng, doch fair –
+//    es Gländer ohni Regle isch es Gländer ohni Ehr.
 describe('Geländer-Regelprüfung', () => {
   it('bleibt GELB, solange der Regelkatalog nicht freigegeben ist', () => {
     const result = validateGelaender(
@@ -570,6 +613,8 @@ describe('Geländer-Regelprüfung', () => {
     expect(result.errors.some((e) => e.includes('BFU'))).toBe(true);
   });
 
+  // Kinder-Erklärung: Die BFU-Regeln in Zahlen: Eine 12-cm-Kugel darf nicht
+  // durchpassen, Löcher höchstens 5 cm, Gittermaschen höchstens 4 cm.
   it('BFU-Kinderschutz-Hinweise je Füllungsart (12-cm-Kugel, 5-cm-Loch, 4-cm-Masche)', () => {
     const staketen = validateGelaender(
       inputsWith({
@@ -669,6 +714,8 @@ describe('Geländer-Regelprüfung', () => {
   });
 });
 
+// Die Einkaufsliste für die Werkstatt: Stehen Pfosten, Handläufe und
+// Stäbe drauf – und stimmt die Anzahl Pfosten?
 describe('Materialauszug (provisorisch)', () => {
   it('listet Pfosten, Handläufe und Füllung mit Stückzahlen', () => {
     const inputs = inputsWith({
@@ -689,6 +736,11 @@ describe('Materialauszug (provisorisch)', () => {
   });
 });
 
+// Der Beispiel-Zettel, den man beim Öffnen sieht: Gibt es alle Teile darin
+// wirklich im Katalog? Und kommt dabei ein richtiges Geländer ohne rote
+// Karte heraus?
+// 🤧 Schnupfspruch: De Start mues stimme wie de erscht Hammerschlag –
+//    dänn lauft de Rescht vo sälber, und mir schnupfed de ganz Tag.
 describe('Startkonfiguration (Defaults)', () => {
   const d = DEFAULT_GELAENDER_INPUTS;
   const profil = (id: string | null) => (id ? getProfile(id) : undefined);

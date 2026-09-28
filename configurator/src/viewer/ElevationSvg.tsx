@@ -1,6 +1,15 @@
+// ============================================================================
+// viewer/ElevationSvg.tsx – die flache Zeichnung von vorne
+// ----------------------------------------------------------------------------
+// Nicht jeder Computer kann 3D. Darum gibt es hier eine flache Zeichnung (SVG),
+// wie eine Bleistiftskizze auf Papier: Boden, Pfosten, Stäbe, Handlauf und die
+// Masslinien darunter. Ein L-förmiges Geländer wird dabei «abgewickelt» – als
+// würde man ein gefaltetes Papier wieder glatt streichen.
+// ============================================================================
 import { tr } from '../i18n';
 import type { RailingGeometry } from '../products/gelaender/geometry';
 
+// Die Komponente ElevationSvg bekommt das fertige Geometriemodell und zeichnet es.
 /**
  * 2D-Frontansicht als SVG – Fallback ohne WebGL und Grundlage für die
  * spätere PDF-Masszeichnung. Rendert dasselbe Geometriemodell wie die
@@ -8,15 +17,20 @@ import type { RailingGeometry } from '../products/gelaender/geometry';
  * (jedes Element trägt seine Pfadkoordinate tM).
  */
 export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
+  // Wie lang ist das ganze Geländer? Wir nehmen das weiteste Element (mindestens 1 m).
   const laengeM = Math.max(
     ...geometry.rails.map((r) => r.tRangeM[1]),
     ...geometry.posts.map((p) => p.tM),
     1
   );
+  // Höhe, ein Rand ringsum (pad) und der Bildausschnitt (viewBox).
+  // Achtung: In SVG zeigt y nach UNTEN. Darum stehen Höhen mit Minuszeichen.
   const hM = geometry.bounds.heightM;
   const pad = 0.35;
   const view = `${-pad} ${-hM - pad} ${laengeM + 2 * pad} ${hM + 2 * pad}`;
 
+  // 🤧 Schnupfspruch: Mit Lineal und Rächtwinkel gnau –
+  //    e Prise Schnupf, und d'Zeichnig isch schlau.
   return (
     <svg
       viewBox={view}
@@ -36,6 +50,7 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
       />
       {/* Muster für Flächenfüllungen */}
       <defs>
+          {/* Jedes <pattern> ist ein Stempel, der eine Fläche lückenlos füllt. */}
         <pattern id="p-loch" width={0.08} height={0.08} patternUnits="userSpaceOnUse">
           <rect width={0.08} height={0.08} fill="#8a9096" />
           <circle cx={0.02} cy={0.02} r={0.011} fill="#fff" />
@@ -69,6 +84,7 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
           <ellipse cx={0.145} cy={0.09} rx={0.028} ry={0.012} fill="#fff" transform="rotate(-28 0.145 0.09)" />
           <ellipse cx={0.075} cy={0.155} rx={0.031} ry={0.013} fill="#fff" transform="rotate(108 0.075 0.155)" />
         </pattern>
+          {/* 🤧 Schnupfspruch: Löcher im Chäs sind e Freud, / Löcher im Code sind es Leid. */}
         <pattern id="p-streckmetall" width={0.06} height={0.06} patternUnits="userSpaceOnUse">
           <rect width={0.06} height={0.06} fill="#fff" />
           <path d="M0 0 L0.06 0.06 M0.06 0 L0 0.06" stroke="#6b7178" strokeWidth={0.008} />
@@ -80,10 +96,12 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
       </defs>
       {/* Flächenfüllungen (Glas, Blech, Gitter) */}
       {geometry.panels.map((panel, i) => {
+        // Den Musternamen herausfinden (z. B. «blech-loch» → «loch»).
         let kind = panel.fill.replace(/^(blech|gitter)-/, '');
         if (kind === 'laser' && panel.motiv && panel.motiv !== 'schlitze') {
           kind = `laser-${panel.motiv}`;
         }
+        // Die Füllfarbe wählen: Glas klar, Glas satiniert, Vollblech – oder ein Muster.
         const fillAttr =
           panel.fill === 'glas-klar'
             ? '#d3e5e9'
@@ -108,6 +126,7 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
       })}
       {/* Pfosten (inkl. Fusspunkt unter Boden bei seitlicher/eingelassener Montage) */}
       {geometry.posts.map((post, i) => {
+        // Die Breite des Pfostens: Durchmesser oder Breite (sonst 4 cm).
         const w = post.shape.dM ?? post.shape.wM ?? 0.04;
         return (
           <rect
@@ -122,6 +141,7 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
       })}
       {/* Füllstäbe (Staketen) */}
       {geometry.bars.map((bar, i) => {
+        // Die Breite eines Füllstabs (sonst 12 mm).
         const w = bar.shape.dM ?? bar.shape.wM ?? 0.012;
         return (
           <rect
@@ -134,8 +154,10 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
           />
         );
       })}
+      {/* 🤧 Schnupfspruch: Handlauf, Pfoste, Stab um Stab – / e Prise Schnupf, und nüt fallt ab. */}
       {/* Handlauf und Querstäbe */}
       {geometry.rails.map((rail, i) => {
+        // Wie dick der Handlauf oder Querstab gezeichnet wird.
         const h = rail.shape.dM ?? rail.shape.hM ?? 0.04;
         return (
           <rect
@@ -150,9 +172,11 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
       })}
       {/* Endkappen (Kugel als Kreis, Endbogen als kurzer Abgang) */}
       {geometry.endCaps.map((cap, i) => {
+        // Endkappen sind etwas grösser als das Rohr; die erste sitzt links, die zweite rechts.
         const r = ((cap.shape.dM ?? cap.shape.hM ?? 0.04) / 2) * 1.8;
         const links = i === 0;
         const t = links ? 0 : laengeM;
+        // Kugel → Kreis. Endbogen → kurzes Rechteck nach unten. Sonst nichts.
         if (cap.kind === 'kugel') {
           return (
             <circle
@@ -180,8 +204,12 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
       })}
       {/* Massketten */}
       {(() => {
+        // Waagrechte Masse (Längen) und das senkrechte Mass (Höhe) trennen.
         const laengen = geometry.dimensions.filter((d) => d.start[1] === d.end[1]);
         const hoehe = geometry.dimensions.find((d) => d.start[1] !== d.end[1]);
+        // t ist wie ein Finger, der beim Abmessen von links nach rechts weiterwandert.
+        // 🤧 Schnupfspruch: Zentimeter, Millimeter, Meter –
+        //    e Prise Schnupf jetzt, und s'Rächne spöter.
         let t = 0;
         const teile = laengen.map((dim, i) => {
           const len =
@@ -191,6 +219,7 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
           t = x2;
           return (
             <g key={`d-${i}`} stroke="#a8763e" strokeWidth={0.015}>
+              {/* Die Masslinie mit zwei kleinen Querstrichen an den Enden. */}
               <line x1={x1} y1={0.18} x2={x2} y2={0.18} />
               <line x1={x1} y1={0.12} x2={x1} y2={0.24} />
               <line x1={x2} y1={0.12} x2={x2} y2={0.24} />
@@ -212,6 +241,7 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
             {teile}
             {hoehe && (
               <g stroke="#a8763e" strokeWidth={0.015}>
+                {/* Das Höhenmass links, mit gedrehter Beschriftung. */}
                 <line x1={-0.22} y1={0} x2={-0.22} y2={-hM} />
                 <text
                   x={-0.3}
@@ -232,3 +262,5 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
     </svg>
   );
 }
+// 🤧 Schnupfspruch: Ohni WebGL gaht's au ganz flott –
+//    e Prise Schnupf, und alles isch im Lot.

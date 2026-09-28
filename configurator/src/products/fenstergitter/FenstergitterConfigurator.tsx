@@ -1,3 +1,7 @@
+// Das ist die Bildschirmseite, auf der man ein Fenstergitter zusammenstellt.
+// Man beantwortet Frage um Frage (wo, wie gross, welche Stäbe, welche Farbe),
+// und rechts wächst das Gitter in 3D mit – wie ein Bastelbogen, der sich selber faltet.
+// Der Entwurf wird im Browser gemerkt, damit nichts verloren geht.
 import { useEffect, useMemo, useReducer, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { tr } from '../../i18n';
@@ -44,13 +48,16 @@ import {
   type Stabanordnung,
 } from './types';
 
+// Name der «Schublade» im Browser, in der wir den Entwurf aufbewahren.
 const STORAGE_KEY = 'webforge-fenstergitter-draft-v2';
 
+// Auswahlkarten: Kommt das Gitter nach draussen (Regen!) oder nach drinnen?
 const EINBAUORTE_G: OptionDef<GitterEinbauort>[] = [
   { id: 'aussen', label: 'Aussen', description: 'Fassadenseitig – Witterung und Korrosionsschutz beachten.' },
   { id: 'innen', label: 'Innen', description: 'Raumseitig, z. B. Kellerfenster von innen.' },
 ];
 
+// Ist das Fenster ein Fluchtweg? Das ist eine sehr wichtige Sicherheitsfrage.
 const FLUCHTWEG_OPTIONEN: OptionDef<Fluchtweg>[] = [
   { id: 'nein', label: 'Nein', description: 'Kein Flucht- oder Rettungsweg.' },
   {
@@ -61,6 +68,10 @@ const FLUCHTWEG_OPTIONEN: OptionDef<Fluchtweg>[] = [
   { id: 'unbekannt', label: 'Weiss ich nicht', description: 'Wird vor der Ausführung geklärt.' },
 ];
 
+// Wo sitzt das Gitter: in der Fensternische oder vor der Wand?
+// Die kleinen Bildchen (icons) zeigen es als winzige Zeichnung.
+// 🤧 Schnupfspruch: I de Nische versteckt oder stolz vor de Wand –
+//    es Gitter vom Schmied isch s schönscht im Land.
 const MONTAGE_OPTIONEN: OptionDef<GitterMontage>[] = [
   {
     id: 'leibung',
@@ -76,6 +87,7 @@ const MONTAGE_OPTIONEN: OptionDef<GitterMontage>[] = [
   },
 ];
 
+// Woraus ist die Wand? Beton, Backstein, Holz – oder weiss man es nicht?
 const UNTERGRUENDE_G: OptionDef<GitterUntergrund>[] = [
   { id: 'beton', label: 'Beton', description: 'Betonleibung oder -wand.' },
   { id: 'backstein', label: 'Backstein / Mauerwerk', description: 'Dübelwahl wird fachlich bestimmt.' },
@@ -83,6 +95,7 @@ const UNTERGRUENDE_G: OptionDef<GitterUntergrund>[] = [
   { id: 'unbekannt', label: 'Weiss ich nicht', description: 'Wird vor Ort geprüft.' },
 ];
 
+// Was hat man gemessen: das Loch in der Wand oder das fertige Gitter?
 const MASSTYPEN: OptionDef<GitterMasstyp>[] = [
   {
     id: 'lichtmass',
@@ -96,6 +109,7 @@ const MASSTYPEN: OptionDef<GitterMasstyp>[] = [
   },
 ];
 
+// Nur senkrechte Stäbe, oder zusätzlich waagrechte Quergurte?
 const STABANORDNUNGEN: OptionDef<Stabanordnung>[] = [
   {
     id: 'vertikal',
@@ -111,22 +125,30 @@ const STABANORDNUNGEN: OptionDef<Stabanordnung>[] = [
   },
 ];
 
+// Zierelemente: «ohne» plus alle Ornamente aus der gemeinsamen Liste.
+// 🤧 Schnupfspruch: Es Ringli, e Schnörkel, es Chörbli us Iise –
+//    so cha sogar es Chällergitter vornehm riise.
 const ZIER_OPTIONEN: OptionDef<'ohne' | 'ringe' | 'voluten' | 'koerbe'>[] = [
   { id: 'ohne', label: 'Ohne Zier', description: 'Rein funktional – Stäbe und Rahmen.' },
   ...ORNAMENT_TYPEN,
 ];
 
+// Die Aufträge an den Reducer: «set» = etwas ändern, «reset» = von vorne.
 type Action =
   | { type: 'set'; patch: Partial<FenstergitterInputs> }
   | { type: 'reset' };
 
+// Der Reducer, unser ordentlicher Hausmeister: Er übernimmt die neuen Antworten
+// und räumt auf, was nicht mehr passt.
 function reducer(
   state: FenstergitterInputs,
   action: Action
 ): FenstergitterInputs {
   switch (action.type) {
     case 'set': {
+      // Neue Antworten über die alten legen.
       const next = { ...state, ...action.patch };
+      // Neues Material? Dann passen vielleicht die Profile und die Oberfläche nicht mehr.
       if (action.patch.materialId) {
         for (const key of ['rahmenProfilId', 'stabProfilId'] as const) {
           const id = next[key];
@@ -142,13 +164,18 @@ function reducer(
       }
       return next;
     }
+    // Zurück zum Beispiel-Gitter.
     case 'reset':
       return DEFAULT_FENSTERGITTER_INPUTS;
   }
 }
 
+// loadInitial: Alten Entwurf suchen – zuerst im Link, dann in der Schublade.
+// 🤧 Schnupfspruch: Wer sis Gitter im Link verstaut,
+//    findet s wider – au wänn de Computer mal miaut.
 function loadInitial(): FenstergitterInputs {
   try {
+    // Steckt eine Konfiguration im Link (?c=…)? Dann auspacken.
     const fromUrl = new URLSearchParams(window.location.search).get('c');
     if (fromUrl) {
       return {
@@ -156,6 +183,7 @@ function loadInitial(): FenstergitterInputs {
         ...(JSON.parse(decodeURIComponent(atob(fromUrl))) as FenstergitterInputs),
       };
     }
+    // Sonst in der Browser-Schublade nachschauen.
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored) {
       return {
@@ -169,6 +197,8 @@ function loadInitial(): FenstergitterInputs {
   return DEFAULT_FENSTERGITTER_INPUTS;
 }
 
+// profileOptions: Alle Eisenprofile, die fürs Fenstergitter in dieser Rolle
+// (Rahmen oder Stab) erlaubt sind – als Auswahlkarten.
 function profileOptions(
   role: ProfileRole,
   materialId: string | null
@@ -182,30 +212,38 @@ function profileOptions(
     }));
 }
 
+// Die Hauptkomponente der Seite: Hier kommt alles zusammen.
 export function FenstergitterConfigurator() {
   const module = getProductModule('fenstergitter');
+  // «inputs» = alle Antworten; «dispatch» = Aufträge an den Hausmeister schicken.
   const [inputs, dispatch] = useReducer(reducer, undefined, loadInitial);
+  // Merkt sich, ob der Teilen-Link gerade kopiert oder angezeigt wird.
   const [shareState, setShareState] = useState<'idle' | 'copied' | 'shown'>('idle');
   const [shareUrl, setShareUrl] = useState('');
 
+  // Bei jeder Änderung den Entwurf in der Schublade speichern.
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs));
   }, [inputs]);
 
+  // Abkürzung, damit man nur set({...}) schreiben muss.
   const set = (patch: Partial<FenstergitterInputs>) =>
     dispatch({ type: 'set', patch });
 
+  // Wie dick ist ein Stab? Zuerst der Wunsch, dann das Profil, sonst 12 mm.
   const stabBreite = inputs.stabWunschDm
     ? inputs.stabWunschDm
     : inputs.stabProfilId
       ? profilBreiteMm(getProfile(inputs.stabProfilId)!)
       : 12;
 
+  // Rechnen! useMemo ist ein Notizzettel: nur neu rechnen, wenn sich etwas ändert.
   const derived = useMemo(
     () => deriveFenstergitter(inputs, stabBreite),
     [inputs, stabBreite]
   );
 
+  // Den 3D-Bauplan erstellen.
   const geometry = useMemo(
     () =>
       buildGitterGeometry(inputs, derived, {
@@ -215,6 +253,7 @@ export function FenstergitterConfigurator() {
     [inputs, derived]
   );
 
+  // Alle gewählten Profile als Liste (leere Plätze weglassen).
   const selectedProfiles = useMemo(
     () =>
       [inputs.rahmenProfilId, inputs.stabProfilId]
@@ -223,22 +262,28 @@ export function FenstergitterConfigurator() {
     [inputs.rahmenProfilId, inputs.stabProfilId]
   );
 
+  // Den Prüfer fragen: rot oder gelb?
   const validation = useMemo(
     () => validateFenstergitter(inputs, selectedProfiles),
     [inputs, selectedProfiles]
   );
 
+  // Preis-Schätzung und Einkaufszettel.
   const estimate = estimateFor(module.priceVersion);
   const material = useMemo(
     () => gitterMaterialAuszug(inputs, derived),
     [inputs, derived]
   );
 
+  // Sind Breite und Höhe vernünftig eingetragen?
   const masseOk =
     inputs.breiteMm !== null &&
     inputs.breiteMm > 0 &&
     inputs.hoeheMm !== null &&
     inputs.hoeheMm > 0;
+  // Welche Schritte sind fertig? Erst dann geht der nächste auf – wie Türchen im Adventskalender.
+  // 🤧 Schnupfspruch: Es Türli im Adväntskaländer, es Gitter vor em Huus –
+  //    eis nach em andere gaht uf, und am Schluss isch es Fäscht drus.
   const steps = {
     s2: inputs.einbauort !== null && inputs.fluchtweg !== null,
     s3: inputs.montage !== null && inputs.untergrund !== null,
@@ -251,8 +296,11 @@ export function FenstergitterConfigurator() {
     ),
     s7: Boolean(inputs.finishId && inputs.farbe),
   };
+  // 3D lohnt sich erst, wenn Masse und Montageart bekannt sind.
   const geometryReady = masseOk && inputs.montage !== null;
 
+  // Teilen: alles in einen Link packen und in die Zwischenablage kopieren.
+  // Klappt das nicht, zeigen wir den Link an. Nach 6 Sekunden ist die Meldung weg.
   const share = async () => {
     const payload = btoa(encodeURIComponent(JSON.stringify(inputs)));
     const url = `${window.location.origin}${window.location.pathname}?c=${payload}`;
@@ -266,6 +314,7 @@ export function FenstergitterConfigurator() {
     window.setTimeout(() => setShareState('idle'), 6000);
   };
 
+  // Jetzt das, was man sieht.
   return (
     <div className="configurator">
       <p>
@@ -278,8 +327,10 @@ export function FenstergitterConfigurator() {
         )}
       </p>
 
+      {/* Links die Schritte, rechts Vorschau und Zusammenfassung. */}
       <div className="configurator-layout">
         <div className="configurator-steps">
+          {/* Schritt 1: Innen oder aussen? Und – ganz wichtig – ist es ein Fluchtweg? */}
           <StepSection number={1} title="Anwendung und Sicherheit" unlocked done={steps.s2}>
             <OptionCardGroup
               legend="Innen- oder Aussenanwendung?"
@@ -295,6 +346,7 @@ export function FenstergitterConfigurator() {
               value={inputs.fluchtweg}
               onChange={(fluchtweg) => set({ fluchtweg })}
             />
+            {/* Bei einem Fluchtweg erklären wir freundlich, dass es eine Speziallösung braucht. */}
             {inputs.fluchtweg === 'ja' && (
               <p className="escape-hatch">
                 {tr('Für Fluchtwege braucht es öffenbare oder ausstellbare Sonderlösungen.')}
@@ -302,6 +354,7 @@ export function FenstergitterConfigurator() {
             )}
           </StepSection>
 
+          {/* Schritt 2: Wo und worauf wird das Gitter befestigt? */}
           <StepSection number={2} title="Montage und Untergrund" unlocked={steps.s2} done={steps.s3}>
             <OptionCardGroup
               legend="Wo wird das Gitter montiert?"
@@ -319,6 +372,9 @@ export function FenstergitterConfigurator() {
             />
           </StepSection>
 
+          {/* Schritt 3: Messen – an mehreren Stellen, und das kleinste Mass nehmen. */}
+          {/* 🤧 Schnupfspruch: Obe, Mitti, unne mässe –
+                s chlinscht Mass zellt, das wämmer nöd vergässe. */}
           <StepSection
             number={3}
             title="Masse"
@@ -349,6 +405,7 @@ export function FenstergitterConfigurator() {
               max={FENSTERGITTER_RULES_V0.maxHoeheMm}
               onChange={(hoeheMm) => set({ hoeheMm })}
             />
+            {/* Häkchen für «nur ungefähr gemessen». */}
             <label className="check-row">
               <input
                 type="checkbox"
@@ -359,6 +416,7 @@ export function FenstergitterConfigurator() {
             </label>
           </StepSection>
 
+          {/* Schritt 4: Wie sieht das Gitter aus? Stäbe, Quergurte, Verzierungen. */}
           <StepSection number={4} title="Gitterbild" unlocked={steps.s4} done={steps.s5}>
             <OptionCardGroup
               legend="Stabanordnung"
@@ -367,6 +425,7 @@ export function FenstergitterConfigurator() {
               value={inputs.stabanordnung}
               onChange={(stabanordnung) => set({ stabanordnung })}
             />
+            {/* Quergurte: nur fragen, wenn man sie ausgewählt hat (1 oder 2). */}
             {inputs.stabanordnung === 'vertikal-quergurt' && (
               <NumberField
                 label="Anzahl Quergurte"
@@ -387,6 +446,7 @@ export function FenstergitterConfigurator() {
                 set({ ornamentTyp: wert === 'ohne' ? null : wert })
               }
             />
+            {/* Wo sitzt die Verzierung? Oben, Mitte oder unten. */}
             {inputs.ornamentTyp && (
               <OptionCardGroup
                 legend="Zier-Lage"
@@ -398,6 +458,7 @@ export function FenstergitterConfigurator() {
             )}
           </StepSection>
 
+          {/* Schritt 5: Material und Eisenprofile – oder ein Wunsch-Durchmesser. */}
           <StepSection
             number={5}
             title="Material und Profile"
@@ -440,6 +501,7 @@ export function FenstergitterConfigurator() {
                   }
                   badge={() => 'TESTDATEN'}
                 />
+                {/* Aufklappbares Kästchen für einen Sonderwunsch beim Stab. */}
                 <details
                   className="material-details"
                   open={inputs.stabWunschDm !== null}
@@ -459,6 +521,9 @@ export function FenstergitterConfigurator() {
             )}
           </StepSection>
 
+          {/* Schritt 6: Rostschutz und Farbe. */}
+          {/* 🤧 Schnupfspruch: Anthrazit, Schwarz oder Tannegrüen –
+                de Rost blibt dusse, und s Gitter blibt schön. */}
           <StepSection number={6} title="Oberfläche und Farbe" unlocked={steps.s6} done={steps.s7}>
             <OptionCardGroup
               legend="Oberflächenbehandlung"
@@ -480,6 +545,7 @@ export function FenstergitterConfigurator() {
             <fieldset className="option-group">
               <legend>{tr('Farbe')}</legend>
               <div className="swatch-row">
+                {/* Ein Farbtupfer für jede Farbe zum Anklicken. */}
                 {FARBEN.map((farbe) => (
                   <label
                     key={farbe.id}
@@ -509,6 +575,7 @@ export function FenstergitterConfigurator() {
             </fieldset>
           </StepSection>
 
+          {/* Schritt 7: Wer schraubt das Gitter an? */}
           <StepSection
             number={7}
             title="Montage"
@@ -525,15 +592,19 @@ export function FenstergitterConfigurator() {
           </StepSection>
         </div>
 
+        {/* Rechte Seite: 3D-Vorschau und Zusammenfassung. */}
         <aside className="configurator-aside">
+          {/* Das Gitter in 3D, direkt an einer kleinen Wand mit Fenster. */}
           <GitterViewer
             geometry={geometry}
             color={farbHex(inputs.farbe)}
             empty={!geometryReady}
           />
 
+          {/* Die Zusammenfassung – wie ein Kassenzettel. */}
           <div className="summary-card">
             <h2>{tr('Ihre Konfiguration')}</h2>
+            {/* Mit Massen: ausgerechnete Werte und Einkaufszettel. Ohne: kurzer Hinweis. */}
             {geometryReady ? (
               <>
                 <ul className="summary-list">
@@ -586,6 +657,9 @@ export function FenstergitterConfigurator() {
               <p className="field-hint">{tr('Noch keine Masse erfasst.')}</p>
             )}
 
+            {/* Rot für Fehler, gelb für Hinweise. */}
+            {/* 🤧 Schnupfspruch: Isch s Kästli rot, dänn lueg nomol dri –
+                  isch s gäl, dänn chunnt de Meister verbi. */}
             {validation.errors.length > 0 && (
               <div className="status-banner red" role="alert">
                 <strong>{tr('Bitte prüfen:')}</strong>
@@ -606,8 +680,10 @@ export function FenstergitterConfigurator() {
               </div>
             )}
 
+            {/* Ungefähre Preis-Schätzung. */}
             <p className="estimate">{describeEstimate(estimate)}</p>
 
+            {/* Knöpfe: speichern, Offerte anfragen (kommt bald), zurücksetzen. */}
             <div className="summary-actions">
               <button type="button" className="secondary" onClick={share}>
                 {tr('Konfiguration speichern (Link)')}
@@ -628,6 +704,7 @@ export function FenstergitterConfigurator() {
                 {tr('Zurücksetzen')}
               </button>
             </div>
+            {/* Rückmeldung nach dem Teilen. */}
             {shareState === 'copied' && (
               <p className="field-hint" role="status">
                 {tr('Link kopiert – Konfiguration jederzeit wieder öffnen und teilen.')}
@@ -639,6 +716,7 @@ export function FenstergitterConfigurator() {
               </p>
             )}
 
+            {/* Versionsnummern fürs Kleingedruckte. */}
             <p className="versions">
               {tr('Produkt {p} · Regeln {r} · Preis: {preis} · Katalog {k}', {
                 p: module.productVersion,

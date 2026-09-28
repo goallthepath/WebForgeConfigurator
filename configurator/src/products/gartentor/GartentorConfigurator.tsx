@@ -1,3 +1,8 @@
+// Das ist die grosse Bildschirmseite, auf der man sein eigenes Gartentor
+// zusammenstellt – Schritt für Schritt, wie bei einem Rezept.
+// Links stehen die Fragen (Torart, Masse, Füllung, Farbe …),
+// rechts sieht man das Tor in 3D und eine kleine Zusammenfassung.
+// Alles, was man wählt, merkt sich die Seite, auch wenn man sie neu lädt.
 import { useEffect, useMemo, useReducer, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { StepSection } from '../../components/ui/StepSection';
@@ -45,8 +50,12 @@ import {
   type TorUntergrund,
 } from './types';
 
+// Unter diesem Namen legt der Browser unseren Entwurf in seine «Schublade»
+// (localStorage), damit er beim nächsten Besuch noch da ist.
 const STORAGE_KEY = 'webforge-gartentor-draft-v2';
 
+// Die Auswahlkarten für «ein oder zwei Flügel». Jede Karte hat ein kleines
+// Bildchen (icon) – das sind winzige Zeichnungen aus Rechtecken und Linien.
 const FLUEGELARTEN: OptionDef<Fluegelart>[] = [
   {
     id: 'ein',
@@ -62,6 +71,7 @@ const FLUEGELARTEN: OptionDef<Fluegelart>[] = [
   },
 ];
 
+// Auswahlkarten: Hängt das Tor an einer alten Mauer oder an neuen Pfosten?
 const SEITENBAUTEN: OptionDef<Seitenbau>[] = [
   {
     id: 'mauer',
@@ -77,16 +87,20 @@ const SEITENBAUTEN: OptionDef<Seitenbau>[] = [
   },
 ];
 
+// Geht das Tor zum Garten hin auf (innen) oder zum Weg hin (aussen)?
 const OEFFNUNGSRICHTUNGEN: OptionDef<Oeffnungsrichtung>[] = [
   { id: 'innen', label: 'Öffnet nach innen', description: 'Flügel schwenken zum Grundstück (üblich).' },
   { id: 'aussen', label: 'Öffnet nach aussen', description: 'Flügel schwenken zum Weg – Platzverhältnisse prüfen.' },
 ];
 
+// Auf welcher Seite sind die Scharniere? Wie bei einer Zimmertür:
+// Man muss wissen, ob sie links oder rechts angeschlagen ist.
 const ANSCHLAEGE: OptionDef<Anschlagseite>[] = [
   { id: 'links', label: 'Anschlag links', description: 'Bänder links (von aussen gesehen).' },
   { id: 'rechts', label: 'Anschlag rechts', description: 'Bänder rechts (von aussen gesehen).' },
 ];
 
+// Worauf steht das Tor? Auf Beton, Pflastersteinen oder weicher Erde?
 const UNTERGRUENDE_T: OptionDef<TorUntergrund>[] = [
   { id: 'beton', label: 'Beton', description: 'Betonfundament oder -platte vorhanden.' },
   { id: 'pflaster', label: 'Pflaster / Platten', description: 'Fundamente werden geplant.' },
@@ -94,6 +108,9 @@ const UNTERGRUENDE_T: OptionDef<TorUntergrund>[] = [
   { id: 'unbekannt', label: 'Weiss ich nicht', description: 'Wird beim Aufmass geprüft.' },
 ];
 
+// Womit wird der Flügel gefüllt? Stäbe, ein Blech oder schöne Schmiede-Schnörkel.
+// 🤧 Schnupfspruch: Staketli, Blech und Schnörkeli fin –
+//    jede Garte wott sis eigne Törli ha, und das isch schön!
 const FUELLUNGEN_T: OptionDef<TorFuellung>[] = [
   {
     id: 'staketen',
@@ -115,6 +132,9 @@ const FUELLUNGEN_T: OptionDef<TorFuellung>[] = [
   },
 ];
 
+// Wie geht das Tor zu? Mit richtigem Schloss, mit einem Riegel oder gar nicht.
+// 🤧 Schnupfspruch: De Schlüssel im Sack, de Riegel im Schloss –
+//    und de Gartezwerg hüetet d Rose ganz grooss.
 const SCHLOESSER: OptionDef<TorSchloss>[] = [
   {
     id: 'schloss-druecker',
@@ -125,14 +145,21 @@ const SCHLOESSER: OptionDef<TorSchloss>[] = [
   { id: 'ohne', label: 'Ohne Verschluss', description: 'Nur Anschlag – z. B. für Gartenwege.' },
 ];
 
+// Eine «Action» ist ein kleiner Auftrag an den Reducer:
+// «set» = ändere diese Antworten, «reset» = alles zurück auf Anfang.
 type Action =
   | { type: 'set'; patch: Partial<GartentorInputs> }
   | { type: 'reset' };
 
+// Der Reducer ist wie ein ordentlicher Hausmeister: Er bekommt einen Auftrag
+// und räumt danach auf, damit keine unpassenden Antworten übrig bleiben.
 function reducer(state: GartentorInputs, action: Action): GartentorInputs {
   switch (action.type) {
     case 'set': {
+      // Neue Antworten über die alten legen (wie ein frischer Kleber übers alte Etikett).
       const next = { ...state, ...action.patch };
+      // Andere Füllung gewählt? Dann passen die alten Blech- oder Ornament-Wünsche
+      // nicht mehr und werden gelöscht.
       if (action.patch.fuellung) {
         if (action.patch.fuellung !== 'blech') {
           next.blechTyp = null;
@@ -140,9 +167,14 @@ function reducer(state: GartentorInputs, action: Action): GartentorInputs {
         }
         if (action.patch.fuellung !== 'geschmiedet') next.ornamentTyp = null;
       }
+      // Kein Laser-Blech? Dann braucht es auch kein Laser-Motiv.
       if (action.patch.blechTyp && action.patch.blechTyp !== 'laser') {
         next.laserMotiv = null;
       }
+      // Anderes Material (z. B. Edelstahl statt Stahl)? Dann schauen wir alle
+      // gewählten Profile und die Oberfläche an und werfen weg, was nicht passt.
+      // 🤧 Schnupfspruch: Isch s Iise gwächslet, flüügt s Profil devo –
+      //    de Huusmeister rumt uf, bevor d Gäscht chömed cho.
       if (action.patch.materialId) {
         for (const key of [
           'rahmenProfilId',
@@ -162,13 +194,18 @@ function reducer(state: GartentorInputs, action: Action): GartentorInputs {
       }
       return next;
     }
+    // «reset»: Zurück zum schönen Standard-Tor.
     case 'reset':
       return DEFAULT_GARTENTOR_INPUTS;
   }
 }
 
+// loadInitial: Beim Öffnen der Seite suchen wir einen alten Entwurf.
+// Zuerst im Link (?c=…), sonst in der Browser-Schublade, sonst Standard-Tor.
 function loadInitial(): GartentorInputs {
   try {
+    // Steckt eine Konfiguration im Link? Dann auspacken (sie ist verschlüsselt
+    // wie eine Geheimschrift, aber nur, damit sie in eine Web-Adresse passt).
     const fromUrl = new URLSearchParams(window.location.search).get('c');
     if (fromUrl) {
       return {
@@ -176,6 +213,7 @@ function loadInitial(): GartentorInputs {
         ...(JSON.parse(decodeURIComponent(atob(fromUrl))) as GartentorInputs),
       };
     }
+    // Sonst: Liegt noch etwas in der Browser-Schublade?
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored) {
       return {
@@ -189,6 +227,8 @@ function loadInitial(): GartentorInputs {
   return DEFAULT_GARTENTOR_INPUTS;
 }
 
+// profileOptions: Sucht alle Eisenprofile, die für eine bestimmte Aufgabe
+// (Rahmen, Stab, Pfosten) beim Gartentor erlaubt sind, und macht Auswahlkarten daraus.
 function profileOptions(
   role: ProfileRole,
   materialId: string | null
@@ -202,27 +242,38 @@ function profileOptions(
     }));
 }
 
+// Das Hauptbauteil (Komponente) der Seite. Hier kommt alles zusammen.
+// 🤧 Schnupfspruch: Es Törli im Browser, es Törli im Code –
+//    und wänn s nöd schlüsst, isch es gwüss nume en Bug im Mode.
 export function GartentorConfigurator() {
   const module = getProductModule('gartentor');
+  // «inputs» sind alle Antworten; mit «dispatch» schicken wir dem Hausmeister Aufträge.
   const [inputs, dispatch] = useReducer(reducer, undefined, loadInitial);
+  // Merkt sich, ob der Teilen-Link gerade kopiert oder angezeigt wird.
   const [shareState, setShareState] = useState<'idle' | 'copied' | 'shown'>('idle');
   const [shareUrl, setShareUrl] = useState('');
 
+  // Jedes Mal, wenn sich eine Antwort ändert, speichern wir den Entwurf.
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs));
   }, [inputs]);
 
+  // Kleine Abkürzung: set({...}) statt jedes Mal den ganzen Auftrag zu schreiben.
   const set = (patch: Partial<GartentorInputs>) => dispatch({ type: 'set', patch });
 
+  // Wie dick ist ein Füllstab? Kennen wir das Profil nicht, nehmen wir 12 mm.
   const stabBreite = inputs.fuellstabProfilId
     ? profilBreiteMm(getProfile(inputs.fuellstabProfilId)!)
     : 12;
 
+  // Ab hier wird gerechnet. useMemo ist wie ein Notizzettel: Man rechnet nur neu,
+  // wenn sich etwas geändert hat – sonst liest man einfach vom Zettel ab.
   const derived = useMemo(
     () => deriveGartentor(inputs, stabBreite),
     [inputs, stabBreite]
   );
 
+  // Aus Zahlen wird ein 3D-Bauplan (wo steht welches Teil?).
   const geometry = useMemo(
     () =>
       buildTorGeometry(inputs, derived, {
@@ -237,6 +288,7 @@ export function GartentorConfigurator() {
     [inputs, derived]
   );
 
+  // Die Liste aller ausgewählten Profile (leere Plätze werden weggelassen).
   const selectedProfiles = useMemo(
     () =>
       [inputs.rahmenProfilId, inputs.fuellstabProfilId, inputs.pfostenProfilId]
@@ -245,22 +297,27 @@ export function GartentorConfigurator() {
     [inputs.rahmenProfilId, inputs.fuellstabProfilId, inputs.pfostenProfilId]
   );
 
+  // Den Prüfer fragen: Ist alles in Ordnung? (rot / gelb)
   const validation = useMemo(
     () => validateGartentor(inputs, selectedProfiles),
     [inputs, selectedProfiles]
   );
 
+  // Preis-Schätzung und Einkaufszettel für die Werkstatt.
   const estimate = estimateFor(module.priceVersion);
   const material = useMemo(
     () => torMaterialAuszug(inputs, derived),
     [inputs, derived]
   );
 
+  // Sind Breite und Höhe eingetragen und grösser als 0?
   const masseOk =
     inputs.oeffnungBreiteMm !== null &&
     inputs.oeffnungBreiteMm > 0 &&
     inputs.hoeheMm !== null &&
     inputs.hoeheMm > 0;
+  // Ist die Füllung fertig ausgewählt? Beim Blech braucht es eine Blechart
+  // (und beim Laser ein Motiv), beim Geschmiedeten ein Ornament.
   const fuellungOk =
     inputs.fuellung === 'blech'
       ? inputs.blechTyp !== null &&
@@ -268,8 +325,13 @@ export function GartentorConfigurator() {
       : inputs.fuellung === 'geschmiedet'
         ? inputs.ornamentTyp !== null
         : inputs.fuellung !== null;
+  // Braucht dieses Tor überhaupt Stäbe?
   const brauchtStab =
     inputs.fuellung === 'staketen' || inputs.fuellung === 'geschmiedet';
+  // Welche Schritte sind erledigt? Wie in einem Videospiel: Erst wenn ein Level
+  // geschafft ist, geht das nächste auf.
+  // 🤧 Schnupfspruch: Schritt für Schritt, Level für Level –
+  //    so chunnt au s Törli dur de Näbel.
   const steps = {
     s2: inputs.fluegelart !== null && inputs.seitenbau !== null,
     s3:
@@ -287,8 +349,12 @@ export function GartentorConfigurator() {
     ),
     s8: Boolean(inputs.finishId && inputs.farbe),
   };
+  // Erst wenn Masse und Flügelart bekannt sind, lohnt sich das 3D-Bild.
   const geometryReady = masseOk && inputs.fluegelart !== null;
 
+  // Teilen: Wir packen alle Antworten in einen Link und kopieren ihn.
+  // Klappt das Kopieren nicht, zeigen wir den Link einfach an.
+  // Nach 6 Sekunden verschwindet die Meldung wieder.
   const share = async () => {
     const payload = btoa(encodeURIComponent(JSON.stringify(inputs)));
     const url = `${window.location.origin}${window.location.pathname}?c=${payload}`;
@@ -302,6 +368,7 @@ export function GartentorConfigurator() {
     window.setTimeout(() => setShareState('idle'), 6000);
   };
 
+  // Und jetzt: Was man auf dem Bildschirm sieht (JSX ist wie HTML in JavaScript).
   return (
     <div className="configurator">
       <p>
@@ -314,8 +381,10 @@ export function GartentorConfigurator() {
         )}
       </p>
 
+      {/* Zwei Spalten: links die Schritte, rechts Vorschau und Zusammenfassung. */}
       <div className="configurator-layout">
         <div className="configurator-steps">
+          {/* Schritt 1: Wie viele Flügel, und woran wird das Tor befestigt? */}
           <StepSection number={1} title="Torart" unlocked done={steps.s2}>
             <OptionCardGroup
               legend="Ein- oder zweiflügelig?"
@@ -338,6 +407,7 @@ export function GartentorConfigurator() {
             </p>
           </StepSection>
 
+          {/* Schritt 2: In welche Richtung geht es auf, und worauf steht es? */}
           <StepSection number={2} title="Öffnung und Untergrund" unlocked={steps.s2} done={steps.s3}>
             <OptionCardGroup
               legend="Öffnungsrichtung"
@@ -346,6 +416,7 @@ export function GartentorConfigurator() {
               value={inputs.oeffnungsrichtung}
               onChange={(oeffnungsrichtung) => set({ oeffnungsrichtung })}
             />
+            {/* Nur bei einem Flügel muss man sagen, wo die Scharniere sind. */}
             {inputs.fluegelart === 'ein' && (
               <OptionCardGroup
                 legend="Anschlagseite (von aussen gesehen)"
@@ -364,6 +435,9 @@ export function GartentorConfigurator() {
             />
           </StepSection>
 
+          {/* Schritt 3: Messen! Breite, Höhe und die Luft unter dem Tor. */}
+          {/* 🤧 Schnupfspruch: Zwöimol mässe, eimol bohre –
+                susch hät de Schlosser d Gedult verlore. */}
           <StepSection
             number={3}
             title="Masse"
@@ -397,6 +471,7 @@ export function GartentorConfigurator() {
               hint="Abstand Flügelunterkante zum Boden."
               onChange={(v) => set({ bodenfreiheitMm: v ?? 30 })}
             />
+            {/* Häkchen: «Ich habe nur ungefähr gemessen.» */}
             <label className="check-row">
               <input
                 type="checkbox"
@@ -407,6 +482,7 @@ export function GartentorConfigurator() {
             </label>
           </StepSection>
 
+          {/* Schritt 4: Die Füllung – und je nach Wahl noch Blechart, Motiv oder Ornament. */}
           <StepSection number={4} title="Füllung" unlocked={steps.s4} done={steps.s5}>
             <OptionCardGroup
               legend="Torfüllung"
@@ -444,6 +520,9 @@ export function GartentorConfigurator() {
             )}
           </StepSection>
 
+          {/* Schritt 5: Schloss oder Riegel, und vielleicht später ein Motor. */}
+          {/* 🤧 Schnupfspruch: E Törli mit Motor, das gaht vo sälber uf –
+                aber s Hüehnli fragt: Wo isch de Chnopf? */}
           <StepSection number={5} title="Beschläge" unlocked={steps.s5} done={steps.s6}>
             <OptionCardGroup
               legend="Verschluss"
@@ -462,6 +541,7 @@ export function GartentorConfigurator() {
             </label>
           </StepSection>
 
+          {/* Schritt 6: Aus welchem Metall und mit welchen Eisenstangen? */}
           <StepSection
             number={6}
             title="Material und Profile"
@@ -518,6 +598,7 @@ export function GartentorConfigurator() {
             )}
           </StepSection>
 
+          {/* Schritt 7: Die Oberfläche (Schutz gegen Rost) und die Farbe. */}
           <StepSection number={7} title="Oberfläche und Farbe" unlocked={steps.s7} done={steps.s8}>
             <OptionCardGroup
               legend="Oberflächenbehandlung"
@@ -541,6 +622,7 @@ export function GartentorConfigurator() {
             <fieldset className="option-group">
               <legend>{tr('Farbe')}</legend>
               <div className="swatch-row">
+                {/* Für jede Farbe ein kleines rundes Farbmuster zum Anklicken. */}
                 {FARBEN.map((farbe) => (
                   <label
                     key={farbe.id}
@@ -570,6 +652,7 @@ export function GartentorConfigurator() {
             </fieldset>
           </StepSection>
 
+          {/* Schritt 8: Montieren wir, oder macht man es selbst? */}
           <StepSection
             number={8}
             title="Montage"
@@ -586,7 +669,11 @@ export function GartentorConfigurator() {
           </StepSection>
         </div>
 
+        {/* Rechte Spalte: 3D-Vorschau und Zusammenfassung. */}
         <aside className="configurator-aside">
+          {/* Das Tor in 3D – man kann es sogar auf- und zugehen lassen! */}
+          {/* 🤧 Schnupfspruch: Drei Dimensione, zwei Flügel, ei Klick –
+                s Törli gaht uf – was für es Glück! */}
           <TorViewer
             geometry={geometry}
             color={farbHex(inputs.farbe)}
@@ -594,8 +681,10 @@ export function GartentorConfigurator() {
             oeffnungsrichtung={inputs.oeffnungsrichtung ?? 'innen'}
           />
 
+          {/* Die Zusammenfassung: wie ein Kassenzettel für die Auswahl. */}
           <div className="summary-card">
             <h2>{tr('Ihre Konfiguration')}</h2>
+            {/* Sind Masse da, zeigen wir die ausgerechneten Werte, sonst einen Hinweis. */}
             {geometryReady ? (
               <>
                 <ul className="summary-list">
@@ -650,6 +739,7 @@ export function GartentorConfigurator() {
               <p className="field-hint">{tr('Noch keine Masse erfasst.')}</p>
             )}
 
+            {/* Rote Kiste für Fehler, gelbe Kiste für Hinweise. */}
             {validation.errors.length > 0 && (
               <div className="status-banner red" role="alert">
                 <strong>{tr('Bitte prüfen:')}</strong>
@@ -670,8 +760,12 @@ export function GartentorConfigurator() {
               </div>
             )}
 
+            {/* Ungefähre Preis-Schätzung. */}
             <p className="estimate">{describeEstimate(estimate)}</p>
 
+            {/* Knöpfe: Link speichern, Offerte anfragen (kommt bald), zurücksetzen. */}
+            {/* 🤧 Schnupfspruch: Es Chnöpfli zum Teile, es Chnöpfli zum Frage –
+                  und eis zum Vergässe – das darf me au mal wage. */}
             <div className="summary-actions">
               <button type="button" className="secondary" onClick={share}>
                 {tr('Konfiguration speichern (Link)')}
@@ -692,6 +786,7 @@ export function GartentorConfigurator() {
                 {tr('Zurücksetzen')}
               </button>
             </div>
+            {/* Kleine Rückmeldung, nachdem man den Link geteilt hat. */}
             {shareState === 'copied' && (
               <p className="field-hint" role="status">
                 {tr('Link kopiert – Konfiguration jederzeit wieder öffnen und teilen.')}
@@ -703,6 +798,7 @@ export function GartentorConfigurator() {
               </p>
             )}
 
+            {/* Ganz klein unten: Versionsnummern, damit die Werkstatt weiss, womit gerechnet wurde. */}
             <p className="versions">
               {tr('Produkt {p} · Regeln {r} · Preis: {preis} · Katalog {k}', {
                 p: module.productVersion,

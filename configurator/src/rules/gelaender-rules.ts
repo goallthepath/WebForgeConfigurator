@@ -1,3 +1,13 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Für Kinder erklärt: Diese Datei ist der Schiedsrichter. Sie schaut sich
+// den Wunschzettel an und pfeift, wenn etwas nicht geht («zu hoch!», «zu
+// kurz!») – das sind rote Karten (errors). Wenn etwas geht, aber jemand
+// nochmals genau hinschauen muss, gibt es eine gelbe Karte (warnings).
+// Ganz wichtig: Ein Geländer soll Menschen und vor allem Kinder davor
+// schützen, hinunterzufallen. Darum gibt es hier so viele Regeln.
+// ─────────────────────────────────────────────────────────────────────────
+// 🤧 Schnupfspruch: De Schiedsrichter pfiift, s Gländer stoht stiif –
+//    wer d Regle kennt, dä schnupft entspannt.
 import {
   obergurtHoeheEff,
   type GelaenderInputs,
@@ -15,6 +25,8 @@ import { tr } from '../i18n';
  * als GELB klassifiziert werden und alle abgeleiteten Stückzahlen
  * gelten als provisorisch. Der Server prüft beim Absenden erneut.
  */
+// Kinder-Erklärung: Das ist die Liste aller Grenzwerte – wie die Regeln
+// auf der Spielplatz-Tafel: «höchstens so weit», «mindestens so hoch».
 export interface GelaenderRuleParams {
   approval: 'freigegeben' | 'fachliche Freigabe erforderlich';
   /** Maximaler Pfostenabstand (Achsmass) in mm. */
@@ -39,6 +51,9 @@ export interface GelaenderRuleParams {
   maxWunschDmMm: number;
 }
 
+// Die Zahlen für die Regeln oben. Achtung: Das sind Übungszahlen (TESTDATEN),
+// noch nicht vom Meister abgesegnet – so wie ein Probe-Diktat, das noch
+// nicht zählt.
 export const GELAENDER_RULES_V0: GelaenderRuleParams = {
   approval: 'fachliche Freigabe erforderlich',
   // TESTDATEN – dienen nur der Plausibilisierung und 3D-Vorschau.
@@ -63,6 +78,10 @@ export const GELAENDER_RULES_V0: GelaenderRuleParams = {
   maxWunschDmMm: 76,
 };
 
+// Kinder-Erklärung: Die BFU ist die Beratungsstelle für Unfallverhütung in
+// der Schweiz. Sie sagt zum Beispiel: Unten am Geländer darf eine Kugel so
+// gross wie ein Kinderkopf (12 cm, etwa eine Orange) nicht durch die Lücken
+// passen. Und ein Geländer soll meistens mindestens 1 Meter hoch sein.
 /**
  * BFU-Richtwerte aus der Fachdokumentation 2.003 «Geländer und Brüstungen»
  * (Ausgabe 2020) – quellenreferenzierte Planungsgrundsätze, KEINE
@@ -84,18 +103,28 @@ export const BFU_RICHTWERTE = {
   maxMaschenweiteMm: 40,
 } as const;
 
+// Dieser Satz wird immer angezeigt, solange die Regeln noch Übungszahlen
+// sind – damit niemand glaubt, alles sei schon fix.
+// 🤧 Schnupfspruch: Provisorisch isch nüt Schlimms, de Meischter luegt's no aa –
+//    wie de Chäs im Chäller, dä bruucht o sini Zyt. Schnupf!
 export const RULE_APPROVAL_WARNING =
   'Die technischen Produktregeln (Abstände, Grenzmasse) sind noch nicht fachlich freigegeben – ' +
   'Stückzahlen und Masse in der Vorschau sind provisorisch. Unser Meister prüft jede Anfrage persönlich.';
 
+// Die grosse Prüf-Funktion: Sie geht alle Wünsche durch, sammelt rote und
+// gelbe Karten in zwei Körbchen und sagt am Schluss: ROT (so geht's nicht)
+// oder GELB (geht, aber ein Fachmann prüft es nochmals).
 export function validateGelaender(
   inputs: GelaenderInputs,
   selectedProfiles: readonly Profile[],
   params: GelaenderRuleParams = GELAENDER_RULES_V0
 ): ValidationResult {
+  // Zwei leere Körbchen: eines für Warnungen, eines für Fehler.
   const warnings: string[] = [];
   const errors: string[] = [];
 
+  // Ist jedes gerade Stück nicht zu kurz und nicht zu lang? Ein Stück aus
+  // einer einzigen Stange darf nicht länger sein, als die Werkstatt hat.
   for (const segment of inputs.segmentLaengenMm) {
     if (segment < params.minSegmentLaengeMm) {
       errors.push(
@@ -115,6 +144,9 @@ export function validateGelaender(
     }
   }
 
+  // Ist die Höhe im erlaubten Bereich? Und wenn man tief fallen könnte,
+  // muss das Geländer mindestens 1 Meter hoch sein – etwa bis zum Bauchnabel
+  // eines Erwachsenen.
   if (inputs.hoeheMm !== null) {
     if (inputs.hoeheMm < params.minHoeheMm || inputs.hoeheMm > params.maxHoeheMm) {
       errors.push(
@@ -139,6 +171,12 @@ export function validateGelaender(
     }
   }
 
+  // Kinder-Erklärung: Die waagrechten Stangen müssen in der richtigen
+  // Reihenfolge übereinander liegen – wie die Sprossen einer Leiter zum
+  // Baumhaus: unten der Untergurt, dann die Knieleiste, dann der Obergurt,
+  // und ganz oben der Handlauf. Liegt etwas verkehrt, gibt's eine rote Karte.
+  // 🤧 Schnupfspruch: Unde de Gurt und obe de Lauf –
+  //    wär's umgekehrt, gäbs en Uflauf. Schnupf druf!
   // Konstruktive Höhenordnung: Untergurt < Knieleiste < Obergurt < Oberkante.
   if (inputs.hoeheMm) {
     const ober = obergurtHoeheEff(inputs);
@@ -164,6 +202,9 @@ export function validateGelaender(
     }
   }
 
+  // Sind die Befestigungsteile (die «Füsse») vernünftig gross?
+  // Die kleine Hilfsfunktion «pruefe» schaut, ob eine Zahl zwischen
+  // «min» und «max» liegt – wie ein Türsteher, der die Grösse misst.
   // Befestigungs-Wunschmasse je Montageart (Vorschaubereiche TESTDATEN).
   if (inputs.montageart) {
     const pruefe = (wert: number, min: number, max: number, name: string) => {
@@ -201,6 +242,8 @@ export function validateGelaender(
     );
   }
 
+  // Wünscht sich jemand eine Stange mit einem Spezial-Durchmesser, der
+  // nicht im Katalog steht? Das ist erlaubt, aber der Meister muss es prüfen.
   // Sonderprofile (Wunschmass) sind immer prüfpflichtig.
   for (const [wert, teil] of [
     [inputs.handlaufWunschDm, 'Handlauf'],
@@ -227,18 +270,25 @@ export function validateGelaender(
     }
   }
 
+  // Geschmiedete Schnörkel sind Handarbeit – das plant der Meister persönlich.
+  // 🤧 Schnupfspruch: Schnörkel, Volute, Ring und Korb –
+  //    de Schmied het Funke, de Schnupf het Sorg.
   if (inputs.fuellungsart === 'geschmiedet') {
     warnings.push(
       tr('Charakter-Familie: Die gewählten Ornamente sind eine Grundauswahl – Aufteilung und handwerkliche Ausarbeitung plant unser Meister persönlich mit Ihnen (Manufaktur).')
     );
   }
 
+  // Weiss man nicht, wie tief es runtergeht? Dann wird es vor Ort gemessen.
   if (inputs.absturzhoehe === 'unbekannt') {
     warnings.push(
       tr('Absturzhöhe unbekannt: Sie wird beim Aufmass gemessen – massgebend ist die begehbare bzw. besteigbare Fläche (BFU).')
     );
   }
 
+  // Kinderschutz: Wenn Kinder da sein könnten (oder man es nicht weiss),
+  // gibt es für jede Füllungsart einen passenden Hinweis – zum Beispiel,
+  // dass man an Löchern oder Gittern nicht hochklettern können soll.
   // Kinderschutz (BFU): 12-cm-Kugel bis 75 cm, Kletterwirkung.
   const kindersicherPlanen = inputs.kinderschutz !== 'nein';
   if (kindersicherPlanen) {
@@ -276,6 +326,8 @@ export function validateGelaender(
     }
   }
 
+  // Die ausgewählten Stangen-Profile: Gibt es sie noch? Und sind sie schon
+  // vom Fachmann freigegeben?
   for (const profile of selectedProfiles) {
     if (!profile.active) {
       errors.push(tr('Profil «{name}» ist nicht mehr verfügbar.', { name: profile.name }));
@@ -289,6 +341,11 @@ export function validateGelaender(
     }
   }
 
+  // Noch ein paar gelbe Karten: ungefähre Masse, unbekannter Untergrund,
+  // Spezialfarbe, Querstäbe (die wie eine Leiter zum Klettern einladen!)
+  // und Vollblech (das fängt den Wind wie ein Segel).
+  // 🤧 Schnupfspruch: Querstäb sind e Leitere für d Chind –
+  //    drum bouet mer Staketli, und zwar gschwind!
   if (inputs.masseUngefaehr) {
     warnings.push(
       tr('Ungefähre Masse: Vor der Offerte ist ein Aufmass oder eine Massbestätigung nötig.')
@@ -319,6 +376,8 @@ export function validateGelaender(
     );
   }
 
+  // Je nach Ort gibt's besondere Hinweise: Dachterrasse, französischer
+  // Balkon (vor einem bodentiefen Fenster), Garten, Kragarm, eingelassen.
   // Einsatzort-spezifische Hinweise (Fachgrundlage Abschnitt 1).
   if (inputs.einsatzort === 'attika') {
     warnings.push(
@@ -351,6 +410,7 @@ export function validateGelaender(
     );
   }
 
+  // Glas: Die Dicke des Sicherheitsglases legt der Fachmann fest.
   if (inputs.fuellungsart === 'glas') {
     warnings.push(
       tr('Glasaufbau und Glasstärke (Sicherheitsglas) werden bei der fachlichen Prüfung verbindlich festgelegt.')
@@ -362,10 +422,15 @@ export function validateGelaender(
     }
   }
 
+  // Solange die Regeln nur Übungszahlen sind, kommt immer diese Warnung dazu.
   if (params.approval !== 'freigegeben') {
     warnings.push(tr(RULE_APPROVAL_WARNING));
   }
 
+  // Das Urteil: Gibt es mindestens einen Fehler → ROT. Sonst → GELB.
+  // (GRÜN gibt es erst, wenn alles fachlich freigegeben ist.)
+  // 🤧 Schnupfspruch: Rot, Gelb oder Grüen – s Gländer mues sich müeh.
+  //    Doch bis de Meischter nickt, wird no einisch gschnupft!
   if (errors.length > 0) {
     return { level: 'red', warnings, errors };
   }

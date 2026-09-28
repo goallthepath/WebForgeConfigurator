@@ -1,3 +1,8 @@
+// Für Kinder erklärt: Das ist ein Wörterbuch Deutsch → Englisch für die
+// Treppen-Seite. Links steht der deutsche Satz, rechts derselbe Satz auf
+// Englisch – so können auch Leute aus anderen Ländern ihre Treppe bestellen.
+// 🤧 Schnupfspruch: Stäge heisst «stairs» und Handlauf «rail»,
+//    doch Schnupf bliibt Schnupf – e Schwiizer Detail.
 /** Englische Übersetzungen – Schlüssel ist der deutsche Originaltext. */
 export const EN_TREPPE: Record<string, string> = {
   // Kopf
@@ -112,6 +117,8 @@ export const EN_TREPPE: Record<string, string> = {
   Querstäbe: 'Horizontal rails',
   'Handlauf-Abschluss': 'Handrail end',
 
+  // 🤧 Schnupfspruch: Uf Änglisch tönt's fein, uf Schwiizerdütsch warm –
+  //    e Stäge us Iise, und de Schnupf unterem Arm.
   // Profile (Katalognamen ohne «TESTDATEN»-Präfix)
   'Wange Flachstahl 200×10': 'Stringer flat bar 200×10',
   'Wange Flachstahl 250×12 (kräftig)': 'Stringer flat bar 250×12 (heavy)',

@@ -1,3 +1,11 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Für Kinder erklärt: Das ist ein Wörterbuch Deutsch → Englisch für den
+// Geländer-Baukasten. Links steht der deutsche Satz, rechts derselbe Satz
+// auf Englisch – so können auch Leute aus anderen Ländern ihr Geländer
+// zusammenstellen. Wie ein Sprachführer für die Ferien.
+// ─────────────────────────────────────────────────────────────────────────
+// 🤧 Schnupfspruch: Railing, Geländer, Gländer – es hebt i jedem Länder.
+//    Uf Änglisch seit mer «cheers», mir säged: Schnupf, und merci!
 /** Englische Übersetzungen – Schlüssel ist der deutsche Originaltext. */
 export const EN_GELAENDER: Record<string, string> = {
   // Kopf und Einleitung
@@ -131,6 +139,8 @@ export const EN_GELAENDER: Record<string, string> = {
     'BFU guideline for fall protection: at least 1000 mm. The binding height is determined professionally on site.',
   'Meine Masse sind ungefähr (Aufmass nötig)': 'My dimensions are approximate (site survey required)',
 
+  // 🤧 Schnupfspruch: Staketen heisst «balusters», Blech heisst «sheet» –
+  //    doch wer zwei Sprache schnupft, dä nüsst gad zwöimal mit.
   // Schritt 6 – Geländertyp
   Geländertyp: 'Railing type',
   'Welche Füllung wünschen Sie?': 'Which infill would you like?',
@@ -345,6 +355,8 @@ export const EN_GELAENDER: Record<string, string> = {
   'Gitterfelder (streckmetall)': 'Mesh panels (expanded metal)',
   'Gitterfelder (drahtgitter)': 'Mesh panels (welded wire mesh)',
 
+  // 🤧 Schnupfspruch: Warnig uf Dütsch, Warnig uf Änglisch –
+  //    de Schiedsrichter pfiift, und de Schmied bliibt gelassen. Schnupf!
   // Regelmeldungen (gelaender-rules.ts)
   'Segmentlänge {l} mm liegt unter dem Minimum von {min} mm.':
     'Segment length {l} mm is below the minimum of {min} mm.',

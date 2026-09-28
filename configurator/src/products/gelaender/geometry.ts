@@ -1,3 +1,12 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Für Kinder erklärt: Diese Datei ist der Bauplan-Zeichner. Sie rechnet für
+// jedes einzelne Teil des Geländers aus, WO es im Raum steht – wie wenn du
+// auf Häuschenpapier für jeden Lego-Stein aufschreibst: «3 Kästchen nach
+// rechts, 2 nach hinten, 5 nach oben». Die 3D-Ansicht liest diesen Plan
+// später und malt die Teile genau dorthin. Alles wird in Metern gemessen.
+// ─────────────────────────────────────────────────────────────────────────
+// 🤧 Schnupfspruch: X, Y und Z – s Gländer stoht im Bett.
+//    De Computer rächnet s Eisen, mir tüend schnupfe und verreise.
 import type { GelaenderDerived, GelaenderInputs } from './types';
 import type { Profile } from '../types';
 import { GELAENDER_RULES_V0 } from '../../rules/gelaender-rules';
@@ -12,6 +21,8 @@ import { obergurtHoeheEff } from './types';
  * Alle Koordinaten in Metern.
  */
 
+// Die Form einer Stange, von vorne angeschaut: rund wie ein Rohr
+// (mit Durchmesser dM) oder eckig wie eine Schachtel (Breite wM, Höhe hM).
 export interface ProfileShape {
   kind: 'round' | 'box';
   /** Durchmesser (round) in m. */
@@ -21,6 +32,8 @@ export interface ProfileShape {
   hM?: number;
 }
 
+// Ein Pfosten: der senkrechte Stecken, der im Boden steht. x und z sagen,
+// wo er am Boden steht (wie Koordinaten auf einer Schatzkarte).
 export interface GeoPost {
   x: number;
   z: number;
@@ -32,6 +45,8 @@ export interface GeoPost {
   shape: ProfileShape;
 }
 
+// Eine waagrechte Stange (Handlauf oder Gurt): von einem Punkt «start» zu
+// einem Punkt «end» – wie ein Strich, den man mit dem Lineal zieht.
 export interface GeoRail {
   start: [number, number, number];
   end: [number, number, number];
@@ -40,6 +55,7 @@ export interface GeoRail {
   shape: ProfileShape;
 }
 
+// Ein senkrechter Füllstab zwischen den Pfosten – wie die Latten im Zaun.
 export interface GeoBar {
   x: number;
   z: number;
@@ -49,6 +65,8 @@ export interface GeoBar {
   shape: ProfileShape;
 }
 
+// Wie eine Platte aussieht: Glas klar oder milchig, Blech voll/gelocht/
+// gelasert oder Gitter.
 /** Darstellungsart einer Flächenfüllung. */
 export type PanelFill =
   | 'glas-klar'
@@ -59,6 +77,8 @@ export type PanelFill =
   | 'gitter-streckmetall'
   | 'gitter-drahtgitter';
 
+// Kinder-Erklärung: Eine ganze Platte zwischen zwei Pfosten – wie eine
+// Fensterscheibe im Fensterrahmen.
 /** Flächenfüllung (Feld zwischen zwei Pfosten): Glas, Blech oder Gitter. */
 export interface GeoPanel {
   center: [number, number, number];
@@ -73,6 +93,10 @@ export interface GeoPanel {
   motiv?: 'schlitze' | 'kreise' | 'quadrate' | 'floral';
 }
 
+// Kinder-Erklärung: Die «Füsse» und «Hände» des Geländers, mit denen es
+// am Boden, an der Seite oder an der Wand festhält.
+// 🤧 Schnupfspruch: Fuessplatte, Schwert und Wandlasche –
+//    es Gländer ohni Füess gheit i d Asche. Schnupf!
 /** Fussplatte, seitliches Schwert oder Kragarm am Pfosten. */
 export interface GeoPlate {
   center: [number, number, number];
@@ -83,6 +107,7 @@ export interface GeoPlate {
   kind: 'fussplatte' | 'schwert' | 'kragarm' | 'wandlasche';
 }
 
+// Ein geschmiedeter Schnörkel, den der Schmied mit dem Hammer biegt.
 /** Schmiedeornament (Grundauswahl der Charakter-Familie). */
 export interface GeoOrnament {
   kind: 'ringe' | 'voluten' | 'koerbe';
@@ -93,6 +118,8 @@ export interface GeoOrnament {
   sizeM: number;
 }
 
+// Ein Stück Boden oder Mauer, auf dem das Geländer steht – nur zum
+// Anschauen in 3D, damit das Geländer nicht in der Luft schwebt.
 /** Baukörper-Andeutung je Lauf – Darstellung folgt dem Untergrund. */
 export interface GeoSlab {
   center: [number, number, number];
@@ -101,6 +128,7 @@ export interface GeoSlab {
   kind: 'beton' | 'holz' | 'stahl' | 'unbekannt';
 }
 
+// Wie das Ende des Handlaufs aussieht, und wo genau so ein Ende sitzt.
 export type EndCap = 'gerade' | 'kugel-drittel' | 'kugel' | 'endbogen';
 
 export interface GeoEndCap {
@@ -111,12 +139,17 @@ export interface GeoEndCap {
   shape: ProfileShape;
 }
 
+// Eine Masslinie: ein Pfeil mit einer Zahl dran, wie auf einem Bauplan
+// («3000 mm»), damit man sieht, wie lang etwas ist.
 export interface GeoDimension {
   start: [number, number, number];
   end: [number, number, number];
   label: string;
 }
 
+// Der ganze fertige Bauplan in einer Schachtel: alle Pfosten, Stangen,
+// Stäbe, Platten, Füsse, Schnörkel und Masslinien. Dazu die «bounds»:
+// wie gross das Ganze ist, damit die Kamera weiss, wie weit sie weg muss.
 export interface RailingGeometry {
   posts: GeoPost[];
   rails: GeoRail[];
@@ -137,6 +170,9 @@ export interface RailingGeometry {
   };
 }
 
+// Schaut im Profil-Katalog nach, wie dick eine Stange ist, und rechnet
+// Millimeter in Meter um (durch 1000 teilen – 1000 mm sind 1 Meter).
+// Gibt's kein Profil, nehmen wir einfach ein 4-cm-Rohr.
 export function shapeFromProfile(profile: Profile | undefined): ProfileShape {
   if (!profile) return { kind: 'round', dM: 0.04 };
   const cs = profile.crossSection as {
@@ -155,12 +191,16 @@ export function shapeFromProfile(profile: Profile | undefined): ProfileShape {
   };
 }
 
+// Ein gerades Stück («Lauf»): wo es anfängt (origin), in welche Richtung
+// es geht (dir) und wie lang es ist.
 interface RunDef {
   origin: [number, number];
   dir: [number, number];
   lengthM: number;
 }
 
+// Kinder-Erklärung: Beim Laufen um die Ecke: +1 heisst «links abbiegen»,
+// -1 heisst «rechts abbiegen». Ein I biegt nie ab, ein U zweimal.
 /** 90°-Drehungen je Grundform (+1 = links, -1 = rechts), Start entlang +X. */
 const TURNS: Record<string, number[]> = {
   i: [],
@@ -170,6 +210,10 @@ const TURNS: Record<string, number[]> = {
   'u-aussen': [-1, -1],
 };
 
+// Kinder-Erklärung: Stell dir vor, du läufst mit Kreide auf dem Pausenplatz
+// das Geländer ab: Du startest bei 0, gehst geradeaus so weit wie das erste
+// Stück lang ist, drehst dich um 90° und gehst das nächste Stück – so
+// entsteht der Grundriss, Strich für Strich.
 /** Läufe (Segmente) als Polygonzug in der Bodenebene. */
 export function runsFromInputs(inputs: GelaenderInputs): RunDef[] {
   const seg = inputs.segmentLaengenMm.map((l) => l / 1000).filter((l) => l > 0);
@@ -178,6 +222,8 @@ export function runsFromInputs(inputs: GelaenderInputs): RunDef[] {
   const result: RunDef[] = [];
   let pos: [number, number] = [0, 0];
   let dir: [number, number] = [1, 0];
+  // Für jedes Stück: (ausser beim ersten) zuerst um die Ecke drehen,
+  // dann das Stück aufschreiben und bis ans Ende weiterlaufen.
   seg.forEach((lengthM, i) => {
     if (i > 0) {
       const turn = turns[i - 1] ?? 0;
@@ -190,6 +236,11 @@ export function runsFromInputs(inputs: GelaenderInputs): RunDef[] {
   return result;
 }
 
+// 🤧 Schnupfspruch: Pfoste, Stab und Handlauf – so stapled mir s Gländer uf.
+//    Wie Lego, nume us Iise, gäll – und dänn en Schnupf, ganz schnäll!
+// Die grosse Bau-Funktion: Sie baut Stück für Stück den ganzen Bauplan
+// zusammen – zuerst die Grössen, dann für jedes gerade Stück die Pfosten,
+// Füsse, Stangen, Stäbe, Platten, Schnörkel und Masslinien.
 export function buildRailingGeometry(
   inputs: GelaenderInputs,
   derived: GelaenderDerived,
@@ -201,6 +252,7 @@ export function buildRailingGeometry(
     untergurt?: Profile;
   }
 ): RailingGeometry {
+  // Zuerst: Wie hoch ist das Geländer und wie dick sind die Stangen?
   const heightM = (inputs.hoeheMm ?? 1000) / 1000;
   const postShape = shapeFromProfile(profiles.pfosten);
   // Wunschmasse (Sonderprofile, prüfpflichtig) überschreiben die Vorschau.
@@ -218,6 +270,9 @@ export function buildRailingGeometry(
   const mitHandlauf = !inputs.ohneHandlauf;
   const mitUntergurt = derived.untergurtLaengenMm.length > 0;
   const gurtDicke = gurtShape.dM ?? gurtShape.hM ?? 0.02;
+  // Kinder-Erklärung: Jetzt überlegen wir, wie hoch alles liegt – wie bei
+  // einem Regal: unterstes Brett, oberstes Brett und dazwischen der Platz
+  // für die Füllung (fillBottomM bis fillTopM).
   /** Achshöhe des Untergurts bzw. Bodenfreiheit der Füllung. */
   const bottomM =
     (mitUntergurt
@@ -266,6 +321,7 @@ export function buildRailingGeometry(
   const ornaments: GeoOrnament[] = [];
   const dimensions: GeoDimension[] = [];
 
+  // Welche Sorte Platte gibt's? (Oder gar keine, dann «null».)
   const panelFill: PanelFill | null =
     inputs.fuellungsart === 'glas'
       ? inputs.glasTyp === 'satiniert'
@@ -277,10 +333,17 @@ export function buildRailingGeometry(
           ? (`gitter-${inputs.gitterTyp ?? 'streckmetall'}` as PanelFill)
           : null;
 
+  // 🤧 Schnupfspruch: Lauf für Lauf und Eck für Eck –
+  //    de Schmied isch fliissig, de Rost isch weg.
   const runDefs = runsFromInputs(inputs);
 
   let baseT = 0;
+  // Jetzt gehen wir jedes gerade Stück einzeln durch.
   runDefs.forEach((run, runIndex) => {
+    // Kinder-Erklärung: Abstand zwischen zwei Pfosten = Länge geteilt durch
+    // (Anzahl Pfosten − 1). Bei 4 Pfosten gibt's nur 3 Lücken – zähl mal
+    // die Lücken zwischen deinen Fingern! «at(t)» sagt uns, wo wir stehen,
+    // wenn wir t Meter auf dem Stück gelaufen sind.
     const nPosts = derived.pfostenProSegment[runIndex] ?? 2;
     const spacing = nPosts > 1 ? run.lengthM / (nPosts - 1) : run.lengthM;
     const at = (t: number): [number, number] => [
@@ -293,6 +356,7 @@ export function buildRailingGeometry(
     const rotY = Math.atan2(run.dir[0], run.dir[1]) - Math.PI / 2;
     const postW = postShape.dM ?? postShape.wM ?? 0.04;
 
+    // Die Pfosten hinstellen, einen nach dem anderen, in gleichen Abständen.
     for (let p = 0; p < nPosts; p++) {
       // Eckpfosten nicht doppelt setzen (stellt der vorherige Lauf).
       if (runIndex > 0 && p === 0) continue;
@@ -344,6 +408,8 @@ export function buildRailingGeometry(
       }
     }
 
+    // Kinder-Erklärung: Bei der Wand-Montage gibt es an den Enden kleine
+    // Laschen – wie Hände, die sich an der Wand festhalten.
     // Wandmontage: Laschen an beiden freien Enden (Handlauf/Untergurt).
     if (inputs.montageart === 'wand') {
       const wlH = inputs.wandlascheHoeheMm / 1000;
@@ -371,6 +437,8 @@ export function buildRailingGeometry(
       }
     }
 
+    // Unter das Geländer malen wir ein Stück Boden (Beton, Holz oder Stahl),
+    // damit man sieht, worauf es steht.
     // Baukörper-Andeutung (nicht bei Wandmontage), Art folgt Untergrund.
     if (inputs.montageart && inputs.montageart !== 'wand') {
       const kind = inputs.untergrund ?? 'beton';
@@ -391,6 +459,8 @@ export function buildRailingGeometry(
       });
     }
 
+    // Die waagrechten Stangen: «gurt» ist eine kleine Helfer-Funktion, die
+    // eine Stange auf einer bestimmten Höhe über das ganze Stück legt.
     const [sx0, sz0] = at(0);
     const [ex0, ez0] = at(run.lengthM);
     const gurt = (yM: number, shape: ProfileShape) =>
@@ -408,11 +478,16 @@ export function buildRailingGeometry(
       gurt(inputs.knieleisteHoeheMm / 1000, gurtShape);
     }
 
+    // Zwischen den Pfosten liegen die Felder – mindestens eines.
     const felder = Math.max(1, nPosts - 1);
 
     const mitStaeben =
       inputs.fuellungsart === 'staketen' || inputs.fuellungsart === 'geschmiedet';
 
+    // Kinder-Erklärung: Die senkrechten Stäbe verteilen wir gleichmässig
+    // in jedem Feld, wie Zaunlatten mit immer gleich viel Platz dazwischen.
+    // 🤧 Schnupfspruch: Stab a Stab, grad wie Soldate –
+    //    s Gländer isch de Stolz vom Schlossermeischter-Grate!
     if (mitStaeben) {
       const staebeProFeld =
         felder > 0
@@ -432,6 +507,10 @@ export function buildRailingGeometry(
           });
         }
 
+        // Kinder-Erklärung: Beim geschmiedeten Geländer kommt in die Mitte
+        // des Feldes (oder jedes zweiten) ein Schnörkel. Wie gross er wird,
+        // hängt von der Wahl «klein / mittel / gross» ab – aber er darf nie
+        // grösser sein als der Platz, den er hat.
         // Charakter-Familie: Ornamente gemäss Grundeinstellungen.
         if (
           inputs.fuellungsart === 'geschmiedet' &&
@@ -471,6 +550,8 @@ export function buildRailingGeometry(
       }
     }
 
+    // Querstäbe (Reling): gleichmässig übereinander verteilt, wie die
+    // Sprossen einer Leiter, die man hingelegt hat.
     if (inputs.fuellungsart === 'querstab' && derived.querstabLagen > 0) {
       const oben = mitHandlauf ? railAxisM - railThickness / 2 : heightM;
       const frei = oben - bottomM;
@@ -479,6 +560,7 @@ export function buildRailingGeometry(
       }
     }
 
+    // Platten (Glas, Blech, Gitter): pro Feld eine, genau in die Mitte.
     if (panelFill) {
       const panelH = fillTopM - fillBottomM;
       for (let f = 0; f < felder; f++) {
@@ -522,6 +604,9 @@ export function buildRailingGeometry(
       }
     }
 
+    // Kinder-Erklärung: Die Masslinie liegt ein Stückchen neben dem Geländer,
+    // damit sie nicht mitten durch die Stäbe geht – wie eine Beschriftung
+    // neben einer Zeichnung.
     // Masslinie parallel zum Lauf, nach aussen versetzt.
     const offset = 0.35;
     const ox = run.dir[1] * offset;
@@ -534,6 +619,7 @@ export function buildRailingGeometry(
       label: `${Math.round(run.lengthM * 1000)} mm`,
     });
 
+    // Weiterzählen: Das nächste Stück beginnt dort, wo dieses aufhört.
     baseT += run.lengthM;
   });
 
@@ -546,6 +632,10 @@ export function buildRailingGeometry(
     });
   }
 
+  // Zum Schluss: den kleinsten und grössten Punkt suchen, damit die Kamera
+  // weiss, wie gross der «Rahmen» ums ganze Geländer ist.
+  // 🤧 Schnupfspruch: Vom Pfoste bis zum Amboss, vom Amboss bis zum Zaun –
+  //    en guete Plan isch halbi Arbet, de Rescht isch Schnupf und Staun.
   const xs = posts.map((p) => p.x);
   const zs = posts.map((p) => p.z);
   return {

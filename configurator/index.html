@@ -1,13 +1,23 @@
 <!doctype html>
+<!--
+  index.html – die leere Bühne
+  Das ist die allererste Seite, die der Browser lädt. Sie ist fast leer:
+  nur ein Titel und ein leeres Kästchen namens «root». Sobald das Programm
+  (main.tsx) startet, baut es den ganzen Konfigurator in dieses Kästchen hinein –
+  wie Kulissen, die auf eine leere Theaterbühne geschoben werden.
+-->
 <html lang="de-CH">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>Konfigurator – Musterschlosserei</title>
+    <!-- 🤧 Schnupfspruch: Es lärs Chäschtli, «root» isch sin Name – bald chömed alli Bauteil zäme. -->
   </head>
   <body>
+    <!-- Das leere Kästchen: Hier hinein baut React die ganze Webseite. -->
     <div id="root"></div>
+    <!-- Das Startsignal: Der Browser lädt main.tsx und das Programm springt an. -->
     <script type="module" src="/src/app/main.tsx"></script>
   </body>
 </html>

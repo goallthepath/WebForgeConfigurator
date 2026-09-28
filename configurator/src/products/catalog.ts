@@ -1,3 +1,10 @@
+// ============================================================================
+// products/catalog.ts – das Verzeichnis aller Produkte
+// ----------------------------------------------------------------------------
+// Wie das Inhaltsverzeichnis eines Bastelbuchs: Hier steht, welche Produkte es
+// gibt, unter welcher Adresse man sie findet, wie sie heissen und in welcher
+// Version die Regeln und Preise gelten.
+// ============================================================================
 import type { ProductId } from './types';
 
 /**
@@ -16,6 +23,10 @@ export interface ProductModule {
   priceVersion: string | null;
 }
 
+// Die Liste der vier Produkte. «readonly» und «as const» bedeuten: Diese Liste
+// ist in Stein gemeisselt – niemand darf sie aus Versehen verändern.
+// 🤧 Schnupfspruch: Gländer, Tor, Gitter und Treppe,
+//    e Prise Schnupf, und scho gaht's d'Stäge ue – ohni z'schleppe.
 export const PRODUCT_MODULES: readonly ProductModule[] = [
   {
     id: 'gelaender',
@@ -59,10 +70,15 @@ export const PRODUCT_MODULES: readonly ProductModule[] = [
   },
 ] as const;
 
+// getProductModule sucht ein Produkt anhand seiner ID heraus –
+// wie wenn man im Inhaltsverzeichnis mit dem Finger die richtige Zeile sucht.
 export function getProductModule(id: ProductId): ProductModule {
   const module = PRODUCT_MODULES.find((m) => m.id === id);
+  // Nicht gefunden? Dann sofort laut Bescheid geben, statt still weiterzumachen.
   if (!module) {
     throw new Error(`Unbekanntes Produktmodul: ${id}`);
   }
   return module;
 }
+// 🤧 Schnupfspruch: Es Error-Fänschterli poppt uf –
+//    nimm e Prise und schnuuf tüüf druf.

@@ -1,3 +1,13 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Für Kinder erklärt: Das ist die Hauptseite des Geländer-Baukastens – das,
+// was man im Browser sieht. Links beantwortet man Schritt für Schritt
+// Fragen (wie bei einem Rezept: zuerst dies, dann das), rechts sieht man
+// sofort das Geländer in 3D und eine kleine Zusammenfassung. Diese Datei
+// verbindet alles: den Wunschzettel, den Rechenmeister, den Schiedsrichter
+// und die 3D-Bühne.
+// ─────────────────────────────────────────────────────────────────────────
+// 🤧 Schnupfspruch: Schritt für Schritt, Stab für Stab –
+//    so chunnt s Gländer uf de Balkon, zack-zack! Schnupf, bravo!
 import { useEffect, useMemo, useReducer, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { StepSection } from '../../components/ui/StepSection';
@@ -57,15 +67,24 @@ import {
   type GelaenderInputs,
 } from './types';
 
+// Unter diesem Namen merkt sich der Browser den Entwurf – wie ein
+// Namensschild an deiner Schublade, damit du deine Sachen wiederfindest.
 const STORAGE_KEY = 'webforge-gelaender-draft-v2';
 
+// Kinder-Erklärung: Es gibt nur zwei Befehle: «ändere etwas» (set) oder
+// «fang von vorne an» (reset).
 type Action =
   | { type: 'set'; patch: Partial<GelaenderInputs> }
   | { type: 'reset' };
 
+// Der Reducer ist wie ein strenger, aber netter Hausmeister: Jede Änderung
+// am Wunschzettel geht über ihn. Er trägt sie ein und räumt dabei auf,
+// was nicht mehr zusammenpasst – wer z. B. von Glas auf Stäbe wechselt,
+// braucht keine Glassorte mehr.
 function reducer(state: GelaenderInputs, action: Action): GelaenderInputs {
   switch (action.type) {
     case 'set': {
+      // Neuen Zettel machen: alter Zettel plus die Änderungen.
       const next = { ...state, ...action.patch };
       // Variantenwechsel passt die Segmentanzahl an, ohne Werte zu verlieren.
       if (action.patch.variante) {
@@ -88,6 +107,7 @@ function reducer(state: GelaenderInputs, action: Action): GelaenderInputs {
         if (action.patch.fuellungsart !== 'gitter') next.gitterTyp = null;
         if (action.patch.fuellungsart !== 'geschmiedet') next.ornamentTyp = null;
       }
+      // Kein Laser mehr? Dann auch kein Laser-Motiv.
       if (action.patch.blechTyp && action.patch.blechTyp !== 'laser') {
         next.laserMotiv = null;
       }
@@ -112,6 +132,8 @@ function reducer(state: GelaenderInputs, action: Action): GelaenderInputs {
           next.finishId = null;
         }
       }
+      // 🤧 Schnupfspruch: Ufruume isch wie Schmiede –
+      //    mit Ornig im Chopf bisch zfriede. Schnupf!
       return next;
     }
     case 'reset':
@@ -119,6 +141,9 @@ function reducer(state: GelaenderInputs, action: Action): GelaenderInputs {
   }
 }
 
+// Beim Öffnen der Seite: Gibt es einen geteilten Link mit einer
+// Konfiguration drin (?c=…)? Dann nehmen wir die. Sonst schauen wir, ob im
+// Browser noch ein alter Entwurf liegt. Und sonst: der Beispiel-Zettel.
 function loadInitial(): GelaenderInputs {
   try {
     const fromUrl = new URLSearchParams(window.location.search).get('c');
@@ -141,8 +166,12 @@ function loadInitial(): GelaenderInputs {
   return DEFAULT_GELAENDER_INPUTS;
 }
 
+// Die Namen für die geraden Stücke: erstes, zweites, drittes.
 const SEGMENT_LABELS = ['Erstes Segment', 'Zweites Segment', 'Drittes Segment'];
 
+// Holt aus dem Katalog alle Stangen-Profile, die für eine bestimmte Rolle
+// (Pfosten, Handlauf …) passen – und nur aus dem gewählten Material.
+// Wie wenn du aus der Legokiste nur die roten 2er-Steine heraussuchst.
 function profileOptions(
   role: ProfileRole,
   materialId: string | null
@@ -156,24 +185,36 @@ function profileOptions(
   }));
 }
 
+// Kinder-Erklärung: Macht aus einem Katalog-Namen einen hübschen Namen
+// zum Anzeigen.
 /** Katalogname ohne TESTDATEN-Markierung, in der aktuellen Sprache. */
 function displayName(item: { name: string }): string {
   const raw = (item as { rawName?: string }).rawName;
   return raw ? catalogDisplayName(raw) : item.name;
 }
 
+// 🤧 Schnupfspruch: De Hauptkomponent isch wie de Meischter i de Werkstatt:
+//    Er seit wo's dure goht – und schnupft, wenn's guet stoht.
+// Der Hauptbaustein der Seite. Hier kommt alles zusammen.
 export function GelaenderConfigurator() {
+  // Der Wunschzettel lebt im «useReducer» (beim Hausmeister oben).
+  // Dazu zwei kleine Merkzettel für das Teilen per Link.
   const module = getProductModule('gelaender');
   const [inputs, dispatch] = useReducer(reducer, undefined, loadInitial);
   const [shareState, setShareState] = useState<'idle' | 'copied' | 'shown'>('idle');
   const [shareUrl, setShareUrl] = useState('');
 
+  // Jedes Mal, wenn sich der Wunschzettel ändert, speichern wir ihn im
+  // Browser – wie ein automatisches «Speichern» im Computerspiel.
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs));
   }, [inputs]);
 
+  // Kurzbefehl: «set({ … })» heisst «ändere diese Wünsche».
   const set = (patch: Partial<GelaenderInputs>) => dispatch({ type: 'set', patch });
 
+  // Welche Stangen-Profile sind gerade ausgewählt? (Nur die, die man bei
+  // dieser Füllung wirklich braucht.) Die schickt man zum Schiedsrichter.
   const selectedProfiles = useMemo(
     () =>
       [
@@ -201,6 +242,7 @@ export function GelaenderConfigurator() {
         ? profilBreiteMm(getProfile(stabProfil)!)
         : 12;
 
+  // Der Rechenmeister zählt Pfosten, Stäbe und Längen aus.
   const derived = useMemo(
     () => deriveGelaender(inputs, stabBreite),
     [inputs, stabBreite]
@@ -212,6 +254,7 @@ export function GelaenderConfigurator() {
     []
   );
 
+  // Der Bauplan-Zeichner rechnet aus, wo jedes Teil in 3D steht.
   const geometry = useMemo(
     () =>
       buildRailingGeometry(inputs, derived, {
@@ -232,17 +275,22 @@ export function GelaenderConfigurator() {
     [inputs, derived, untergurtProfil]
   );
 
+  // Der Schiedsrichter prüft alles und verteilt rote und gelbe Karten.
   const validation = useMemo(
     () => validateGelaender(inputs, selectedProfiles),
     [inputs, selectedProfiles]
   );
 
+  // Die Preis-Schätzung und die Einkaufsliste für die Werkstatt.
   const estimate = estimateFor(module.priceVersion);
   const material = useMemo(
     () => materialAuszug(inputs, derived),
     [inputs, derived]
   );
 
+  // Kinder-Erklärung: Die Schritte sind wie Türen in einem Spiel – die
+  // nächste Tür geht erst auf, wenn die Aufgabe davor erledigt ist.
+  // Jedes «…Ok» ist ein Häkchen: «Ist das schon beantwortet?»
   // Freischaltlogik der Schritte
   const sicherheitOk =
     inputs.kinderschutz !== null &&
@@ -277,6 +325,8 @@ export function GelaenderConfigurator() {
       fuellungOk
   );
   const ausfuehrungOk = inputs.ohneHandlauf || inputs.handlaufAbschluss !== null;
+  // 🤧 Schnupfspruch: Nüün Schritt bis zum Gländer, nüün Prise für de Schmied –
+  //    wer alli Türe ufmacht, dä singt es Schmiedelied.
   const steps = {
     s2: inputs.einsatzort !== null,
     s3: sicherheitOk,
@@ -287,8 +337,13 @@ export function GelaenderConfigurator() {
     s8: profileOk,
     s9: ausfuehrungOk && Boolean(inputs.finishId && inputs.farbe),
   };
+  // Das 3D-Bild zeigen wir erst, wenn Form und Masse bekannt sind.
   const geometryReady = masseOk && inputs.variante !== null;
 
+  // Teilen: Den Wunschzettel in eine lange Geheimschrift (Base64) verpacken
+  // und an den Link hängen – wie eine Flaschenpost. Dann versuchen wir, den
+  // Link in die Zwischenablage zu kopieren; klappt das nicht, zeigen wir
+  // ihn einfach an. Nach 6 Sekunden verschwindet die Meldung wieder.
   const share = async () => {
     const payload = btoa(encodeURIComponent(JSON.stringify(inputs)));
     const url = `${window.location.origin}${window.location.pathname}?c=${payload}`;
@@ -302,10 +357,13 @@ export function GelaenderConfigurator() {
     window.setTimeout(() => setShareState('idle'), 6000);
   };
 
+  // Falls noch keine Höhe da ist, rechnen wir mit 1000 mm (1 Meter).
   const hoeheOderDefault = inputs.hoeheMm ?? 1000;
 
+  // Ab hier wird die Seite «gezeichnet» (JSX sieht aus wie HTML).
   return (
     <div className="configurator">
+      {/* Kinder-Erklärung: Zurück-Link, Titel und ein kurzer Einleitungssatz. */}
       <p>
         <Link to="/">{tr('← Produktauswahl')}</Link>
       </p>
@@ -316,8 +374,10 @@ export function GelaenderConfigurator() {
         )}
       </p>
 
+      {/* Zwei Spalten: links die Schritte, rechts Vorschau und Zusammenfassung. */}
       <div className="configurator-layout">
         <div className="configurator-steps">
+          {/* Schritt 1: Wo kommt das Geländer hin? (Für Treppen gibt's einen eigenen Baukasten.) */}
           <StepSection number={1} title="Einsatzort" unlocked done={steps.s2}>
             <OptionCardGroup
               legend="Wo kommt das Geländer zum Einsatz?"
@@ -334,6 +394,7 @@ export function GelaenderConfigurator() {
             </p>
           </StepSection>
 
+          {/* Schritt 2: Sicherheit – Kinder? Wie tief kann man fallen? Drinnen oder draussen? */}
           <StepSection
             number={2}
             title="Nutzung und Sicherheit"
@@ -364,6 +425,9 @@ export function GelaenderConfigurator() {
             />
           </StepSection>
 
+          {/* Schritt 3: Die Form – I, L oder U. */}
+          {/* 🤧 Schnupfspruch: Es I isch grad, es L macht Eck, es U isch fascht es Näscht –
+              doch s Gländer, wo de Schmied macht, das isch allwäg s Bescht. Schnupf! */}
           <StepSection number={3} title="Form wählen" unlocked={steps.s3} done={steps.s4}>
             <OptionCardGroup
               legend="Welchen Grundriss hat Ihr Geländer?"
@@ -379,6 +443,7 @@ export function GelaenderConfigurator() {
             </p>
           </StepSection>
 
+          {/* Schritt 4: Wie wird das Geländer festgemacht, und worauf? */}
           <StepSection
             number={4}
             title="Befestigung und Untergrund"
@@ -399,6 +464,8 @@ export function GelaenderConfigurator() {
               value={inputs.untergrund}
               onChange={(untergrund) => set({ untergrund })}
             />
+            {/* Kinder-Erklärung: Je nach Befestigung zeigen wir andere Mass-Felder –
+                für eine Fussplatte Länge/Breite/Dicke, für ein Schwert Höhe/Breite/Dicke usw. */}
             {inputs.montageart && (
               <fieldset className="option-group">
                 <legend>
@@ -479,6 +546,9 @@ export function GelaenderConfigurator() {
             )}
           </StepSection>
 
+          {/* Schritt 5: Die Masse – wie lang ist jedes Stück und wie hoch das Geländer? */}
+          {/* 🤧 Schnupfspruch: Mäss zwöimal, schnid einisch – so seit's de Schmied, gäll.
+              Und wer drüümal mässt, dä schnupft au drüümal – schnäll! */}
           <StepSection
             number={5}
             title="Masse"
@@ -486,6 +556,7 @@ export function GelaenderConfigurator() {
             unlocked={steps.s5}
             done={steps.s6}
           >
+            {/* Für jedes gerade Stück ein eigenes Zahlenfeld. */}
             {inputs.segmentLaengenMm.map((laenge, i) => (
               <NumberField
                 key={i}
@@ -516,6 +587,7 @@ export function GelaenderConfigurator() {
               hint="BFU-Richtwert bei Absturzsicherung: mindestens 1000 mm. Die verbindliche Höhe wird fachlich am Objekt festgelegt."
               onChange={(hoeheMm) => set({ hoeheMm })}
             />
+            {/* Häkchen: «Ich habe nur ungefähr gemessen» – dann misst die Werkstatt nach. */}
             <label className="check-row">
               <input
                 type="checkbox"
@@ -526,6 +598,7 @@ export function GelaenderConfigurator() {
             </label>
           </StepSection>
 
+          {/* Schritt 6: Die Füllung – Stäbe, Blech, Gitter, Glas oder geschmiedet. */}
           <StepSection
             number={6}
             title="Geländertyp"
@@ -539,6 +612,7 @@ export function GelaenderConfigurator() {
               value={inputs.fuellungsart}
               onChange={(fuellungsart) => set({ fuellungsart })}
             />
+            {/* Je nach Füllung erscheinen weitere Fragen (Blechsorte, Laser-Motiv, Gitter …). */}
             {inputs.fuellungsart === 'blech' && (
               <OptionCardGroup
                 legend="Blechausführung"
@@ -566,6 +640,9 @@ export function GelaenderConfigurator() {
                 onChange={(gitterTyp) => set({ gitterTyp })}
               />
             )}
+            {/* Geschmiedet: Welche Schnörkel, wie gross, wo und wie oft? */}
+            {/* 🤧 Schnupfspruch: Hammer, Amboss, Füür und Rauch –
+                e Volute für de Balkon und e Prise für de Bauch. */}
             {inputs.fuellungsart === 'geschmiedet' && (
               <>
                 <OptionCardGroup
@@ -610,6 +687,8 @@ export function GelaenderConfigurator() {
                 )}
               </>
             )}
+            {/* Kinder-Erklärung: Die Konstruktion – wo liegt der Handlauf, und welche
+                waagrechten Gurte (unten, Mitte, oben) gibt es, und auf welcher Höhe? */}
             <fieldset className="option-group">
               <legend>{tr('Konstruktion (Gurte und Handlauf-Lage)')}</legend>
               {!inputs.ohneHandlauf && (
@@ -661,6 +740,8 @@ export function GelaenderConfigurator() {
                   onChange={(v) => set({ untergurtHoeheMm: v ?? 80 })}
                 />
               )}
+              {/* Die Knieleiste: eine Stange etwa auf Kniehöhe. Beim Einschalten
+                  legen wir sie zuerst auf die halbe Geländerhöhe. */}
               <label className="check-row">
                 <input
                   type="checkbox"
@@ -700,6 +781,9 @@ export function GelaenderConfigurator() {
             </p>
           </StepSection>
 
+          {/* Schritt 7: Material und Stangen-Profile (Pfosten, Handlauf, Stäbe, Glas). */}
+          {/* 🤧 Schnupfspruch: Stahl oder Edelstahl, das isch hüt d Frag –
+              de Rost seit «schad», und mir schnupfed de ganz Tag. */}
           <StepSection
             number={7}
             title="Profile wählen"
@@ -722,6 +806,7 @@ export function GelaenderConfigurator() {
               onChange={(materialId) => set({ materialId })}
               badge={() => 'TESTDATEN'}
             />
+            {/* Die Profile erscheinen erst, wenn ein Material gewählt ist. */}
             {inputs.materialId && (
               <>
             <OptionCardGroup
@@ -827,6 +912,7 @@ export function GelaenderConfigurator() {
             )}
           </StepSection>
 
+          {/* Schritt 8: Handlauf-Ende, Oberfläche und Farbe. */}
           <StepSection
             number={8}
             title="Ausführung, Oberfläche und Farbe"
@@ -864,6 +950,8 @@ export function GelaenderConfigurator() {
               onChange={(finishId) => set({ finishId })}
               badge={() => 'TESTDATEN'}
             />
+            {/* Die Farbtupfer: Für jede Farbe ein rundes Knöpfchen zum Antippen.
+                Ein Fragezeichen heisst «Wunschfarbe – fragen wir nach». */}
             <fieldset className="option-group">
               <legend>{tr('Farbe')}</legend>
               <div className="swatch-row">
@@ -901,6 +989,7 @@ export function GelaenderConfigurator() {
             </fieldset>
           </StepSection>
 
+          {/* Schritt 9: Wer baut das Geländer ein? */}
           <StepSection
             number={9}
             title="Montage"
@@ -917,6 +1006,9 @@ export function GelaenderConfigurator() {
           </StepSection>
         </div>
 
+        {/* Rechte Spalte: 3D-Vorschau und Zusammenfassung. */}
+        {/* 🤧 Schnupfspruch: Links wird gfröget, rechts wird glueget –
+            und i de Mitti wird gschnupft, dass es nur so rueget. */}
         <aside className="configurator-aside">
           <RailingViewer
             geometry={geometry}
@@ -924,6 +1016,8 @@ export function GelaenderConfigurator() {
             empty={!geometryReady}
           />
 
+          {/* Kinder-Erklärung: Die Zusammenfassung – Gesamtlänge, Anzahl Pfosten
+              und Stäbe, und aufklappbar die Einkaufsliste für die Werkstatt. */}
           <div className="summary-card">
             <h2>{tr('Ihre Konfiguration')}</h2>
             {geometryReady ? (
@@ -991,6 +1085,7 @@ export function GelaenderConfigurator() {
               <p className="field-hint">{tr('Noch keine Masse erfasst.')}</p>
             )}
 
+            {/* Die roten Karten (Fehler) und gelben Karten (Hinweise) vom Schiedsrichter. */}
             {validation.errors.length > 0 && (
               <div className="status-banner red" role="alert">
                 <strong>{tr('Bitte prüfen:')}</strong>
@@ -1011,8 +1106,11 @@ export function GelaenderConfigurator() {
               </div>
             )}
 
+            {/* Die grobe Preis-Schätzung. */}
             <p className="estimate">{describeEstimate(estimate)}</p>
 
+            {/* Knöpfe: Link speichern, Offerte anfragen (noch nicht aktiv, und gesperrt
+                bei roten Karten) und alles zurücksetzen. */}
             <div className="summary-actions">
               <button type="button" className="secondary" onClick={share}>
                 {tr('Konfiguration speichern (Link)')}
@@ -1033,6 +1131,7 @@ export function GelaenderConfigurator() {
                 {tr('Zurücksetzen')}
               </button>
             </div>
+            {/* Rückmeldung nach dem Teilen: kopiert – oder der Link zum Abschreiben. */}
             {shareState === 'copied' && (
               <p className="field-hint" role="status">
                 {tr(
@@ -1046,6 +1145,10 @@ export function GelaenderConfigurator() {
               </p>
             )}
 
+            {/* Ganz klein unten: die Versionsnummern, damit die Werkstatt weiss,
+                mit welchen Regeln gerechnet wurde. */}
+            {/* 🤧 Schnupfspruch: Versione, Nummere, Punkt und Strich –
+                s Gländer isch fertig, und de Schnupf isch für mich! */}
             <p className="versions">
               {tr('Produkt')} {module.productVersion} · {tr('Regeln')}{' '}
               {module.ruleVersion} · {tr('Preis:')}{' '}
