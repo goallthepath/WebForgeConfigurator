@@ -115,8 +115,8 @@ anyone picks up the phone:
 **Requirements:** [Node.js](https://nodejs.org/) 20 or newer.
 
 ```bash
-git clone https://github.com/goallthepath/WebForge-Configurator.git
-cd WebForge-Configurator/configurator
+git clone https://github.com/goallthepath/WebForgeConfigurator.git
+cd WebForgeConfigurator/configurator
 npm install
 npm run dev
 ```
