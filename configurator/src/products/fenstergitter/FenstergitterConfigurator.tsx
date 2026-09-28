@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useReducer, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { tr } from '../../i18n';
 import { StepSection } from '../../components/ui/StepSection';
 import { OptionCardGroup } from '../../components/ui/OptionCardGroup';
 import { NumberField } from '../../components/ui/NumberField';
@@ -33,7 +34,7 @@ import {
 import { deriveFenstergitter, gitterMaterialAuszug } from './derive';
 import { buildGitterGeometry } from './geometry';
 import {
-  EMPTY_FENSTERGITTER_INPUTS,
+  DEFAULT_FENSTERGITTER_INPUTS,
   type FenstergitterInputs,
   type Fluchtweg,
   type GitterEinbauort,
@@ -43,7 +44,7 @@ import {
   type Stabanordnung,
 } from './types';
 
-const STORAGE_KEY = 'webforge-fenstergitter-draft-v1';
+const STORAGE_KEY = 'webforge-fenstergitter-draft-v2';
 
 const EINBAUORTE_G: OptionDef<GitterEinbauort>[] = [
   { id: 'aussen', label: 'Aussen', description: 'Fassadenseitig – Witterung und Korrosionsschutz beachten.' },
@@ -142,7 +143,7 @@ function reducer(
       return next;
     }
     case 'reset':
-      return EMPTY_FENSTERGITTER_INPUTS;
+      return DEFAULT_FENSTERGITTER_INPUTS;
   }
 }
 
@@ -151,21 +152,21 @@ function loadInitial(): FenstergitterInputs {
     const fromUrl = new URLSearchParams(window.location.search).get('c');
     if (fromUrl) {
       return {
-        ...EMPTY_FENSTERGITTER_INPUTS,
+        ...DEFAULT_FENSTERGITTER_INPUTS,
         ...(JSON.parse(decodeURIComponent(atob(fromUrl))) as FenstergitterInputs),
       };
     }
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored) {
       return {
-        ...EMPTY_FENSTERGITTER_INPUTS,
+        ...DEFAULT_FENSTERGITTER_INPUTS,
         ...(JSON.parse(stored) as FenstergitterInputs),
       };
     }
   } catch {
     // defekte Drafts still verwerfen
   }
-  return EMPTY_FENSTERGITTER_INPUTS;
+  return DEFAULT_FENSTERGITTER_INPUTS;
 }
 
 function profileOptions(
@@ -268,13 +269,13 @@ export function FenstergitterConfigurator() {
   return (
     <div className="configurator">
       <p>
-        <Link to="/">← Produktauswahl</Link>
+        <Link to="/">← {tr('Produktauswahl')}</Link>
       </p>
-      <h1>Fenstergitter konfigurieren</h1>
+      <h1>{tr('Fenstergitter konfigurieren')}</h1>
       <p className="lead">
-        Fest montiertes, rechteckiges Fenstergitter – mit 3D-Vorschau am
-        Fenster und Masszeichnung. Unser Meister prüft jede Konfiguration
-        persönlich (Einbruchhemmung, Befestigung, Baurecht).
+        {tr(
+          'Fest montiertes, rechteckiges Fenstergitter – mit 3D-Vorschau am Fenster und Masszeichnung. Unser Meister prüft jede Konfiguration persönlich (Einbruchhemmung, Befestigung, Baurecht).'
+        )}
       </p>
 
       <div className="configurator-layout">
@@ -296,15 +297,9 @@ export function FenstergitterConfigurator() {
             />
             {inputs.fluchtweg === 'ja' && (
               <p className="escape-hatch">
-                Für Fluchtwege braucht es öffenbare oder ausstellbare
-                Sonderlösungen.{' '}
-                <a href="/projekt-starten/">Individuelle Ausführung anfragen</a>.
+                {tr('Für Fluchtwege braucht es öffenbare oder ausstellbare Sonderlösungen.')}
               </p>
             )}
-            <p className="escape-hatch">
-              Rundbogen, Schrägen oder öffenbare Gitter?{' '}
-              <a href="/projekt-starten/">Individuelle Ausführung anfragen</a>.
-            </p>
           </StepSection>
 
           <StepSection number={2} title="Montage und Untergrund" unlocked={steps.s2} done={steps.s3}>
@@ -360,7 +355,7 @@ export function FenstergitterConfigurator() {
                 checked={inputs.masseUngefaehr}
                 onChange={(e) => set({ masseUngefaehr: e.target.checked })}
               />
-              Meine Masse sind ungefähr (Aufmass nötig)
+              {tr('Meine Masse sind ungefähr (Aufmass nötig)')}
             </label>
           </StepSection>
 
@@ -375,7 +370,7 @@ export function FenstergitterConfigurator() {
             {inputs.stabanordnung === 'vertikal-quergurt' && (
               <NumberField
                 label="Anzahl Quergurte"
-                unit="Stk."
+                unit={tr('Stk.')}
                 step={1}
                 value={inputs.quergurtAnzahl}
                 min={1}
@@ -449,7 +444,7 @@ export function FenstergitterConfigurator() {
                   className="material-details"
                   open={inputs.stabWunschDm !== null}
                 >
-                  <summary>Wunschmass Stab (Sonderprofil, prüfpflichtig)</summary>
+                  <summary>{tr('Wunschmass Stab (Sonderprofil, prüfpflichtig)')}</summary>
                   <NumberField
                     label="Runddurchmesser"
                     unit="mm"
@@ -483,7 +478,7 @@ export function FenstergitterConfigurator() {
               badge={() => 'TESTDATEN'}
             />
             <fieldset className="option-group">
-              <legend>Farbe</legend>
+              <legend>{tr('Farbe')}</legend>
               <div className="swatch-row">
                 {FARBEN.map((farbe) => (
                   <label
@@ -507,7 +502,7 @@ export function FenstergitterConfigurator() {
                     >
                       {farbe.hex ? '' : '?'}
                     </span>
-                    <span className="swatch-label">{farbe.label}</span>
+                    <span className="swatch-label">{tr(farbe.label)}</span>
                   </label>
                 ))}
               </div>
@@ -538,40 +533,40 @@ export function FenstergitterConfigurator() {
           />
 
           <div className="summary-card">
-            <h2>Ihre Konfiguration</h2>
+            <h2>{tr('Ihre Konfiguration')}</h2>
             {geometryReady ? (
               <>
                 <ul className="summary-list">
                   <li>
-                    Gitter-Aussenmass:{' '}
+                    {tr('Gitter-Aussenmass:')}{' '}
                     <strong>
                       {derived.rahmenBreiteMm} × {derived.rahmenHoeheMm} mm
                     </strong>
-                    {inputs.masseUngefaehr && ' (ungefähr)'}
+                    {inputs.masseUngefaehr && ` (${tr('ungefähr')})`}
                   </li>
                   <li>
-                    Stäbe: <strong>{derived.stabAnzahl}</strong>
-                    <span className="provisional"> provisorisch</span>
+                    {tr('Stäbe:')} <strong>{derived.stabAnzahl}</strong>
+                    <span className="provisional"> {tr('provisorisch')}</span>
                   </li>
                   {derived.quergurtAnzahl > 0 && (
                     <li>
-                      Quergurte: <strong>{derived.quergurtAnzahl}</strong>
+                      {tr('Quergurte:')} <strong>{derived.quergurtAnzahl}</strong>
                     </li>
                   )}
                   <li>
-                    Befestigungslaschen: <strong>{derived.laschenTotal}</strong>
-                    <span className="provisional"> provisorisch</span>
+                    {tr('Befestigungslaschen:')} <strong>{derived.laschenTotal}</strong>
+                    <span className="provisional"> {tr('provisorisch')}</span>
                   </li>
                 </ul>
                 {material.length > 0 && (
                   <details className="material-details">
-                    <summary>Materialauszug (provisorisch, für die Werkstatt)</summary>
+                    <summary>{tr('Materialauszug (provisorisch, für die Werkstatt)')}</summary>
                     <table className="material-table">
                       <thead>
                         <tr>
-                          <th>Position</th>
-                          <th>Stk.</th>
-                          <th>Länge</th>
+                          <th>{tr('Position')}</th>
+                          <th>{tr('Stk.')}</th>
+                          <th>{tr('Länge')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -588,12 +583,12 @@ export function FenstergitterConfigurator() {
                 )}
               </>
             ) : (
-              <p className="field-hint">Noch keine Masse erfasst.</p>
+              <p className="field-hint">{tr('Noch keine Masse erfasst.')}</p>
             )}
 
             {validation.errors.length > 0 && (
               <div className="status-banner red" role="alert">
-                <strong>Bitte prüfen:</strong>
+                <strong>{tr('Bitte prüfen:')}</strong>
                 <ul>
                   {validation.errors.map((error) => (
                     <li key={error}>{error}</li>
@@ -615,39 +610,42 @@ export function FenstergitterConfigurator() {
 
             <div className="summary-actions">
               <button type="button" className="secondary" onClick={share}>
-                Konfiguration speichern (Link)
+                {tr('Konfiguration speichern (Link)')}
               </button>
               <button
                 type="button"
                 className="primary"
                 disabled={validation.level === 'red' || !inputs.montageService}
-                title="Übermittlung an die Werkstatt folgt mit dem Anfrage-System (Phase 3)"
+                title={tr('Übermittlung an die Werkstatt folgt mit dem Anfrage-System (Phase 3)')}
               >
-                Offerte anfragen – folgt in Kürze
+                {tr('Offerte anfragen – folgt in Kürze')}
               </button>
               <button
                 type="button"
                 className="ghost"
                 onClick={() => dispatch({ type: 'reset' })}
               >
-                Zurücksetzen
+                {tr('Zurücksetzen')}
               </button>
             </div>
             {shareState === 'copied' && (
               <p className="field-hint" role="status">
-                Link kopiert – Konfiguration jederzeit wieder öffnen und teilen.
+                {tr('Link kopiert – Konfiguration jederzeit wieder öffnen und teilen.')}
               </p>
             )}
             {shareState === 'shown' && (
               <p className="field-hint" role="status">
-                Link: <code className="share-url">{shareUrl}</code>
+                {tr('Link:')} <code className="share-url">{shareUrl}</code>
               </p>
             )}
 
             <p className="versions">
-              Produkt {module.productVersion} · Regeln {module.ruleVersion} ·
-              Preis: {module.priceVersion ?? 'keine Version (individuelle Prüfung)'} ·
-              Katalog {CATALOG_VERSION}
+              {tr('Produkt {p} · Regeln {r} · Preis: {preis} · Katalog {k}', {
+                p: module.productVersion,
+                r: module.ruleVersion,
+                preis: module.priceVersion ?? tr('keine Version (individuelle Prüfung)'),
+                k: CATALOG_VERSION,
+              })}
             </p>
           </div>
         </aside>

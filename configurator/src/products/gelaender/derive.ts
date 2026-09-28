@@ -8,6 +8,7 @@ import {
   GELAENDER_RULES_V0,
   type GelaenderRuleParams,
 } from '../../rules/gelaender-rules';
+import { tr } from '../../i18n';
 
 /**
  * Abgeleitete Werte (Ebene «abgeleitete Werte» – reine Funktionen).
@@ -143,7 +144,7 @@ export function materialAuszug(
   const positionen: MaterialPosition[] = [];
   if (derived.pfostenTotal > 0 && inputs.hoeheMm) {
     positionen.push({
-      bezeichnung: 'Pfosten',
+      bezeichnung: tr('Pfosten'),
       anzahl: derived.pfostenTotal,
       laengeMm: inputs.hoeheMm,
     });
@@ -152,15 +153,15 @@ export function materialAuszug(
     positionen.push({
       bezeichnung:
         derived.handlaufLaengenMm.length > 1
-          ? `Handlauf Segment ${i + 1}`
-          : 'Handlauf',
+          ? tr('Handlauf Segment {n}', { n: i + 1 })
+          : tr('Handlauf'),
       anzahl: 1,
       laengeMm: laenge,
     });
   });
   if (derived.fuellstaebeTotal > 0 && inputs.hoeheMm) {
     positionen.push({
-      bezeichnung: 'Füllstäbe',
+      bezeichnung: tr('Füllstäbe'),
       anzahl: derived.fuellstaebeTotal,
       laengeMm: null,
     });
@@ -171,8 +172,8 @@ export function materialAuszug(
         positionen.push({
           bezeichnung:
             inputs.segmentLaengenMm.length > 1
-              ? `Querstäbe Segment ${i + 1}`
-              : 'Querstäbe',
+              ? tr('Querstäbe Segment {n}', { n: i + 1 })
+              : tr('Querstäbe'),
           anzahl: derived.querstabLagen,
           laengeMm: laenge,
         });
@@ -187,7 +188,10 @@ export function materialAuszug(
   for (const [laengen, name] of gurtPositionen) {
     laengen.forEach((laenge, i) => {
       positionen.push({
-        bezeichnung: laengen.length > 1 ? `${name} Segment ${i + 1}` : name,
+        bezeichnung:
+          laengen.length > 1
+            ? tr('{teil} Segment {n}', { teil: tr(name), n: i + 1 })
+            : tr(name),
         anzahl: 1,
         laengeMm: laenge,
       });
@@ -196,31 +200,47 @@ export function materialAuszug(
   if (derived.pfostenTotal > 0) {
     if (inputs.montageart === 'boden') {
       positionen.push({
-        bezeichnung: `Fussplatten ${inputs.fussplatteLaengeMm}×${inputs.fussplatteBreiteMm}×${inputs.fussplatteDickeMm} mm (Wunschmass)`,
+        bezeichnung: tr('Fussplatten {l}×{b}×{d} mm (Wunschmass)', {
+          l: inputs.fussplatteLaengeMm,
+          b: inputs.fussplatteBreiteMm,
+          d: inputs.fussplatteDickeMm,
+        }),
         anzahl: derived.pfostenTotal,
         laengeMm: null,
       });
     } else if (inputs.montageart === 'seite') {
       positionen.push({
-        bezeichnung: `Schwerter ${inputs.schwertHoeheMm}×${inputs.schwertBreiteMm}×${inputs.schwertDickeMm} mm (Wunschmass)`,
+        bezeichnung: tr('Schwerter {h}×{b}×{d} mm (Wunschmass)', {
+          h: inputs.schwertHoeheMm,
+          b: inputs.schwertBreiteMm,
+          d: inputs.schwertDickeMm,
+        }),
         anzahl: derived.pfostenTotal,
         laengeMm: null,
       });
     } else if (inputs.montageart === 'unten') {
       positionen.push({
-        bezeichnung: `Kragarme ${inputs.kragarmStaerkeMm} mm stark (Wunschmass)`,
+        bezeichnung: tr('Kragarme {s} mm stark (Wunschmass)', {
+          s: inputs.kragarmStaerkeMm,
+        }),
         anzahl: derived.pfostenTotal,
         laengeMm: inputs.kragarmLaengeMm,
       });
     } else if (inputs.montageart === 'eingelassen') {
       positionen.push({
-        bezeichnung: `Pfosten-Einbindung ${inputs.einlassTiefeMm} mm (Wunschmass)`,
+        bezeichnung: tr('Pfosten-Einbindung {t} mm (Wunschmass)', {
+          t: inputs.einlassTiefeMm,
+        }),
         anzahl: derived.pfostenTotal,
         laengeMm: null,
       });
     } else if (inputs.montageart === 'wand') {
       positionen.push({
-        bezeichnung: `Wandlaschen ${inputs.wandlascheHoeheMm}×${inputs.wandlascheBreiteMm}×${inputs.wandlascheDickeMm} mm (Wunschmass)`,
+        bezeichnung: tr('Wandlaschen {h}×{b}×{d} mm (Wunschmass)', {
+          h: inputs.wandlascheHoeheMm,
+          b: inputs.wandlascheBreiteMm,
+          d: inputs.wandlascheDickeMm,
+        }),
         anzahl: 2 * Math.max(1, derived.handlaufLaengenMm.length ? 1 : 1) * (derived.untergurtLaengenMm.length > 0 ? 2 : 1),
         laengeMm: null,
       });
@@ -229,10 +249,10 @@ export function materialAuszug(
   if (derived.glasfelderTotal > 0) {
     const art =
       inputs.fuellungsart === 'glas'
-        ? `Glasfelder (${inputs.glasTyp === 'satiniert' ? 'satiniert' : 'klar'})`
+        ? tr(`Glasfelder (${inputs.glasTyp === 'satiniert' ? 'satiniert' : 'klar'})`)
         : inputs.fuellungsart === 'blech'
-          ? `Blechfelder (${inputs.blechTyp ?? 'voll'})`
-          : `Gitterfelder (${inputs.gitterTyp ?? 'streckmetall'})`;
+          ? tr(`Blechfelder (${inputs.blechTyp ?? 'voll'})`)
+          : tr(`Gitterfelder (${inputs.gitterTyp ?? 'streckmetall'})`);
     positionen.push({
       bezeichnung: art,
       anzahl: derived.glasfelderTotal,

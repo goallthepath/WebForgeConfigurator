@@ -2,6 +2,7 @@ import type { TreppeDerived, TreppeInputs } from './types';
 import type { Profile } from '../types';
 import { shapeFromProfile, type ProfileShape } from '../gelaender/geometry';
 import type { HandlaufAbschluss } from '../gelaender/types';
+import { tr } from '../../i18n';
 
 /**
  * Geometriemodell Treppe: Lauf entlang +X (Antritt bei x=0), Höhe +Y,
@@ -257,7 +258,7 @@ export function buildTreppeGeometry(
     {
       start: [0, 0.02, B / 2 + 0.4],
       end: [L, 0.02, B / 2 + 0.4],
-      label: `${derived.lauflaengeMm} mm Lauf`,
+      label: tr('{l} mm Lauf', { l: derived.lauflaengeMm }),
     },
   ];
 

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from 'react';
 import type { GartentorGeometry } from '../products/gartentor/geometry';
 import type { ViewPreset } from './scene-shared';
+import { tr } from '../i18n';
 
 const TorSceneLazy = lazy(() =>
   import('./TorScene').then((m) => ({ default: m.TorScene }))
@@ -34,7 +35,7 @@ function TorElevation({ geometry }: { geometry: GartentorGeometry }) {
       viewBox={`${-oeffnungM / 2 - pad} ${-hoeheM - pad} ${oeffnungM + 2 * pad} ${hoeheM + 2 * pad}`}
       className="elevation-svg"
       role="img"
-      aria-label="Masszeichnung des Gartentors (Frontansicht, geschlossen)"
+      aria-label={tr('Masszeichnung des Gartentors (Frontansicht, geschlossen)')}
       preserveAspectRatio="xMidYMid meet"
     >
       <line
@@ -142,9 +143,9 @@ export function TorViewer({
 
   if (empty) {
     return (
-      <div className="viewer-shell" role="img" aria-label="Produktvorschau">
+      <div className="viewer-shell" role="img" aria-label={tr('Produktvorschau')}>
         <p className="viewer-empty">
-          Die 3D-Vorschau erscheint, sobald Öffnung und Höhe erfasst sind.
+          {tr('Die 3D-Vorschau erscheint, sobald Öffnung und Höhe erfasst sind.')}
         </p>
       </div>
     );
@@ -154,7 +155,7 @@ export function TorViewer({
 
   return (
     <div className="viewer-block">
-      <div className="viewer-toolbar" role="toolbar" aria-label="Ansicht wählen">
+      <div className="viewer-toolbar" role="toolbar" aria-label={tr('Ansicht wählen')}>
         {VIEWS.filter((v) => webgl || v.id === '2d').map((v) => (
           <button
             key={v.id}
@@ -162,7 +163,7 @@ export function TorViewer({
             className={view === v.id ? 'active' : ''}
             onClick={() => setView(v.id)}
           >
-            {v.label}
+            {tr(v.label)}
           </button>
         ))}
         <label className="dims-toggle">
@@ -171,12 +172,12 @@ export function TorViewer({
             checked={showDims}
             onChange={(e) => setShowDims(e.target.checked)}
           />
-          Masslinien
+          {tr('Masslinien')}
         </label>
       </div>
       {show3d && (
         <div className="tor-slider">
-          <label htmlFor="tor-oeffnung">Tor öffnen</label>
+          <label htmlFor="tor-oeffnung">{tr('Tor öffnen')}</label>
           <input
             id="tor-oeffnung"
             type="range"
@@ -191,7 +192,7 @@ export function TorViewer({
       )}
       <div className="viewer-shell">
         {show3d ? (
-          <Suspense fallback={<p className="viewer-empty">3D-Vorschau wird geladen …</p>}>
+          <Suspense fallback={<p className="viewer-empty">{tr('3D-Vorschau wird geladen …')}</p>}>
             <TorSceneLazy
               geometry={geometry}
               color={color}
@@ -208,8 +209,9 @@ export function TorViewer({
       </div>
       {!webgl && (
         <p className="field-hint">
-          Ihr Gerät unterstützt kein 3D – die Zeichnung zeigt Ihr Tor
-          massstäblich. Die Konfiguration funktioniert vollständig.
+          {tr(
+            'Ihr Gerät unterstützt kein 3D – die Zeichnung zeigt Ihr Tor massstäblich. Die Konfiguration funktioniert vollständig.'
+          )}
         </p>
       )}
     </div>

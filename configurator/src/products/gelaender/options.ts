@@ -405,7 +405,7 @@ export const UNTERGRUENDE: OptionDef<Untergrund>[] = [
 export const MONTAGE_SERVICES: OptionDef<MontageService>[] = [
   {
     id: 'webforge',
-    label: 'Montage durch WebForge',
+    label: 'Montage durch unsere Werkstatt',
     description: 'Lieferung und fachgerechte Montage vor Ort, schweizweit.',
   },
   {

@@ -2,6 +2,7 @@ import type { TreppeDerived, TreppeInputs } from '../products/treppe/types';
 import type { Profile, ValidationResult } from '../products/types';
 import { isProductionReady } from './profiles';
 import { BFU_RICHTWERTE, RULE_APPROVAL_WARNING } from './gelaender-rules';
+import { tr } from '../i18n';
 
 /**
  * Regelkatalog Treppe, ruleVersion 0.0.1.
@@ -75,12 +76,18 @@ export function validateTreppe(
   if (H !== null) {
     if (H < params.minGeschosshoeheMm) {
       errors.push(
-        `Geschosshöhe ${H} mm liegt unter dem Minimum von ${params.minGeschosshoeheMm} mm.`
+        tr('Geschosshöhe {h} mm liegt unter dem Minimum von {min} mm.', {
+          h: H,
+          min: params.minGeschosshoeheMm,
+        })
       );
     }
     if (H > params.maxGeschosshoeheMm) {
       errors.push(
-        `Geschosshöhe ${H} mm: Ein gerader Lauf braucht hier ein Zwischenpodest – bitte als individuelle Ausführung anfragen.`
+        tr(
+          'Geschosshöhe {h} mm: Ein gerader Lauf braucht hier ein Zwischenpodest – bitte als individuelle Ausführung anfragen.',
+          { h: H }
+        )
       );
     }
   }
@@ -91,7 +98,11 @@ export function validateTreppe(
       inputs.laufbreiteMm > params.maxLaufbreiteMm
     ) {
       errors.push(
-        `Laufbreite ${inputs.laufbreiteMm} mm liegt ausserhalb des Bereichs ${params.minLaufbreiteMm}–${params.maxLaufbreiteMm} mm.`
+        tr('Laufbreite {b} mm liegt ausserhalb des Bereichs {min}–{max} mm.', {
+          b: inputs.laufbreiteMm,
+          min: params.minLaufbreiteMm,
+          max: params.maxLaufbreiteMm,
+        })
       );
     }
   }
@@ -102,7 +113,10 @@ export function validateTreppe(
       derived.steigungMm > params.maxSteigungMm
     ) {
       errors.push(
-        `Steigung ${derived.steigungMm} mm liegt ausserhalb ${params.minSteigungMm}–${params.maxSteigungMm} mm – Stufenzahl anpassen oder individuell planen.`
+        tr(
+          'Steigung {s} mm liegt ausserhalb {min}–{max} mm – Stufenzahl anpassen oder individuell planen.',
+          { s: derived.steigungMm, min: params.minSteigungMm, max: params.maxSteigungMm }
+        )
       );
     }
     if (
@@ -110,7 +124,10 @@ export function validateTreppe(
       derived.schrittmassMm > params.maxSchrittmassMm
     ) {
       warnings.push(
-        `Schrittmass ${derived.schrittmassMm} mm liegt ausserhalb des üblichen Bereichs ${params.minSchrittmassMm}–${params.maxSchrittmassMm} mm – Gehkomfort wird fachlich geprüft.`
+        tr(
+          'Schrittmass {sm} mm liegt ausserhalb des üblichen Bereichs {min}–{max} mm – Gehkomfort wird fachlich geprüft.',
+          { sm: derived.schrittmassMm, min: params.minSchrittmassMm, max: params.maxSchrittmassMm }
+        )
       );
     }
     if (
@@ -118,7 +135,9 @@ export function validateTreppe(
       derived.auftrittMm > params.maxAuftrittMm
     ) {
       warnings.push(
-        `Auftritt ${derived.auftrittMm} mm liegt ausserhalb des üblichen Bereichs – wird fachlich geprüft.`
+        tr('Auftritt {a} mm liegt ausserhalb des üblichen Bereichs – wird fachlich geprüft.', {
+          a: derived.auftrittMm,
+        })
       );
     }
   }
@@ -126,7 +145,9 @@ export function validateTreppe(
   if (mitGelaender && inputs.gelaenderHoeheMm !== null) {
     if (inputs.gelaenderHoeheMm < BFU_TREPPENLAUF_MIN_MM) {
       errors.push(
-        `Treppengeländer: BFU-Richtwert mindestens ${BFU_TREPPENLAUF_MIN_MM} mm im Lauf – bitte Höhe anpassen.`
+        tr('Treppengeländer: BFU-Richtwert mindestens {min} mm im Lauf – bitte Höhe anpassen.', {
+          min: BFU_TREPPENLAUF_MIN_MM,
+        })
       );
     }
     if (
@@ -134,7 +155,9 @@ export function validateTreppe(
       inputs.gelaenderHoeheMm > params.maxGelaenderhoeheMm
     ) {
       errors.push(
-        `Geländerhöhe ${inputs.gelaenderHoeheMm} mm liegt ausserhalb des Vorschaubereichs.`
+        tr('Geländerhöhe {h} mm liegt ausserhalb des Vorschaubereichs.', {
+          h: inputs.gelaenderHoeheMm,
+        })
       );
     }
   }
@@ -142,62 +165,83 @@ export function validateTreppe(
   if (mitGelaender && inputs.kinderschutz !== 'nein') {
     if (inputs.fuellung === 'querstab') {
       warnings.push(
-        'Querstäbe wirken als Leiter – im Treppenbereich mit Kindern wird das Schutzziel oft nicht erreicht (BFU). Wir prüfen Alternativen.'
+        tr(
+          'Querstäbe wirken als Leiter – im Treppenbereich mit Kindern wird das Schutzziel oft nicht erreicht (BFU). Wir prüfen Alternativen.'
+        )
       );
     } else {
       warnings.push(
-        `Kinderschutz: Öffnungen werden nach BFU geprüft (${BFU_RICHTWERTE.kugelDurchmesserMm}-mm-Kugel bis ${BFU_RICHTWERTE.kinderschutzZoneMm} mm).`
+        tr('Kinderschutz: Öffnungen werden nach BFU geprüft ({d}-mm-Kugel bis {z} mm).', {
+          d: BFU_RICHTWERTE.kugelDurchmesserMm,
+          z: BFU_RICHTWERTE.kinderschutzZoneMm,
+        })
       );
     }
   }
 
   if (mitTreppe && inputs.einbauort === 'aussen' && inputs.stufentyp === 'blech-glatt') {
     warnings.push(
-      'Glattes Blech aussen: Rutschhemmung wird fachlich beurteilt – Gitterrost oder Tränenblech sind aussen üblich.'
+      tr(
+        'Glattes Blech aussen: Rutschhemmung wird fachlich beurteilt – Gitterrost oder Tränenblech sind aussen üblich.'
+      )
     );
   }
 
   if (inputs.modus === 'gelaender') {
     warnings.push(
-      'Geländer auf bestehende Treppe: Befestigung an Wange/Stufen und Zustand des Bestands werden beim Aufmass geprüft.'
+      tr(
+        'Geländer auf bestehende Treppe: Befestigung an Wange/Stufen und Zustand des Bestands werden beim Aufmass geprüft.'
+      )
     );
   }
 
   if (inputs.masseUngefaehr) {
-    warnings.push('Ungefähre Masse: Vor der Fertigung wird vor Ort ausgemessen.');
+    warnings.push(tr('Ungefähre Masse: Vor der Fertigung wird vor Ort ausgemessen.'));
   }
 
   if (inputs.fuellung === 'geschmiedet') {
     warnings.push(
-      'Charakter-Füllung: Ornament-Grundauswahl – die handwerkliche Ausarbeitung plant unser Meister persönlich.'
+      tr(
+        'Charakter-Füllung: Ornament-Grundauswahl – die handwerkliche Ausarbeitung plant unser Meister persönlich.'
+      )
     );
   }
 
   if (mitTreppe) {
     warnings.push(
       inputs.konstruktion === 'mittelholm'
-        ? 'Mittelholmtreppe: Holmquerschnitt und auskragende Stufen werden statisch bemessen – Darstellung ist Vorschau.'
-        : 'Tragkonstruktion (Wangen, Stufen, Auflager) wird statisch bemessen – Profile hier sind Vorschau.'
+        ? tr(
+            'Mittelholmtreppe: Holmquerschnitt und auskragende Stufen werden statisch bemessen – Darstellung ist Vorschau.'
+          )
+        : tr(
+            'Tragkonstruktion (Wangen, Stufen, Auflager) wird statisch bemessen – Profile hier sind Vorschau.'
+          )
     );
     if (inputs.setzstufen === 'offen' && inputs.kinderschutz !== 'nein') {
       warnings.push(
-        `Offene Steigungen: Öffnungen werden kindersicher begrenzt (BFU, ${BFU_RICHTWERTE.kugelDurchmesserMm}-mm-Kugel) – ggf. mit Blenden.`
+        tr(
+          'Offene Steigungen: Öffnungen werden kindersicher begrenzt (BFU, {d}-mm-Kugel) – ggf. mit Blenden.',
+          { d: BFU_RICHTWERTE.kugelDurchmesserMm }
+        )
       );
     }
   }
 
   for (const profile of selectedProfiles) {
     if (!profile.active) {
-      errors.push(`Profil «${profile.name}» ist nicht mehr verfügbar.`);
+      errors.push(tr('Profil «{name}» ist nicht mehr verfügbar.', { name: profile.name }));
     } else if (!isProductionReady(profile)) {
       warnings.push(
-        `Profil «${profile.name}» ist noch nicht fachlich freigegeben (${profile.approval}).`
+        tr('Profil «{name}» ist noch nicht fachlich freigegeben ({approval}).', {
+          name: profile.name,
+          approval: profile.approval,
+        })
       );
     }
   }
 
   if (params.approval !== 'freigegeben') {
-    warnings.push(RULE_APPROVAL_WARNING);
+    warnings.push(tr(RULE_APPROVAL_WARNING));
   }
 
   if (errors.length > 0) {

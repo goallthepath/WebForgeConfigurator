@@ -5,9 +5,18 @@ import {
 } from '../products/fenstergitter/derive';
 import { buildGitterGeometry } from '../products/fenstergitter/geometry';
 import {
+  DEFAULT_FENSTERGITTER_INPUTS,
   EMPTY_FENSTERGITTER_INPUTS,
   type FenstergitterInputs,
 } from '../products/fenstergitter/types';
+import {
+  FINISHES,
+  getProfile,
+  MATERIALS,
+  profilBreiteMm,
+} from '../products/profile-catalog';
+import { FARBEN, MONTAGE_SERVICES } from '../products/gelaender/options';
+import type { Profile } from '../products/types';
 import {
   FENSTERGITTER_RULES_V0,
   validateFenstergitter,
@@ -124,5 +133,45 @@ describe('Fenstergitter-Geometrie', () => {
     expect(namen).toContain('Rahmen horizontal');
     expect(namen).toContain('Gitterstäbe');
     expect(namen.some((n) => n.includes('Befestigungslaschen'))).toBe(true);
+  });
+});
+
+describe('Fenstergitter-Standardkonfiguration', () => {
+  const d = DEFAULT_FENSTERGITTER_INPUTS;
+  const rahmen = getProfile(d.rahmenProfilId!);
+  const stab = getProfile(d.stabProfilId!);
+
+  it('verwendet existierende Katalog- und Options-Ids', () => {
+    expect(MATERIALS.some((m) => m.materialId === d.materialId && m.active)).toBe(true);
+    expect(rahmen?.active).toBe(true);
+    expect(stab?.active).toBe(true);
+    expect(rahmen?.material).toBe(d.materialId);
+    expect(stab?.material).toBe(d.materialId);
+    expect(
+      rahmen?.allowedUses.some((u) => u.product === 'fenstergitter' && u.role === 'gitterrahmen')
+    ).toBe(true);
+    expect(
+      stab?.allowedUses.some((u) => u.product === 'fenstergitter' && u.role === 'gitterstab')
+    ).toBe(true);
+    const finish = FINISHES.find((f) => f.finishId === d.finishId);
+    expect(finish?.allowedMaterials).toContain(d.materialId);
+    expect(FARBEN.some((f) => f.id === d.farbe && f.hex)).toBe(true);
+    expect(MONTAGE_SERVICES.some((m) => m.id === d.montageService)).toBe(true);
+  });
+
+  it('ergibt gültige Ableitung, nicht-leere Geometrie und keine ROT-Ampel', () => {
+    const derived = deriveFenstergitter(d, profilBreiteMm(stab!));
+    expect(derived.rahmenBreiteMm).toBeGreaterThan(0);
+    expect(derived.rahmenHoeheMm).toBeGreaterThan(0);
+    expect(derived.stabAnzahl).toBeGreaterThan(0);
+    const geo = buildGitterGeometry(d, derived, { rahmen, stab });
+    expect(geo.frameW).toBeGreaterThan(0);
+    expect(geo.frameH).toBeGreaterThan(0);
+    expect(geo.stäbe.length).toBe(derived.stabAnzahl);
+    expect(geo.laschen.length).toBe(derived.laschenTotal);
+    expect(gitterMaterialAuszug(d, derived).length).toBeGreaterThan(0);
+    const result = validateFenstergitter(d, [rahmen, stab] as Profile[]);
+    expect(result.level).not.toBe('red');
+    expect(result.errors).toHaveLength(0);
   });
 });

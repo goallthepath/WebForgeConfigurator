@@ -1,7 +1,7 @@
 /**
  * Treppen-Modul: gerade, einläufige Stahltreppe und/oder Treppengeländer.
- * Gewendelte, mehrläufige oder Podest-Treppen führen zur individuellen
- * Anfrage (komplexe Geometrien bleiben persönliche Planung).
+ * Gewendelte, mehrläufige oder Podest-Treppen bleiben individuelle
+ * Planung (komplexe Geometrien plant der Meister persönlich).
  */
 
 import type {
@@ -97,4 +97,38 @@ export const EMPTY_TREPPE_INPUTS: TreppeInputs = {
   finishId: null,
   farbe: null,
   montageService: null,
+};
+
+/**
+ * Startwerte des Konfigurators: eine vollständige, stimmige Treppe, damit
+ * die 3D-Vorschau sofort erscheint. Gerade Wangentreppe aussen, 2700 mm
+ * Geschosshöhe (15 Steigungen à 180 mm, Auftritt 270 mm → Schrittmass
+ * 630 mm), Gitterroststufen, Geländer rechts mit Staketen, anthrazit
+ * pulverbeschichtet. Alle IDs stammen aus dem Katalog / den Optionen.
+ */
+export const DEFAULT_TREPPE_INPUTS: TreppeInputs = {
+  modus: 'kombiniert',
+  einbauort: 'aussen',
+  kinderschutz: 'ja',
+  geschosshoeheMm: 2700,
+  laufbreiteMm: 1000,
+  masseUngefaehr: false,
+  stufenAnzahlManuell: null,
+  konstruktion: 'wangen',
+  stufentyp: 'gitterrost',
+  setzstufen: 'offen',
+  wangenProfilId: 'test-wange-flachstahl-200',
+  gelaenderSeite: 'rechts',
+  gelaenderHoeheMm: 1000,
+  fuellung: 'staketen',
+  ornamentTyp: null,
+  pfostenProfilId: 'test-pfosten-quadratrohr-40',
+  handlaufProfilId: 'test-handlauf-rundrohr-42',
+  fuellstabProfilId: 'test-fuellstab-rundstab-12',
+  querstabProfilId: 'test-querstab-rundrohr-16',
+  handlaufAbschluss: 'endbogen',
+  materialId: 'test-stahl',
+  finishId: 'test-pulverbeschichtet',
+  farbe: 'ral-7016',
+  montageService: 'webforge',
 };

@@ -4,6 +4,7 @@ import {
   type GartentorRuleParams,
 } from '../../rules/gartentor-rules';
 import { fuellstabAnzahl, type MaterialPosition } from '../gelaender/derive';
+import { tr } from '../../i18n';
 
 /**
  * Abgeleitete Werte Gartentor (reine Funktionen, provisorisch bis zur
@@ -57,14 +58,16 @@ export function torMaterialAuszug(
   const positionen: MaterialPosition[] = [];
   derived.fluegelBreitenMm.forEach((breite, i) => {
     const name =
-      derived.fluegelBreitenMm.length > 1 ? `Flügel ${i + 1}` : 'Torflügel';
+      derived.fluegelBreitenMm.length > 1
+        ? tr('Flügel {n}', { n: i + 1 })
+        : tr('Torflügel');
     positionen.push(
-      { bezeichnung: `${name} Rahmen horizontal`, anzahl: 2, laengeMm: breite },
-      { bezeichnung: `${name} Rahmen vertikal`, anzahl: 2, laengeMm: h }
+      { bezeichnung: tr('{name} Rahmen horizontal', { name }), anzahl: 2, laengeMm: breite },
+      { bezeichnung: tr('{name} Rahmen vertikal', { name }), anzahl: 2, laengeMm: h }
     );
     if (derived.staebeProFluegel > 0) {
       positionen.push({
-        bezeichnung: `${name} Füllstäbe`,
+        bezeichnung: tr('{name} Füllstäbe', { name }),
         anzahl: derived.staebeProFluegel,
         laengeMm: null,
       });
@@ -72,13 +75,13 @@ export function torMaterialAuszug(
   });
   if (derived.pfostenAnzahl > 0 && inputs.hoeheMm) {
     positionen.push({
-      bezeichnung: 'Torpfosten (inkl. Einbindung)',
+      bezeichnung: tr('Torpfosten (inkl. Einbindung)'),
       anzahl: derived.pfostenAnzahl,
       laengeMm: inputs.hoeheMm + 600,
     });
   }
   positionen.push({
-    bezeichnung: 'Bänder',
+    bezeichnung: tr('Bänder'),
     anzahl: derived.baenderProFluegel * derived.fluegelBreitenMm.length,
     laengeMm: null,
   });
@@ -86,8 +89,8 @@ export function torMaterialAuszug(
     positionen.push({
       bezeichnung:
         inputs.schloss === 'schloss-druecker'
-          ? 'Einsteckschloss mit Drücker'
-          : 'Überwurf/Riegel',
+          ? tr('Einsteckschloss mit Drücker')
+          : tr('Überwurf/Riegel'),
       anzahl: 1,
       laengeMm: null,
     });

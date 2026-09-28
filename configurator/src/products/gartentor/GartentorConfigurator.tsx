@@ -32,8 +32,9 @@ import {
 } from '../gelaender/options';
 import { deriveGartentor, torMaterialAuszug } from './derive';
 import { buildTorGeometry } from './geometry';
+import { tr } from '../../i18n';
 import {
-  EMPTY_GARTENTOR_INPUTS,
+  DEFAULT_GARTENTOR_INPUTS,
   type Anschlagseite,
   type Fluegelart,
   type GartentorInputs,
@@ -44,7 +45,7 @@ import {
   type TorUntergrund,
 } from './types';
 
-const STORAGE_KEY = 'webforge-gartentor-draft-v1';
+const STORAGE_KEY = 'webforge-gartentor-draft-v2';
 
 const FLUEGELARTEN: OptionDef<Fluegelart>[] = [
   {
@@ -71,7 +72,7 @@ const SEITENBAUTEN: OptionDef<Seitenbau>[] = [
   {
     id: 'pfosten',
     label: 'Neue Torpfosten',
-    description: 'Freistehend – WebForge liefert und setzt die Torpfosten.',
+    description: 'Freistehend – wir liefern und setzen die Torpfosten.',
     icon: '<line x1="10" y1="42" x2="10" y2="8"/><line x1="38" y1="42" x2="38" y2="8"/><line x1="12" y1="14" x2="36" y2="14"/><line x1="12" y1="38" x2="36" y2="38"/><line x1="19" y1="14" x2="19" y2="38"/><line x1="29" y1="14" x2="29" y2="38"/>',
   },
 ];
@@ -162,7 +163,7 @@ function reducer(state: GartentorInputs, action: Action): GartentorInputs {
       return next;
     }
     case 'reset':
-      return EMPTY_GARTENTOR_INPUTS;
+      return DEFAULT_GARTENTOR_INPUTS;
   }
 }
 
@@ -171,21 +172,21 @@ function loadInitial(): GartentorInputs {
     const fromUrl = new URLSearchParams(window.location.search).get('c');
     if (fromUrl) {
       return {
-        ...EMPTY_GARTENTOR_INPUTS,
+        ...DEFAULT_GARTENTOR_INPUTS,
         ...(JSON.parse(decodeURIComponent(atob(fromUrl))) as GartentorInputs),
       };
     }
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored) {
       return {
-        ...EMPTY_GARTENTOR_INPUTS,
+        ...DEFAULT_GARTENTOR_INPUTS,
         ...(JSON.parse(stored) as GartentorInputs),
       };
     }
   } catch {
     // defekte Drafts still verwerfen
   }
-  return EMPTY_GARTENTOR_INPUTS;
+  return DEFAULT_GARTENTOR_INPUTS;
 }
 
 function profileOptions(
@@ -304,13 +305,13 @@ export function GartentorConfigurator() {
   return (
     <div className="configurator">
       <p>
-        <Link to="/">← Produktauswahl</Link>
+        <Link to="/">← {tr('Produktauswahl')}</Link>
       </p>
-      <h1>Gartentor konfigurieren</h1>
+      <h1>{tr('Gartentor konfigurieren')}</h1>
       <p className="lead">
-        Ein- oder zweiflügeliges Drehtor – mit 3D-Vorschau inklusive
-        Öffnungs-Simulation. Unser Meister prüft jede Konfiguration
-        persönlich (Fundamente, Beschläge, Windlast).
+        {tr(
+          'Ein- oder zweiflügeliges Drehtor – mit 3D-Vorschau inklusive Öffnungs-Simulation. Unser Meister prüft jede Konfiguration persönlich (Fundamente, Beschläge, Windlast).'
+        )}
       </p>
 
       <div className="configurator-layout">
@@ -331,8 +332,9 @@ export function GartentorConfigurator() {
               onChange={(seitenbau) => set({ seitenbau })}
             />
             <p className="escape-hatch">
-              Schiebetore, automatisierte Anlagen oder starke Gefälle?{' '}
-              <a href="/projekt-starten/">Individuelle Ausführung anfragen</a>.
+              {tr(
+                'Schiebetore, automatisierte Anlagen oder Tore an starkem Gefälle planen wir individuell.'
+              )}
             </p>
           </StepSection>
 
@@ -401,7 +403,7 @@ export function GartentorConfigurator() {
                 checked={inputs.masseUngefaehr}
                 onChange={(e) => set({ masseUngefaehr: e.target.checked })}
               />
-              Meine Masse sind ungefähr (Aufmass nötig)
+              {tr('Meine Masse sind ungefähr (Aufmass nötig)')}
             </label>
           </StepSection>
 
@@ -456,7 +458,7 @@ export function GartentorConfigurator() {
                 checked={inputs.antriebVorbereitung}
                 onChange={(e) => set({ antriebVorbereitung: e.target.checked })}
               />
-              Vorbereitung für späteren Antrieb (Leerrohr) – wird persönlich geprüft
+              {tr('Vorbereitung für späteren Antrieb (Leerrohr) – wird persönlich geprüft')}
             </label>
           </StepSection>
 
@@ -527,7 +529,9 @@ export function GartentorConfigurator() {
                     f.allowedMaterials.includes(inputs.materialId))
               ).map((f) => ({
                 id: f.finishId,
-                label: f.name.replace(/\s*\(TESTDATEN\)/, ''),
+                label: f.name
+                  .replace(/\s*\(TESTDATEN\)/, '')
+                  .replace(/,\s*TESTDATEN\)/, ')'),
                 description: 'Eignung wird fachlich geprüft.',
               }))}
               value={inputs.finishId}
@@ -535,7 +539,7 @@ export function GartentorConfigurator() {
               badge={() => 'TESTDATEN'}
             />
             <fieldset className="option-group">
-              <legend>Farbe</legend>
+              <legend>{tr('Farbe')}</legend>
               <div className="swatch-row">
                 {FARBEN.map((farbe) => (
                   <label
@@ -559,7 +563,7 @@ export function GartentorConfigurator() {
                     >
                       {farbe.hex ? '' : '?'}
                     </span>
-                    <span className="swatch-label">{farbe.label}</span>
+                    <span className="swatch-label">{tr(farbe.label)}</span>
                   </label>
                 ))}
               </div>
@@ -591,40 +595,42 @@ export function GartentorConfigurator() {
           />
 
           <div className="summary-card">
-            <h2>Ihre Konfiguration</h2>
+            <h2>{tr('Ihre Konfiguration')}</h2>
             {geometryReady ? (
               <>
                 <ul className="summary-list">
                   <li>
-                    Lichte Öffnung:{' '}
+                    {tr('Lichte Öffnung:')}{' '}
                     <strong>{inputs.oeffnungBreiteMm} mm</strong>
-                    {inputs.masseUngefaehr && ' (ungefähr)'}
+                    {inputs.masseUngefaehr && ` ${tr('(ungefähr)')}`}
                   </li>
                   <li>
-                    Flügelbreite{derived.fluegelBreitenMm.length > 1 ? 'n' : ''}:{' '}
+                    {derived.fluegelBreitenMm.length > 1
+                      ? tr('Flügelbreiten:')
+                      : tr('Flügelbreite:')}{' '}
                     <strong>{derived.fluegelBreitenMm.join(' + ')} mm</strong>
-                    <span className="provisional"> provisorisch</span>
+                    <span className="provisional"> {tr('provisorisch')}</span>
                   </li>
                   {derived.staebeProFluegel > 0 && (
                     <li>
-                      Stäbe je Flügel: <strong>{derived.staebeProFluegel}</strong>
-                      <span className="provisional"> provisorisch</span>
+                      {tr('Stäbe je Flügel:')} <strong>{derived.staebeProFluegel}</strong>
+                      <span className="provisional"> {tr('provisorisch')}</span>
                     </li>
                   )}
                   <li>
-                    Bänder je Flügel: <strong>{derived.baenderProFluegel}</strong>
-                    <span className="provisional"> provisorisch</span>
+                    {tr('Bänder je Flügel:')} <strong>{derived.baenderProFluegel}</strong>
+                    <span className="provisional"> {tr('provisorisch')}</span>
                   </li>
                 </ul>
                 {material.length > 0 && (
                   <details className="material-details">
-                    <summary>Materialauszug (provisorisch, für die Werkstatt)</summary>
+                    <summary>{tr('Materialauszug (provisorisch, für die Werkstatt)')}</summary>
                     <table className="material-table">
                       <thead>
                         <tr>
-                          <th>Position</th>
-                          <th>Stk.</th>
-                          <th>Länge</th>
+                          <th>{tr('Position')}</th>
+                          <th>{tr('Stk.')}</th>
+                          <th>{tr('Länge')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -641,12 +647,12 @@ export function GartentorConfigurator() {
                 )}
               </>
             ) : (
-              <p className="field-hint">Noch keine Masse erfasst.</p>
+              <p className="field-hint">{tr('Noch keine Masse erfasst.')}</p>
             )}
 
             {validation.errors.length > 0 && (
               <div className="status-banner red" role="alert">
-                <strong>Bitte prüfen:</strong>
+                <strong>{tr('Bitte prüfen:')}</strong>
                 <ul>
                   {validation.errors.map((error) => (
                     <li key={error}>{error}</li>
@@ -668,39 +674,42 @@ export function GartentorConfigurator() {
 
             <div className="summary-actions">
               <button type="button" className="secondary" onClick={share}>
-                Konfiguration speichern (Link)
+                {tr('Konfiguration speichern (Link)')}
               </button>
               <button
                 type="button"
                 className="primary"
                 disabled={validation.level === 'red' || !inputs.montageService}
-                title="Übermittlung an die Werkstatt folgt mit dem Anfrage-System (Phase 3)"
+                title={tr('Übermittlung an die Werkstatt folgt mit dem Anfrage-System (Phase 3)')}
               >
-                Offerte anfragen – folgt in Kürze
+                {tr('Offerte anfragen – folgt in Kürze')}
               </button>
               <button
                 type="button"
                 className="ghost"
                 onClick={() => dispatch({ type: 'reset' })}
               >
-                Zurücksetzen
+                {tr('Zurücksetzen')}
               </button>
             </div>
             {shareState === 'copied' && (
               <p className="field-hint" role="status">
-                Link kopiert – Konfiguration jederzeit wieder öffnen und teilen.
+                {tr('Link kopiert – Konfiguration jederzeit wieder öffnen und teilen.')}
               </p>
             )}
             {shareState === 'shown' && (
               <p className="field-hint" role="status">
-                Link: <code className="share-url">{shareUrl}</code>
+                {tr('Link:')} <code className="share-url">{shareUrl}</code>
               </p>
             )}
 
             <p className="versions">
-              Produkt {module.productVersion} · Regeln {module.ruleVersion} ·
-              Preis: {module.priceVersion ?? 'keine Version (individuelle Prüfung)'} ·
-              Katalog {CATALOG_VERSION}
+              {tr('Produkt {p} · Regeln {r} · Preis: {preis} · Katalog {k}', {
+                p: module.productVersion,
+                r: module.ruleVersion,
+                preis: module.priceVersion ?? tr('keine Version (individuelle Prüfung)'),
+                k: CATALOG_VERSION,
+              })}
             </p>
           </div>
         </aside>

@@ -4,6 +4,7 @@ import {
   type FenstergitterRuleParams,
 } from '../../rules/fenstergitter-rules';
 import { fuellstabAnzahl, type MaterialPosition } from '../gelaender/derive';
+import { tr } from '../../i18n';
 
 /**
  * Abgeleitete Werte Fenstergitter (reine Funktionen, provisorisch bis
@@ -64,25 +65,28 @@ export function gitterMaterialAuszug(
 ): MaterialPosition[] {
   if (derived.rahmenBreiteMm <= 0 || derived.rahmenHoeheMm <= 0) return [];
   const positionen: MaterialPosition[] = [
-    { bezeichnung: 'Rahmen horizontal', anzahl: 2, laengeMm: derived.rahmenBreiteMm },
-    { bezeichnung: 'Rahmen vertikal', anzahl: 2, laengeMm: derived.rahmenHoeheMm },
+    { bezeichnung: tr('Rahmen horizontal'), anzahl: 2, laengeMm: derived.rahmenBreiteMm },
+    { bezeichnung: tr('Rahmen vertikal'), anzahl: 2, laengeMm: derived.rahmenHoeheMm },
   ];
   if (derived.stabAnzahl > 0) {
     positionen.push({
-      bezeichnung: 'Gitterstäbe',
+      bezeichnung: tr('Gitterstäbe'),
       anzahl: derived.stabAnzahl,
       laengeMm: derived.rahmenHoeheMm,
     });
   }
   if (derived.quergurtAnzahl > 0) {
     positionen.push({
-      bezeichnung: 'Quergurte',
+      bezeichnung: tr('Quergurte'),
       anzahl: derived.quergurtAnzahl,
       laengeMm: derived.rahmenBreiteMm,
     });
   }
   positionen.push({
-    bezeichnung: `Befestigungslaschen (${inputs.montage === 'vorwand' ? 'auf Wand' : 'in Leibung'})`,
+    bezeichnung:
+      inputs.montage === 'vorwand'
+        ? tr('Befestigungslaschen (auf Wand)')
+        : tr('Befestigungslaschen (in Leibung)'),
     anzahl: derived.laschenTotal,
     laengeMm: null,
   });

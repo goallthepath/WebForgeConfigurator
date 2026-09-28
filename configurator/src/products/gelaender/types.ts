@@ -244,3 +244,34 @@ export const EMPTY_GELAENDER_INPUTS: GelaenderInputs = {
   farbe: null,
   montageService: null,
 };
+
+/**
+ * Startkonfiguration: ein gerades, 3 m langes Balkongeländer (1000 mm hoch)
+ * aus Stahl mit senkrechten Staketen, aufgesetzt auf Beton, pulverbeschichtet
+ * in RAL 7016 Anthrazitgrau. Alle Schritte sind damit beantwortet, sodass die
+ * 3D-Vorschau sofort erscheint; jede Angabe bleibt frei änderbar.
+ */
+export const DEFAULT_GELAENDER_INPUTS: GelaenderInputs = {
+  ...EMPTY_GELAENDER_INPUTS,
+  einsatzort: 'balkon',
+  kinderschutz: 'ja',
+  absturzhoehe: 'ueber-1m',
+  variante: 'i',
+  einbauort: 'aussen',
+  montageart: 'boden',
+  untergrund: 'beton',
+  segmentLaengenMm: [3000],
+  hoeheMm: 1000,
+  fuellungsart: 'staketen',
+  mitUntergurt: true,
+  untergurtHoeheMm: 80,
+  materialId: 'test-stahl',
+  pfostenProfilId: 'test-pfosten-quadratrohr-40',
+  handlaufProfilId: 'test-handlauf-rundrohr-42',
+  fuellstabProfilId: 'test-fuellstab-vierkant-12',
+  handlaufAbschluss: 'kugel-drittel',
+  handlaufPosition: 'aufgesetzt',
+  finishId: 'test-pulverbeschichtet',
+  farbe: 'ral-7016',
+  montageService: 'webforge',
+};

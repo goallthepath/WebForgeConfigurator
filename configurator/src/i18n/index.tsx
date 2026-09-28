@@ -47,6 +47,9 @@ export function tr(de: string, vars?: Record<string, string | number>): string {
 }
 
 function initialLang(): Lang {
+  // ?lang=en hat Vorrang (z. B. vom WordPress-Shortcode gesetzt)
+  const fromUrl = new URLSearchParams(window.location.search).get('lang');
+  if (fromUrl === 'de' || fromUrl === 'en') return fromUrl;
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored === 'de' || stored === 'en') return stored;

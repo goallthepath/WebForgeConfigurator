@@ -3,7 +3,8 @@ import {
   type GelaenderInputs,
 } from '../products/gelaender/types';
 import type { Profile, ValidationResult } from '../products/types';
-import { isProductionReady } from './profiles';
+import { approvalLabel, isProductionReady } from './profiles';
+import { tr } from '../i18n';
 
 /**
  * Regelkatalog Geländer, ruleVersion 0.0.1.
@@ -98,12 +99,18 @@ export function validateGelaender(
   for (const segment of inputs.segmentLaengenMm) {
     if (segment < params.minSegmentLaengeMm) {
       errors.push(
-        `Segmentlänge ${segment} mm liegt unter dem Minimum von ${params.minSegmentLaengeMm} mm.`
+        tr('Segmentlänge {l} mm liegt unter dem Minimum von {min} mm.', {
+          l: segment,
+          min: params.minSegmentLaengeMm,
+        })
       );
     }
     if (segment > params.maxSegmentLaengeMm) {
       errors.push(
-        `Segmentlänge ${segment} mm überschreitet das Maximum von ${params.maxSegmentLaengeMm} mm – bitte als individuelle Ausführung anfragen.`
+        tr(
+          'Segmentlänge {l} mm überschreitet das Maximum von {max} mm – bitte als individuelle Ausführung anfragen.',
+          { l: segment, max: params.maxSegmentLaengeMm }
+        )
       );
     }
   }
@@ -111,7 +118,11 @@ export function validateGelaender(
   if (inputs.hoeheMm !== null) {
     if (inputs.hoeheMm < params.minHoeheMm || inputs.hoeheMm > params.maxHoeheMm) {
       errors.push(
-        `Höhe ${inputs.hoeheMm} mm liegt ausserhalb des zulässigen Bereichs (${params.minHoeheMm}–${params.maxHoeheMm} mm).`
+        tr('Höhe {h} mm liegt ausserhalb des zulässigen Bereichs ({min}–{max} mm).', {
+          h: inputs.hoeheMm,
+          min: params.minHoeheMm,
+          max: params.maxHoeheMm,
+        })
       );
     }
     // BFU: Regelfall ≥ 1.00 m Geländerhöhe bei Absturzsicherung.
@@ -120,7 +131,10 @@ export function validateGelaender(
       inputs.hoeheMm < BFU_RICHTWERTE.minGelaenderhoeheMm
     ) {
       errors.push(
-        `Bei über 1 m Absturzhöhe gilt der BFU-Richtwert von mindestens ${BFU_RICHTWERTE.minGelaenderhoeheMm} mm Geländerhöhe – bitte Höhe anpassen oder individuell prüfen lassen.`
+        tr(
+          'Bei über 1 m Absturzhöhe gilt der BFU-Richtwert von mindestens {min} mm Geländerhöhe – bitte Höhe anpassen oder individuell prüfen lassen.',
+          { min: BFU_RICHTWERTE.minGelaenderhoeheMm }
+        )
       );
     }
   }
@@ -130,22 +144,22 @@ export function validateGelaender(
     const ober = obergurtHoeheEff(inputs);
     const knie = inputs.mitKnieleiste ? inputs.knieleisteHoeheMm : null;
     if (inputs.mitUntergurt && inputs.untergurtHoeheMm >= inputs.hoeheMm / 2) {
-      errors.push('Der Untergurt liegt unplausibel hoch – bitte Höhe prüfen.');
+      errors.push(tr('Der Untergurt liegt unplausibel hoch – bitte Höhe prüfen.'));
     }
     if (ober !== null && ober !== undefined) {
       if (ober >= inputs.hoeheMm) {
-        errors.push('Der Obergurt muss unterhalb der Geländeroberkante liegen.');
+        errors.push(tr('Der Obergurt muss unterhalb der Geländeroberkante liegen.'));
       }
       if (inputs.mitUntergurt && ober <= inputs.untergurtHoeheMm) {
-        errors.push('Der Obergurt muss über dem Untergurt liegen.');
+        errors.push(tr('Der Obergurt muss über dem Untergurt liegen.'));
       }
     }
     if (knie !== null && knie !== undefined) {
       if (knie >= (ober ?? inputs.hoeheMm)) {
-        errors.push('Die Knieleiste muss unterhalb des Ober- bzw. Handlaufgurts liegen.');
+        errors.push(tr('Die Knieleiste muss unterhalb des Ober- bzw. Handlaufgurts liegen.'));
       }
       if (inputs.mitUntergurt && knie <= inputs.untergurtHoeheMm) {
-        errors.push('Die Knieleiste muss über dem Untergurt liegen.');
+        errors.push(tr('Die Knieleiste muss über dem Untergurt liegen.'));
       }
     }
   }
@@ -155,7 +169,12 @@ export function validateGelaender(
     const pruefe = (wert: number, min: number, max: number, name: string) => {
       if (wert < min || wert > max) {
         errors.push(
-          `${name} ${wert} mm liegt ausserhalb des Vorschaubereichs (${min}–${max} mm).`
+          tr('{name} {wert} mm liegt ausserhalb des Vorschaubereichs ({min}–{max} mm).', {
+            name: tr(name),
+            wert,
+            min,
+            max,
+          })
         );
       }
     };
@@ -178,7 +197,7 @@ export function validateGelaender(
       pruefe(inputs.wandlascheDickeMm, 5, 15, 'Wandlaschen-Dicke');
     }
     warnings.push(
-      'Befestigung und Verankerung (Platten, Dübel, Randabstände) werden statisch bemessen – Ihre Masse gelten als Wunsch.'
+      tr('Befestigung und Verankerung (Platten, Dübel, Randabstände) werden statisch bemessen – Ihre Masse gelten als Wunsch.')
     );
   }
 
@@ -190,11 +209,19 @@ export function validateGelaender(
     if (wert !== null) {
       if (wert < params.minWunschDmMm || wert > params.maxWunschDmMm) {
         errors.push(
-          `Wunschmass ${teil} Ø ${wert} mm liegt ausserhalb des Vorschaubereichs (${params.minWunschDmMm}–${params.maxWunschDmMm} mm).`
+          tr('Wunschmass {teil} Ø {wert} mm liegt ausserhalb des Vorschaubereichs ({min}–{max} mm).', {
+            teil: tr(teil),
+            wert,
+            min: params.minWunschDmMm,
+            max: params.maxWunschDmMm,
+          })
         );
       } else {
         warnings.push(
-          `Sonderprofil ${teil} Ø ${wert} mm: kein Katalogprofil – Machbarkeit und Statik werden fachlich geprüft.`
+          tr(
+            'Sonderprofil {teil} Ø {wert} mm: kein Katalogprofil – Machbarkeit und Statik werden fachlich geprüft.',
+            { teil: tr(teil), wert }
+          )
         );
       }
     }
@@ -202,13 +229,13 @@ export function validateGelaender(
 
   if (inputs.fuellungsart === 'geschmiedet') {
     warnings.push(
-      'Charakter-Familie: Die gewählten Ornamente sind eine Grundauswahl – Aufteilung und handwerkliche Ausarbeitung plant unser Meister persönlich mit Ihnen (Manufaktur).'
+      tr('Charakter-Familie: Die gewählten Ornamente sind eine Grundauswahl – Aufteilung und handwerkliche Ausarbeitung plant unser Meister persönlich mit Ihnen (Manufaktur).')
     );
   }
 
   if (inputs.absturzhoehe === 'unbekannt') {
     warnings.push(
-      'Absturzhöhe unbekannt: Sie wird beim Aufmass gemessen – massgebend ist die begehbare bzw. besteigbare Fläche (BFU).'
+      tr('Absturzhöhe unbekannt: Sie wird beim Aufmass gemessen – massgebend ist die begehbare bzw. besteigbare Fläche (BFU).')
     );
   }
 
@@ -217,109 +244,126 @@ export function validateGelaender(
   if (kindersicherPlanen) {
     if (inputs.fuellungsart === 'staketen' || inputs.fuellungsart === 'geschmiedet') {
       warnings.push(
-        `Kinderschutz: Bis ${BFU_RICHTWERTE.kinderschutzZoneMm} mm Höhe darf die ${BFU_RICHTWERTE.kugelDurchmesserMm}-mm-Kugel nicht durch Öffnungen passen – die definitive Stabteilung wird danach geprüft.`
+        tr(
+          'Kinderschutz: Bis {zone} mm Höhe darf die {kugel}-mm-Kugel nicht durch Öffnungen passen – die definitive Stabteilung wird danach geprüft.',
+          {
+            zone: BFU_RICHTWERTE.kinderschutzZoneMm,
+            kugel: BFU_RICHTWERTE.kugelDurchmesserMm,
+          }
+        )
       );
     }
     if (inputs.fuellungsart === 'blech' && inputs.blechTyp === 'loch') {
       warnings.push(
-        `Kinderschutz: Lochblech gilt bis ca. ${BFU_RICHTWERTE.maxLochblechOeffnungMm} mm Öffnung als schwer bekletterbar (BFU) – Lochbild wird entsprechend gewählt.`
+        tr(
+          'Kinderschutz: Lochblech gilt bis ca. {max} mm Öffnung als schwer bekletterbar (BFU) – Lochbild wird entsprechend gewählt.',
+          { max: BFU_RICHTWERTE.maxLochblechOeffnungMm }
+        )
       );
     }
     if (inputs.fuellungsart === 'blech' && inputs.blechTyp === 'laser') {
       warnings.push(
-        'Kinderschutz: Laserschnitt-Ausschnitte werden auf Kletterwirkung und Öffnungsgrössen fachlich geprüft; Kanten werden entgratet/abgedeckt (BFU).'
+        tr('Kinderschutz: Laserschnitt-Ausschnitte werden auf Kletterwirkung und Öffnungsgrössen fachlich geprüft; Kanten werden entgratet/abgedeckt (BFU).')
       );
     }
     if (inputs.fuellungsart === 'gitter') {
       warnings.push(
-        `Kinderschutz: Maschenweite bis ca. ${BFU_RICHTWERTE.maxMaschenweiteMm} mm gilt als schwer bekletterbar (BFU) – wird bei der Gitterwahl berücksichtigt.`
+        tr(
+          'Kinderschutz: Maschenweite bis ca. {max} mm gilt als schwer bekletterbar (BFU) – wird bei der Gitterwahl berücksichtigt.',
+          { max: BFU_RICHTWERTE.maxMaschenweiteMm }
+        )
       );
     }
   }
 
   for (const profile of selectedProfiles) {
     if (!profile.active) {
-      errors.push(`Profil «${profile.name}» ist nicht mehr verfügbar.`);
+      errors.push(tr('Profil «{name}» ist nicht mehr verfügbar.', { name: profile.name }));
     } else if (!isProductionReady(profile)) {
       warnings.push(
-        `Profil «${profile.name}» ist noch nicht fachlich freigegeben (${profile.approval}).`
+        tr('Profil «{name}» ist noch nicht fachlich freigegeben ({approval}).', {
+          name: profile.name,
+          approval: approvalLabel(profile.approval),
+        })
       );
     }
   }
 
   if (inputs.masseUngefaehr) {
     warnings.push(
-      'Ungefähre Masse: Vor der Offerte ist ein Aufmass oder eine Massbestätigung nötig.'
+      tr('Ungefähre Masse: Vor der Offerte ist ein Aufmass oder eine Massbestätigung nötig.')
     );
   }
 
   if (inputs.untergrund === 'unbekannt') {
-    warnings.push('Befestigungsuntergrund muss vor Ort geprüft werden.');
+    warnings.push(tr('Befestigungsuntergrund muss vor Ort geprüft werden.'));
   }
 
   if (inputs.farbe === 'individuell') {
-    warnings.push('Individuelle Farbe: wird als Sonderwunsch persönlich geprüft.');
+    warnings.push(tr('Individuelle Farbe: wird als Sonderwunsch persönlich geprüft.'));
   }
 
   if (inputs.fuellungsart === 'querstab') {
     warnings.push(
-      kindersicherPlanen
-        ? 'Querstäbe (Reling) wirken als Leiter – in Bereichen mit Kindern wird das Schutzziel damit oft nicht erreicht (BFU). Wir prüfen Alternativen (Staketen, Glas, vorgesetzte Füllung) oder sehr enge Abstände.'
-        : 'Querstäbe (Reling) gelten als erkletterbar – die Eignung Ihrer Einbausituation wird fachlich geprüft (BFU).'
+      tr(
+        kindersicherPlanen
+          ? 'Querstäbe (Reling) wirken als Leiter – in Bereichen mit Kindern wird das Schutzziel damit oft nicht erreicht (BFU). Wir prüfen Alternativen (Staketen, Glas, vorgesetzte Füllung) oder sehr enge Abstände.'
+          : 'Querstäbe (Reling) gelten als erkletterbar – die Eignung Ihrer Einbausituation wird fachlich geprüft (BFU).'
+      )
     );
   }
 
   if (inputs.fuellungsart === 'blech' && inputs.blechTyp === 'voll') {
     warnings.push(
-      'Vollblech: Windlast, Wasserablauf und Befestigung der Füllung werden fachlich dimensioniert.'
+      tr('Vollblech: Windlast, Wasserablauf und Befestigung der Füllung werden fachlich dimensioniert.')
     );
   }
 
   // Einsatzort-spezifische Hinweise (Fachgrundlage Abschnitt 1).
   if (inputs.einsatzort === 'attika') {
     warnings.push(
-      'Dachterrasse/Attika: Dachhaut, Abdichtung, Entwässerung und Windexposition erfordern eine Detailabklärung vor Ort.'
+      tr('Dachterrasse/Attika: Dachhaut, Abdichtung, Entwässerung und Windexposition erfordern eine Detailabklärung vor Ort.')
     );
   }
   if (inputs.einsatzort === 'franz-balkon') {
     warnings.push(
-      'Französischer Balkon: Befestigung an Fassade/Leibung und Fensteröffnung werden objektspezifisch geplant.'
+      tr('Französischer Balkon: Befestigung an Fassade/Leibung und Fensteröffnung werden objektspezifisch geplant.')
     );
     if (inputs.montageart && inputs.montageart !== 'wand' && inputs.montageart !== 'seite') {
       warnings.push(
-        'Hinweis: Für französische Balkone ist üblicherweise die Wand- oder seitliche Befestigung geeignet.'
+        tr('Hinweis: Für französische Balkone ist üblicherweise die Wand- oder seitliche Befestigung geeignet.')
       );
     }
   }
   if (inputs.einsatzort === 'garten') {
     warnings.push(
-      'Garten/Stützmauer: Terrainverlauf, Absturzhöhe und Fundament/Mauerkrone werden beim Aufmass geprüft.'
+      tr('Garten/Stützmauer: Terrainverlauf, Absturzhöhe und Fundament/Mauerkrone werden beim Aufmass geprüft.')
     );
   }
   if (inputs.montageart === 'unten') {
     warnings.push(
-      'Befestigung von unten (Kragarm): höhere Hebelarme und Zugänglichkeit – wird statisch und montagetechnisch geprüft.'
+      tr('Befestigung von unten (Kragarm): höhere Hebelarme und Zugänglichkeit – wird statisch und montagetechnisch geprüft.')
     );
   }
   if (inputs.montageart === 'eingelassen') {
     warnings.push(
-      'Eingelassene Befestigung: Einbauteile müssen früh mit dem Baumeister koordiniert werden (Höhen, Toleranzen, Bauphasenschutz).'
+      tr('Eingelassene Befestigung: Einbauteile müssen früh mit dem Baumeister koordiniert werden (Höhen, Toleranzen, Bauphasenschutz).')
     );
   }
 
   if (inputs.fuellungsart === 'glas') {
     warnings.push(
-      'Glasaufbau und Glasstärke (Sicherheitsglas) werden bei der fachlichen Prüfung verbindlich festgelegt.'
+      tr('Glasaufbau und Glasstärke (Sicherheitsglas) werden bei der fachlichen Prüfung verbindlich festgelegt.')
     );
     if (inputs.ohneHandlauf) {
       warnings.push(
-        'Ausführung ohne Handlauf: Zulässigkeit wird für Ihre Einbausituation fachlich geprüft.'
+        tr('Ausführung ohne Handlauf: Zulässigkeit wird für Ihre Einbausituation fachlich geprüft.')
       );
     }
   }
 
   if (params.approval !== 'freigegeben') {
-    warnings.push(RULE_APPROVAL_WARNING);
+    warnings.push(tr(RULE_APPROVAL_WARNING));
   }
 
   if (errors.length > 0) {

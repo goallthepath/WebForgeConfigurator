@@ -5,7 +5,8 @@
  * Version: 0.1.0
  * Requires at least: 6.5
  * Requires PHP: 8.1
- * Author: Musterschlosserei
+ * Author: goallthepath & Michl
+ * License: MIT
  * Text Domain: webforge-core
  */
 
@@ -18,6 +19,7 @@ define( 'WEBFORGE_CORE_DIR', plugin_dir_path( __FILE__ ) );
 
 require_once WEBFORGE_CORE_DIR . 'includes/post-types.php';
 require_once WEBFORGE_CORE_DIR . 'includes/rest-api.php';
+require_once WEBFORGE_CORE_DIR . 'includes/shortcode.php';
 
 register_activation_hook(
 	__FILE__,

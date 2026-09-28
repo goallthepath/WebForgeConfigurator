@@ -28,10 +28,11 @@ import {
   ORNAMENT_TYPEN,
   type OptionDef,
 } from '../gelaender/options';
+import { tr } from '../../i18n';
 import { deriveTreppe, treppeMaterialAuszug } from './derive';
 import { buildTreppeGeometry } from './geometry';
 import {
-  EMPTY_TREPPE_INPUTS,
+  DEFAULT_TREPPE_INPUTS,
   type GelaenderSeite,
   type Setzstufen,
   type Stufentyp,
@@ -41,7 +42,7 @@ import {
   type TreppenModus,
 } from './types';
 
-const STORAGE_KEY = 'webforge-treppe-draft-v1';
+const STORAGE_KEY = 'webforge-treppe-draft-v2';
 
 const MODI: OptionDef<TreppenModus>[] = [
   {
@@ -169,7 +170,7 @@ function reducer(state: TreppeInputs, action: Action): TreppeInputs {
       return next;
     }
     case 'reset':
-      return EMPTY_TREPPE_INPUTS;
+      return DEFAULT_TREPPE_INPUTS;
   }
 }
 
@@ -178,18 +179,18 @@ function loadInitial(): TreppeInputs {
     const fromUrl = new URLSearchParams(window.location.search).get('c');
     if (fromUrl) {
       return {
-        ...EMPTY_TREPPE_INPUTS,
+        ...DEFAULT_TREPPE_INPUTS,
         ...(JSON.parse(decodeURIComponent(atob(fromUrl))) as TreppeInputs),
       };
     }
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return { ...EMPTY_TREPPE_INPUTS, ...(JSON.parse(stored) as TreppeInputs) };
+      return { ...DEFAULT_TREPPE_INPUTS, ...(JSON.parse(stored) as TreppeInputs) };
     }
   } catch {
     // defekte Drafts still verwerfen
   }
-  return EMPTY_TREPPE_INPUTS;
+  return DEFAULT_TREPPE_INPUTS;
 }
 
 function profileOptions(
@@ -201,8 +202,15 @@ function profileOptions(
     .map((p) => ({
       id: p.profileId,
       label: p.name.replace(/^TESTDATEN\s*/, ''),
-      description: crossSectionLabel(p),
+      description: crossSectionText(p),
     }));
+}
+
+/** Querschnitt mit übersetzter Profilform (Katalogtext bleibt Quelle). */
+function crossSectionText(p: Profile): string {
+  return crossSectionLabel(p)
+    .replace(/^\S+/, (shape) => tr(shape))
+    .replace(' · Wand ', ` · ${tr('Wand')} `);
 }
 
 export function TreppeConfigurator() {
@@ -327,14 +335,13 @@ export function TreppeConfigurator() {
   return (
     <div className="configurator">
       <p>
-        <Link to="/">← Produktauswahl</Link>
+        <Link to="/">{tr('← Produktauswahl')}</Link>
       </p>
-      <h1>Treppe &amp; Treppengeländer konfigurieren</h1>
+      <h1>{tr('Treppe & Treppengeländer konfigurieren')}</h1>
       <p className="lead">
-        Gerade, einläufige Stahltreppe – als komplette Treppe, als Geländer
-        für Ihren Bestand oder kombiniert. Steigungsverhältnis nach
-        Schrittmassregel, Geländer nach BFU-Richtwerten. Unser Meister
-        prüft jede Konfiguration persönlich (Statik, Norm, Baurecht).
+        {tr(
+          'Gerade, einläufige Stahltreppe – als komplette Treppe, als Geländer für Ihren Bestand oder kombiniert. Steigungsverhältnis nach Schrittmassregel, Geländer nach BFU-Richtwerten. Unser Meister prüft jede Konfiguration persönlich (Statik, Norm, Baurecht).'
+        )}
       </p>
 
       <div className="configurator-layout">
@@ -348,9 +355,9 @@ export function TreppeConfigurator() {
               onChange={(modus) => set({ modus })}
             />
             <p className="escape-hatch">
-              Gewendelte, mehrläufige oder Podest-Treppen sowie
-              Spindeltreppen plant unser Meister persönlich:{' '}
-              <a href="/projekt-starten/">Individuelle Ausführung anfragen</a>.
+              {tr(
+                'Gewendelte, mehrläufige oder Podest-Treppen sowie Spindeltreppen plant unser Meister persönlich.'
+              )}
             </p>
           </StepSection>
 
@@ -399,14 +406,14 @@ export function TreppeConfigurator() {
                 <table className="material-table">
                   <tbody>
                     <tr>
-                      <td>Steigungen</td>
+                      <td>{tr('Steigungen')}</td>
                       <td>
                         <strong>{derived.steigungenAnzahl}</strong>{' '}
-                        ({derived.stufenAnzahl} Trittstufen)
+                        {tr('({n} Trittstufen)', { n: derived.stufenAnzahl })}
                       </td>
                     </tr>
                     <tr>
-                      <td>Steigung / Auftritt</td>
+                      <td>{tr('Steigung / Auftritt')}</td>
                       <td>
                         <strong>
                           {derived.steigungMm} / {derived.auftrittMm} mm
@@ -414,14 +421,14 @@ export function TreppeConfigurator() {
                       </td>
                     </tr>
                     <tr>
-                      <td>Schrittmass</td>
+                      <td>{tr('Schrittmass')}</td>
                       <td>
                         <strong>{derived.schrittmassMm} mm</strong>{' '}
-                        {schrittmassOk ? '✓' : '⚠ ausserhalb üblich'}
+                        {schrittmassOk ? '✓' : tr('⚠ ausserhalb üblich')}
                       </td>
                     </tr>
                     <tr>
-                      <td>Lauflänge / Neigung</td>
+                      <td>{tr('Lauflänge / Neigung')}</td>
                       <td>
                         <strong>
                           {derived.lauflaengeMm} mm / {derived.neigungGrad}°
@@ -432,7 +439,7 @@ export function TreppeConfigurator() {
                 </table>
                 <NumberField
                   label="Steigungen anpassen (optional)"
-                  unit="Stk."
+                  unit={tr('Stk.')}
                   step={1}
                   value={inputs.stufenAnzahlManuell}
                   min={3}
@@ -448,7 +455,7 @@ export function TreppeConfigurator() {
                 checked={inputs.masseUngefaehr}
                 onChange={(e) => set({ masseUngefaehr: e.target.checked })}
               />
-              Meine Masse sind ungefähr (Aufmass nötig)
+              {tr('Meine Masse sind ungefähr (Aufmass nötig)')}
             </label>
           </StepSection>
 
@@ -620,7 +627,7 @@ export function TreppeConfigurator() {
               badge={() => 'TESTDATEN'}
             />
             <fieldset className="option-group">
-              <legend>Farbe</legend>
+              <legend>{tr('Farbe')}</legend>
               <div className="swatch-row">
                 {FARBEN.map((farbe) => (
                   <label
@@ -644,7 +651,7 @@ export function TreppeConfigurator() {
                     >
                       {farbe.hex ? '' : '?'}
                     </span>
-                    <span className="swatch-label">{farbe.label}</span>
+                    <span className="swatch-label">{tr(farbe.label)}</span>
                   </label>
                 ))}
               </div>
@@ -675,46 +682,46 @@ export function TreppeConfigurator() {
           />
 
           <div className="summary-card">
-            <h2>Ihre Konfiguration</h2>
+            <h2>{tr('Ihre Konfiguration')}</h2>
             {geometryReady ? (
               <>
                 <ul className="summary-list">
                   <li>
-                    Geschosshöhe: <strong>{inputs.geschosshoeheMm} mm</strong>
-                    {inputs.masseUngefaehr && ' (ungefähr)'}
+                    {tr('Geschosshöhe:')} <strong>{inputs.geschosshoeheMm} mm</strong>
+                    {inputs.masseUngefaehr && ` ${tr('(ungefähr)')}`}
                   </li>
                   <li>
-                    Steigungsverhältnis:{' '}
+                    {tr('Steigungsverhältnis:')}{' '}
                     <strong>
                       {derived.steigungMm}/{derived.auftrittMm} mm
                     </strong>{' '}
-                    ({derived.steigungenAnzahl} Stg.)
-                    <span className="provisional"> provisorisch</span>
+                    {tr('({n} Stg.)', { n: derived.steigungenAnzahl })}
+                    <span className="provisional"> {tr('provisorisch')}</span>
                   </li>
                   <li>
-                    Lauflänge: <strong>{derived.lauflaengeMm} mm</strong> ·{' '}
+                    {tr('Lauflänge:')} <strong>{derived.lauflaengeMm} mm</strong> ·{' '}
                     {derived.neigungGrad}°
                   </li>
                   {derived.gelaenderSeiten > 0 && (
                     <li>
-                      Geländer:{' '}
+                      {tr('Geländer:')}{' '}
                       <strong>
                         {derived.gelaenderSeiten}× ·{' '}
-                        {derived.pfostenProSeite} Pfosten/Seite
+                        {tr('{n} Pfosten/Seite', { n: derived.pfostenProSeite })}
                       </strong>
-                      <span className="provisional"> provisorisch</span>
+                      <span className="provisional"> {tr('provisorisch')}</span>
                     </li>
                   )}
                 </ul>
                 {material.length > 0 && (
                   <details className="material-details">
-                    <summary>Materialauszug (provisorisch, für die Werkstatt)</summary>
+                    <summary>{tr('Materialauszug (provisorisch, für die Werkstatt)')}</summary>
                     <table className="material-table">
                       <thead>
                         <tr>
-                          <th>Position</th>
-                          <th>Stk.</th>
-                          <th>Länge</th>
+                          <th>{tr('Position')}</th>
+                          <th>{tr('Stk.')}</th>
+                          <th>{tr('Länge')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -731,12 +738,12 @@ export function TreppeConfigurator() {
                 )}
               </>
             ) : (
-              <p className="field-hint">Noch keine Masse erfasst.</p>
+              <p className="field-hint">{tr('Noch keine Masse erfasst.')}</p>
             )}
 
             {validation.errors.length > 0 && (
               <div className="status-banner red" role="alert">
-                <strong>Bitte prüfen:</strong>
+                <strong>{tr('Bitte prüfen:')}</strong>
                 <ul>
                   {validation.errors.map((error) => (
                     <li key={error}>{error}</li>
@@ -758,39 +765,39 @@ export function TreppeConfigurator() {
 
             <div className="summary-actions">
               <button type="button" className="secondary" onClick={share}>
-                Konfiguration speichern (Link)
+                {tr('Konfiguration speichern (Link)')}
               </button>
               <button
                 type="button"
                 className="primary"
                 disabled={validation.level === 'red' || !inputs.montageService}
-                title="Übermittlung an die Werkstatt folgt mit dem Anfrage-System (Phase 3)"
+                title={tr('Übermittlung an die Werkstatt folgt mit dem Anfrage-System (Phase 3)')}
               >
-                Offerte anfragen – folgt in Kürze
+                {tr('Offerte anfragen – folgt in Kürze')}
               </button>
               <button
                 type="button"
                 className="ghost"
                 onClick={() => dispatch({ type: 'reset' })}
               >
-                Zurücksetzen
+                {tr('Zurücksetzen')}
               </button>
             </div>
             {shareState === 'copied' && (
               <p className="field-hint" role="status">
-                Link kopiert – Konfiguration jederzeit wieder öffnen und teilen.
+                {tr('Link kopiert – Konfiguration jederzeit wieder öffnen und teilen.')}
               </p>
             )}
             {shareState === 'shown' && (
               <p className="field-hint" role="status">
-                Link: <code className="share-url">{shareUrl}</code>
+                {tr('Link:')} <code className="share-url">{shareUrl}</code>
               </p>
             )}
 
             <p className="versions">
-              Produkt {module.productVersion} · Regeln {module.ruleVersion} ·
-              Preis: {module.priceVersion ?? 'keine Version (individuelle Prüfung)'} ·
-              Katalog {CATALOG_VERSION}
+              {tr('Produkt')} {module.productVersion} · {tr('Regeln')} {module.ruleVersion} ·{' '}
+              {tr('Preis:')} {module.priceVersion ?? tr('keine Version (individuelle Prüfung)')} ·{' '}
+              {tr('Katalog')} {CATALOG_VERSION}
             </p>
           </div>
         </aside>

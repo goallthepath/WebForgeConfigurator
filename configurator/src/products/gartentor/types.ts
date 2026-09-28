@@ -78,3 +78,34 @@ export const EMPTY_GARTENTOR_INPUTS: GartentorInputs = {
   farbe: null,
   montageService: null,
 };
+
+/**
+ * Startkonfiguration: ein ansprechendes, vollständiges Standard-Gartentor,
+ * damit die 3D-Vorschau sofort erscheint und alle Schritte freigeschaltet
+ * sind. Einflügelig 1000 × 1200 mm, Stahl, Staketen, zwei neue Torpfosten,
+ * Schloss mit Drücker, pulverbeschichtet in RAL 7016 Anthrazitgrau.
+ */
+export const DEFAULT_GARTENTOR_INPUTS: GartentorInputs = {
+  fluegelart: 'ein',
+  seitenbau: 'pfosten',
+  oeffnungsrichtung: 'innen',
+  anschlag: 'links',
+  oeffnungBreiteMm: 1000,
+  hoeheMm: 1200,
+  bodenfreiheitMm: 50,
+  masseUngefaehr: false,
+  untergrund: 'beton',
+  fuellung: 'staketen',
+  blechTyp: null,
+  laserMotiv: null,
+  ornamentTyp: null,
+  schloss: 'schloss-druecker',
+  antriebVorbereitung: false,
+  materialId: 'test-stahl',
+  rahmenProfilId: 'test-rahmen-rechteckrohr',
+  fuellstabProfilId: 'test-fuellstab-vierkant-12',
+  pfostenProfilId: 'test-pfosten-quadratrohr-40',
+  finishId: 'test-pulverbeschichtet',
+  farbe: 'ral-7016',
+  montageService: 'webforge',
+};

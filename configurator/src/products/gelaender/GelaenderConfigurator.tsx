@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { StepSection } from '../../components/ui/StepSection';
 import { OptionCardGroup } from '../../components/ui/OptionCardGroup';
 import { NumberField } from '../../components/ui/NumberField';
+import { tr } from '../../i18n';
 import { RailingViewer } from '../../viewer/RailingViewer';
 import { describeEstimate, estimateFor } from '../../pricing/estimate';
 import { profilesForUse } from '../../rules/profiles';
@@ -13,6 +14,8 @@ import {
 import { getProductModule } from '../catalog';
 import {
   CATALOG_VERSION,
+  catalogDisplayName,
+  crossSectionLabel,
   FINISHES,
   getProfile,
   MATERIALS,
@@ -47,14 +50,14 @@ import {
   type OptionDef,
 } from './options';
 import {
-  EMPTY_GELAENDER_INPUTS,
+  DEFAULT_GELAENDER_INPUTS,
   OBERGURT_STANDARD_ABSTAND_MM,
   obergurtAktiv,
   SEGMENTE_PRO_VARIANTE,
   type GelaenderInputs,
 } from './types';
 
-const STORAGE_KEY = 'webforge-gelaender-draft-v1';
+const STORAGE_KEY = 'webforge-gelaender-draft-v2';
 
 type Action =
   | { type: 'set'; patch: Partial<GelaenderInputs> }
@@ -112,7 +115,7 @@ function reducer(state: GelaenderInputs, action: Action): GelaenderInputs {
       return next;
     }
     case 'reset':
-      return EMPTY_GELAENDER_INPUTS;
+      return DEFAULT_GELAENDER_INPUTS;
   }
 }
 
@@ -121,21 +124,21 @@ function loadInitial(): GelaenderInputs {
     const fromUrl = new URLSearchParams(window.location.search).get('c');
     if (fromUrl) {
       return {
-        ...EMPTY_GELAENDER_INPUTS,
+        ...DEFAULT_GELAENDER_INPUTS,
         ...(JSON.parse(decodeURIComponent(atob(fromUrl))) as GelaenderInputs),
       };
     }
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored) {
       return {
-        ...EMPTY_GELAENDER_INPUTS,
+        ...DEFAULT_GELAENDER_INPUTS,
         ...(JSON.parse(stored) as GelaenderInputs),
       };
     }
   } catch {
     // defekte Drafts still verwerfen
   }
-  return EMPTY_GELAENDER_INPUTS;
+  return DEFAULT_GELAENDER_INPUTS;
 }
 
 const SEGMENT_LABELS = ['Erstes Segment', 'Zweites Segment', 'Drittes Segment'];
@@ -148,28 +151,15 @@ function profileOptions(
     .filter((p) => !materialId || p.material === materialId)
     .map((p) => ({
     id: p.profileId,
-    label: p.name.replace(/^TESTDATEN\s*/, ''),
+    label: displayName(p),
     description: crossSectionLabel(p),
   }));
 }
 
-function crossSectionLabel(p: Profile): string {
-  const cs = p.crossSection as Record<string, number | string>;
-  const shapeNames: Record<string, string> = {
-    'round-tube': 'Rundrohr',
-    'square-tube': 'Quadratrohr',
-    'rect-tube': 'Rechteckrohr',
-    'flat-bar': 'Flachstahl',
-    'square-bar': 'Vierkantstab',
-    'round-bar': 'Rundstab',
-    't-profile': 'T-Stahl',
-  };
-  const shape = shapeNames[String(cs.shape)] ?? String(cs.shape);
-  const masse = cs.diameterMm
-    ? `Ø ${cs.diameterMm} mm`
-    : `${cs.widthMm ?? '?'} × ${cs.heightMm ?? cs.widthMm ?? '?'} mm`;
-  const wand = cs.wallThicknessMm ? ` · Wand ${cs.wallThicknessMm} mm` : '';
-  return `${shape} ${masse}${wand}`;
+/** Katalogname ohne TESTDATEN-Markierung, in der aktuellen Sprache. */
+function displayName(item: { name: string }): string {
+  const raw = (item as { rawName?: string }).rawName;
+  return raw ? catalogDisplayName(raw) : item.name;
 }
 
 export function GelaenderConfigurator() {
@@ -317,14 +307,13 @@ export function GelaenderConfigurator() {
   return (
     <div className="configurator">
       <p>
-        <Link to="/">← Produktauswahl</Link>
+        <Link to="/">{tr('← Produktauswahl')}</Link>
       </p>
-      <h1>Geländer konfigurieren</h1>
+      <h1>{tr('Geländer konfigurieren')}</h1>
       <p className="lead">
-        Stellen Sie Ihr Geländer Schritt für Schritt zusammen – mit
-        3D-Vorschau und Masszeichnung. Am Ende senden Sie eine unverbindliche
-        Offertanfrage; unser Meister prüft jede Konfiguration persönlich
-        (Sicherheit nach BFU/SIA gehört zur fachlichen Prüfung).
+        {tr(
+          'Stellen Sie Ihr Geländer Schritt für Schritt zusammen – mit 3D-Vorschau und Masszeichnung. Am Ende senden Sie eine unverbindliche Offertanfrage; unser Meister prüft jede Konfiguration persönlich (Sicherheit nach BFU/SIA gehört zur fachlichen Prüfung).'
+        )}
       </p>
 
       <div className="configurator-layout">
@@ -338,11 +327,10 @@ export function GelaenderConfigurator() {
               onChange={(einsatzort) => set({ einsatzort })}
             />
             <p className="escape-hatch">
-              <strong>Treppengeländer?</strong> Dafür gibt es den eigenen{' '}
-              <Link to="/treppe/">Treppen-Konfigurator</Link> (Treppe,
-              Geländer oder kombiniert). Persönlich geplant werden:{' '}
-              <a href="/projekt-starten/">Industriegeländer</a> (Suva-Regelwerk)
-              und <a href="/projekt-starten/">Bestandssanierung/Erhöhung</a>.
+              <strong>{tr('Treppengeländer?')}</strong>{' '}
+              {tr('Dafür gibt es den eigenen')}{' '}
+              <Link to="/treppe/">{tr('Treppen-Konfigurator')}</Link>{' '}
+              {tr('(Treppe, Geländer oder kombiniert).')}
             </p>
           </StepSection>
 
@@ -385,9 +373,9 @@ export function GelaenderConfigurator() {
               onChange={(variante) => set({ variante })}
             />
             <p className="escape-hatch">
-              Mehr Ecken, Winkel ≠ 90° oder geschwungene Verläufe?{' '}
-              <a href="/projekt-starten/">Individuelle Ausführung anfragen</a> –
-              Unser Meister plant sie persönlich mit Ihnen.
+              {tr(
+                'Mehr Ecken, Winkel ≠ 90° oder geschwungene Verläufe? Unser Meister plant sie persönlich mit Ihnen.'
+              )}
             </p>
           </StepSection>
 
@@ -414,15 +402,17 @@ export function GelaenderConfigurator() {
             {inputs.montageart && (
               <fieldset className="option-group">
                 <legend>
-                  {inputs.montageart === 'boden'
-                    ? 'Fussplatten-Wunschmass'
-                    : inputs.montageart === 'seite'
-                      ? 'Schwert-Wunschmass'
-                      : inputs.montageart === 'unten'
-                        ? 'Kragarm-Wunschmass'
-                        : inputs.montageart === 'eingelassen'
-                          ? 'Einbindung'
-                          : 'Wandlaschen-Wunschmass'}
+                  {tr(
+                    inputs.montageart === 'boden'
+                      ? 'Fussplatten-Wunschmass'
+                      : inputs.montageart === 'seite'
+                        ? 'Schwert-Wunschmass'
+                        : inputs.montageart === 'unten'
+                          ? 'Kragarm-Wunschmass'
+                          : inputs.montageart === 'eingelassen'
+                            ? 'Einbindung'
+                            : 'Wandlaschen-Wunschmass'
+                  )}
                 </legend>
                 <div className="field-row">
                   {inputs.montageart === 'boden' && (
@@ -481,8 +471,9 @@ export function GelaenderConfigurator() {
                   )}
                 </div>
                 <p className="field-hint">
-                  Darstellung inkl. Ankerbild in der 3D-Vorschau. Definitive
-                  Ausführung, Dübel und Randabstände werden statisch bemessen.
+                  {tr(
+                    'Darstellung inkl. Ankerbild in der 3D-Vorschau. Definitive Ausführung, Dübel und Randabstände werden statisch bemessen.'
+                  )}
                 </p>
               </fieldset>
             )}
@@ -501,7 +492,9 @@ export function GelaenderConfigurator() {
                 label={
                   inputs.segmentLaengenMm.length === 1
                     ? 'Länge'
-                    : `${SEGMENT_LABELS[i] ?? `Segment ${i + 1}`}`
+                    : SEGMENT_LABELS[i]
+                      ? tr(SEGMENT_LABELS[i])
+                      : tr('Segment {n}', { n: i + 1 })
                 }
                 unit="mm"
                 value={laenge || null}
@@ -529,7 +522,7 @@ export function GelaenderConfigurator() {
                 checked={inputs.masseUngefaehr}
                 onChange={(e) => set({ masseUngefaehr: e.target.checked })}
               />
-              Meine Masse sind ungefähr (Aufmass nötig)
+              {tr('Meine Masse sind ungefähr (Aufmass nötig)')}
             </label>
           </StepSection>
 
@@ -611,14 +604,14 @@ export function GelaenderConfigurator() {
                         checked={inputs.ornamentDoppelt}
                         onChange={(e) => set({ ornamentDoppelt: e.target.checked })}
                       />
-                      Doppelreihe (zwei Ornamente übereinander)
+                      {tr('Doppelreihe (zwei Ornamente übereinander)')}
                     </label>
                   </>
                 )}
               </>
             )}
             <fieldset className="option-group">
-              <legend>Konstruktion (Gurte und Handlauf-Lage)</legend>
+              <legend>{tr('Konstruktion (Gurte und Handlauf-Lage)')}</legend>
               {!inputs.ohneHandlauf && (
                 <OptionCardGroup
                   legend="Handlauf-Position"
@@ -629,9 +622,11 @@ export function GelaenderConfigurator() {
                 />
               )}
               <p className="field-hint">
-                {obergurtAktiv(inputs)
-                  ? 'Aufgesetzter Handlauf: Der Obergurt entsteht automatisch (Rahmenbauweise).'
-                  : 'Handlauf zwischen den Pfosten: Er übernimmt selbst die Obergurt-Funktion.'}
+                {tr(
+                  obergurtAktiv(inputs)
+                    ? 'Aufgesetzter Handlauf: Der Obergurt entsteht automatisch (Rahmenbauweise).'
+                    : 'Handlauf zwischen den Pfosten: Er übernimmt selbst die Obergurt-Funktion.'
+                )}
               </p>
               {obergurtAktiv(inputs) && (
                 <NumberField
@@ -653,7 +648,7 @@ export function GelaenderConfigurator() {
                   checked={inputs.mitUntergurt}
                   onChange={(e) => set({ mitUntergurt: e.target.checked })}
                 />
-                Untergurt (unterer Rahmengurt – konstruktiv üblich)
+                {tr('Untergurt (unterer Rahmengurt – konstruktiv üblich)')}
               </label>
               {inputs.mitUntergurt && (
                 <NumberField
@@ -680,7 +675,7 @@ export function GelaenderConfigurator() {
                     })
                   }
                 />
-                Knieleiste (mittlerer Gurt)
+                {tr('Knieleiste (mittlerer Gurt)')}
               </label>
               {inputs.mitKnieleiste && (
                 <NumberField
@@ -693,22 +688,22 @@ export function GelaenderConfigurator() {
                 />
               )}
               <p className="field-hint">
-                Gurthöhen sind Gestaltungswünsche – Öffnungsmasse und
-                Kletterschutz werden fachlich geprüft (BFU).
+                {tr(
+                  'Gurthöhen sind Gestaltungswünsche – Öffnungsmasse und Kletterschutz werden fachlich geprüft (BFU).'
+                )}
               </p>
             </fieldset>
             <p className="escape-hatch">
-              Schmiedeeiserne Ornamente, Voluten, Rosetten oder historische
-              Nachbildungen?{' '}
-              <a href="/projekt-starten/">Individuelle Ausführung anfragen</a> –
-              das ist das Kernhandwerk der Kunstschlosserei.
+              {tr(
+                'Schmiedeeiserne Ornamente, Voluten, Rosetten oder historische Nachbildungen? Das ist das Kernhandwerk der Kunstschlosserei – unser Meister plant sie persönlich mit Ihnen.'
+              )}
             </p>
           </StepSection>
 
           <StepSection
             number={7}
             title="Profile wählen"
-            hint="Alle Profile stammen aus dem WebForge-Standardkatalog. Aktuell Testkatalog – definitive Querschnitte werden statisch bemessen und fachlich freigegeben."
+            hint="Alle Profile stammen aus dem Standardkatalog der Werkstatt. Aktuell Testkatalog – definitive Querschnitte werden statisch bemessen und fachlich freigegeben."
             unlocked={steps.s7}
             done={steps.s8}
           >
@@ -717,7 +712,7 @@ export function GelaenderConfigurator() {
               name="materialId"
               options={MATERIALS.filter((m) => m.active).map((m) => ({
                 id: m.materialId,
-                label: m.name.replace(/\s*\(TESTDATEN\)/, ''),
+                label: displayName(m),
                 description:
                   m.materialId === 'test-edelstahl'
                     ? 'Rostfrei - geschliffen oder gebuerstet, ideal aussen.'
@@ -744,7 +739,7 @@ export function GelaenderConfigurator() {
                   checked={inputs.ohneHandlauf}
                   onChange={(e) => set({ ohneHandlauf: e.target.checked })}
                 />
-                Puristisch ohne Handlauf (nur Glaskante sichtbar)
+                {tr('Puristisch ohne Handlauf (nur Glaskante sichtbar)')}
               </label>
             )}
             {!inputs.ohneHandlauf && (
@@ -763,7 +758,7 @@ export function GelaenderConfigurator() {
                   className="material-details"
                   open={inputs.handlaufWunschDm !== null}
                 >
-                  <summary>Wunschmass Handlauf (Sonderprofil, pruefpflichtig)</summary>
+                  <summary>{tr('Wunschmass Handlauf (Sonderprofil, pruefpflichtig)')}</summary>
                   <NumberField
                     label="Runddurchmesser"
                     unit="mm"
@@ -794,7 +789,7 @@ export function GelaenderConfigurator() {
                   className="material-details"
                   open={inputs.fuellstabWunschDm !== null}
                 >
-                  <summary>Wunschmass Staketen (Sonderprofil, pruefpflichtig)</summary>
+                  <summary>{tr('Wunschmass Staketen (Sonderprofil, pruefpflichtig)')}</summary>
                   <NumberField
                     label="Runddurchmesser"
                     unit="mm"
@@ -857,7 +852,7 @@ export function GelaenderConfigurator() {
                     f.allowedMaterials.includes(inputs.materialId))
               ).map((f) => ({
                 id: f.finishId,
-                label: f.name.replace(/\s*\(TESTDATEN\)/, ''),
+                label: displayName(f),
                 description:
                   f.outdoorSuitable === null
                     ? 'Eignung innen/aussen wird fachlich geprüft.'
@@ -870,7 +865,7 @@ export function GelaenderConfigurator() {
               badge={() => 'TESTDATEN'}
             />
             <fieldset className="option-group">
-              <legend>Farbe</legend>
+              <legend>{tr('Farbe')}</legend>
               <div className="swatch-row">
                 {FARBEN.map((farbe) => (
                   <label
@@ -894,14 +889,14 @@ export function GelaenderConfigurator() {
                     >
                       {farbe.hex ? '' : '?'}
                     </span>
-                    <span className="swatch-label">{farbe.label}</span>
+                    <span className="swatch-label">{tr(farbe.label)}</span>
                   </label>
                 ))}
               </div>
               <p className="field-hint">
-                Bildschirmfarben sind Näherungswerte – verbindlich ist die
-                RAL-Karte. Duplex-System (verzinkt + beschichtet) empfiehlt
-                sich aussen; Details klärt die fachliche Prüfung.
+                {tr(
+                  'Bildschirmfarben sind Näherungswerte – verbindlich ist die RAL-Karte. Duplex-System (verzinkt + beschichtet) empfiehlt sich aussen; Details klärt die fachliche Prüfung.'
+                )}
               </p>
             </fieldset>
           </StepSection>
@@ -930,48 +925,48 @@ export function GelaenderConfigurator() {
           />
 
           <div className="summary-card">
-            <h2>Ihre Konfiguration</h2>
+            <h2>{tr('Ihre Konfiguration')}</h2>
             {geometryReady ? (
               <>
                 <ul className="summary-list">
                   <li>
-                    Gesamtlänge: <strong>{derived.gesamtlaengeMm} mm</strong>
-                    {inputs.masseUngefaehr && ' (ungefähr)'}
+                    {tr('Gesamtlänge:')} <strong>{derived.gesamtlaengeMm} mm</strong>
+                    {inputs.masseUngefaehr && ` ${tr('(ungefähr)')}`}
                   </li>
                   <li>
-                    Pfosten: <strong>{derived.pfostenTotal}</strong>
-                    <span className="provisional"> provisorisch</span>
+                    {tr('Pfosten:')} <strong>{derived.pfostenTotal}</strong>
+                    <span className="provisional"> {tr('provisorisch')}</span>
                   </li>
                   {derived.fuellstaebeTotal > 0 && (
                     <li>
-                      Füllstäbe: <strong>{derived.fuellstaebeTotal}</strong>
-                      <span className="provisional"> provisorisch</span>
+                      {tr('Füllstäbe:')} <strong>{derived.fuellstaebeTotal}</strong>
+                      <span className="provisional"> {tr('provisorisch')}</span>
                     </li>
                   )}
                   {derived.querstabLagen > 0 && (
                     <li>
-                      Querstab-Lagen: <strong>{derived.querstabLagen}</strong>
-                      <span className="provisional"> provisorisch</span>
+                      {tr('Querstab-Lagen:')} <strong>{derived.querstabLagen}</strong>
+                      <span className="provisional"> {tr('provisorisch')}</span>
                     </li>
                   )}
                   {derived.glasfelderTotal > 0 && (
                     <li>
-                      Füllfelder: <strong>{derived.glasfelderTotal}</strong>
-                      <span className="provisional"> provisorisch</span>
+                      {tr('Füllfelder:')} <strong>{derived.glasfelderTotal}</strong>
+                      <span className="provisional"> {tr('provisorisch')}</span>
                     </li>
                   )}
                 </ul>
                 {material.length > 0 && (
                   <details className="material-details">
                     <summary>
-                      Materialauszug (provisorisch, für die Werkstatt)
+                      {tr('Materialauszug (provisorisch, für die Werkstatt)')}
                     </summary>
                     <table className="material-table">
                       <thead>
                         <tr>
-                          <th>Position</th>
-                          <th>Stk.</th>
-                          <th>Länge</th>
+                          <th>{tr('Position')}</th>
+                          <th>{tr('Stk.')}</th>
+                          <th>{tr('Länge')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -985,19 +980,20 @@ export function GelaenderConfigurator() {
                       </tbody>
                     </table>
                     <p className="field-hint">
-                      Basis TESTDATEN-Regeln – verbindliche Stückliste erst
-                      nach statischer Bemessung und fachlicher Freigabe.
+                      {tr(
+                        'Basis TESTDATEN-Regeln – verbindliche Stückliste erst nach statischer Bemessung und fachlicher Freigabe.'
+                      )}
                     </p>
                   </details>
                 )}
               </>
             ) : (
-              <p className="field-hint">Noch keine Masse erfasst.</p>
+              <p className="field-hint">{tr('Noch keine Masse erfasst.')}</p>
             )}
 
             {validation.errors.length > 0 && (
               <div className="status-banner red" role="alert">
-                <strong>Bitte prüfen:</strong>
+                <strong>{tr('Bitte prüfen:')}</strong>
                 <ul>
                   {validation.errors.map((error) => (
                     <li key={error}>{error}</li>
@@ -1019,40 +1015,42 @@ export function GelaenderConfigurator() {
 
             <div className="summary-actions">
               <button type="button" className="secondary" onClick={share}>
-                Konfiguration speichern (Link)
+                {tr('Konfiguration speichern (Link)')}
               </button>
               <button
                 type="button"
                 className="primary"
                 disabled={validation.level === 'red' || !inputs.montageService}
-                title="Übermittlung an die Werkstatt folgt mit dem Anfrage-System (Phase 3)"
+                title={tr('Übermittlung an die Werkstatt folgt mit dem Anfrage-System (Phase 3)')}
               >
-                Offerte anfragen – folgt in Kürze
+                {tr('Offerte anfragen – folgt in Kürze')}
               </button>
               <button
                 type="button"
                 className="ghost"
                 onClick={() => dispatch({ type: 'reset' })}
               >
-                Zurücksetzen
+                {tr('Zurücksetzen')}
               </button>
             </div>
             {shareState === 'copied' && (
               <p className="field-hint" role="status">
-                Link kopiert – damit lässt sich die Konfiguration jederzeit
-                wieder öffnen und teilen.
+                {tr(
+                  'Link kopiert – damit lässt sich die Konfiguration jederzeit wieder öffnen und teilen.'
+                )}
               </p>
             )}
             {shareState === 'shown' && (
               <p className="field-hint" role="status">
-                Link zum Speichern: <code className="share-url">{shareUrl}</code>
+                {tr('Link zum Speichern:')} <code className="share-url">{shareUrl}</code>
               </p>
             )}
 
             <p className="versions">
-              Produkt {module.productVersion} · Regeln {module.ruleVersion} ·
-              Preis: {module.priceVersion ?? 'keine Version (individuelle Prüfung)'} ·
-              Katalog {CATALOG_VERSION}
+              {tr('Produkt')} {module.productVersion} · {tr('Regeln')}{' '}
+              {module.ruleVersion} · {tr('Preis:')}{' '}
+              {module.priceVersion ?? tr('keine Version (individuelle Prüfung)')} ·{' '}
+              {tr('Katalog')} {CATALOG_VERSION}
             </p>
           </div>
         </aside>

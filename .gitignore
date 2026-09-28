@@ -4,6 +4,7 @@ vendor/
 
 # Builds
 configurator/dist/
+wordpress/wp-content/plugins/webforge-core/configurator/
 design-tokens/generated/
 
 # Umgebungen / Geheimnisse

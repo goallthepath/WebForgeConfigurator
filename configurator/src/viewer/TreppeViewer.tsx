@@ -1,6 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from 'react';
 import type { TreppeGeometry } from '../products/treppe/geometry';
 import type { ViewPreset } from './scene-shared';
+import { tr } from '../i18n';
 
 const TreppeSceneLazy = lazy(() =>
   import('./TreppeScene').then((m) => ({ default: m.TreppeScene }))
@@ -45,7 +46,7 @@ function TreppeSchnitt({ geometry }: { geometry: TreppeGeometry }) {
       viewBox={`${-pad} ${-(H + Math.max(gh, 0.3)) - pad} ${L + 2 * pad + 0.8} ${H + Math.max(gh, 0.3) + 2 * pad}`}
       className="elevation-svg"
       role="img"
-      aria-label="Treppenschnitt (Seitenansicht)"
+      aria-label={tr('Treppenschnitt (Seitenansicht)')}
       preserveAspectRatio="xMidYMid meet"
     >
       {/* Böden */}
@@ -122,9 +123,9 @@ export function TreppeViewer({
 
   if (empty) {
     return (
-      <div className="viewer-shell" role="img" aria-label="Produktvorschau">
+      <div className="viewer-shell" role="img" aria-label={tr('Produktvorschau')}>
         <p className="viewer-empty">
-          Die 3D-Vorschau erscheint, sobald die Geschosshöhe erfasst ist.
+          {tr('Die 3D-Vorschau erscheint, sobald die Geschosshöhe erfasst ist.')}
         </p>
       </div>
     );
@@ -134,7 +135,7 @@ export function TreppeViewer({
 
   return (
     <div className="viewer-block">
-      <div className="viewer-toolbar" role="toolbar" aria-label="Ansicht wählen">
+      <div className="viewer-toolbar" role="toolbar" aria-label={tr('Ansicht wählen')}>
         {VIEWS.filter((v) => webgl || v.id === '2d').map((v) => (
           <button
             key={v.id}
@@ -142,7 +143,7 @@ export function TreppeViewer({
             className={view === v.id ? 'active' : ''}
             onClick={() => setView(v.id)}
           >
-            {v.label}
+            {tr(v.label)}
           </button>
         ))}
         <label className="dims-toggle">
@@ -151,12 +152,12 @@ export function TreppeViewer({
             checked={showDims}
             onChange={(e) => setShowDims(e.target.checked)}
           />
-          Masslinien
+          {tr('Masslinien')}
         </label>
       </div>
       <div className="viewer-shell">
         {show3d ? (
-          <Suspense fallback={<p className="viewer-empty">3D-Vorschau wird geladen …</p>}>
+          <Suspense fallback={<p className="viewer-empty">{tr('3D-Vorschau wird geladen …')}</p>}>
             <TreppeSceneLazy
               geometry={geometry}
               color={color}
@@ -171,8 +172,9 @@ export function TreppeViewer({
       </div>
       {!webgl && (
         <p className="field-hint">
-          Ihr Gerät unterstützt kein 3D – der Schnitt zeigt Ihre Treppe
-          massstäblich. Die Konfiguration funktioniert vollständig.
+          {tr(
+            'Ihr Gerät unterstützt kein 3D – der Schnitt zeigt Ihre Treppe massstäblich. Die Konfiguration funktioniert vollständig.'
+          )}
         </p>
       )}
     </div>

@@ -72,3 +72,32 @@ export const EMPTY_FENSTERGITTER_INPUTS: FenstergitterInputs = {
   farbe: null,
   montageService: null,
 };
+
+/**
+ * Startkonfiguration: ein realistisches, vollständiges Fenstergitter
+ * (Kellerfenster ca. 1000 × 1200 mm, Leibungsmontage, Vierkantstäbe mit
+ * einem Quergurt, pulverbeschichtet in Anthrazitgrau), damit die
+ * 3D-Vorschau sofort erscheint. Alle Ids stammen aus dem Katalog bzw.
+ * den Optionslisten; die Validierung bleibt GELB (nie ROT).
+ */
+export const DEFAULT_FENSTERGITTER_INPUTS: FenstergitterInputs = {
+  einbauort: 'aussen',
+  fluchtweg: 'nein',
+  montage: 'leibung',
+  untergrund: 'beton',
+  masstyp: 'lichtmass',
+  breiteMm: 1000,
+  hoeheMm: 1200,
+  masseUngefaehr: false,
+  stabanordnung: 'vertikal-quergurt',
+  quergurtAnzahl: 1,
+  ornamentTyp: null,
+  ornamentLage: 'mitte',
+  materialId: 'test-stahl',
+  rahmenProfilId: 'test-rahmen-rechteckrohr',
+  stabProfilId: 'test-fuellstab-vierkant-12',
+  stabWunschDm: null,
+  finishId: 'test-pulverbeschichtet',
+  farbe: 'ral-7016',
+  montageService: 'webforge',
+};

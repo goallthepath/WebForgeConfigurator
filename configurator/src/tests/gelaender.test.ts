@@ -11,6 +11,7 @@ import {
   runsFromInputs,
 } from '../products/gelaender/geometry';
 import {
+  DEFAULT_GELAENDER_INPUTS,
   EMPTY_GELAENDER_INPUTS,
   SEGMENTE_PRO_VARIANTE,
   type GelaenderInputs,
@@ -19,6 +20,15 @@ import {
   GELAENDER_RULES_V0,
   validateGelaender,
 } from '../rules/gelaender-rules';
+import {
+  FINISHES,
+  getProfile,
+  MATERIALS,
+  PROFILES,
+  profilBreiteMm,
+} from '../products/profile-catalog';
+import { profilesForUse } from '../rules/profiles';
+import { FARBEN } from '../products/gelaender/options';
 
 const PARAMS = { ...GELAENDER_RULES_V0 };
 
@@ -676,5 +686,58 @@ describe('Materialauszug (provisorisch)', () => {
     expect(material.find((m) => m.bezeichnung === 'Pfosten')?.anzahl).toBe(
       derived.pfostenTotal
     );
+  });
+});
+
+describe('Startkonfiguration (Defaults)', () => {
+  const d = DEFAULT_GELAENDER_INPUTS;
+  const profil = (id: string | null) => (id ? getProfile(id) : undefined);
+
+  it('verweist nur auf existierende Katalog- und Options-IDs', () => {
+    expect(MATERIALS.some((m) => m.materialId === d.materialId)).toBe(true);
+    const finish = FINISHES.find((f) => f.finishId === d.finishId);
+    expect(finish?.allowedMaterials).toContain(d.materialId);
+    expect(FARBEN.some((f) => f.id === d.farbe)).toBe(true);
+    for (const [id, role] of [
+      [d.pfostenProfilId, 'pfosten'],
+      [d.handlaufProfilId, 'handlauf'],
+      [d.fuellstabProfilId, 'fuellstab'],
+    ] as const) {
+      const p = profil(id);
+      expect(p?.material).toBe(d.materialId);
+      expect(
+        profilesForUse(PROFILES, 'gelaender', role).some(
+          (x) => x.profileId === id
+        )
+      ).toBe(true);
+    }
+    expect(d.segmentLaengenMm.length).toBe(SEGMENTE_PRO_VARIANTE[d.variante!]);
+  });
+
+  it('liefert gültige abgeleitete Werte, nicht-leere Geometrie und keine rote Ampel', () => {
+    const stab = profilBreiteMm(profil(d.fuellstabProfilId)!);
+    const derived = deriveGelaender(d, stab, PARAMS);
+    expect(derived.gesamtlaengeMm).toBe(3000);
+    expect(derived.pfostenTotal).toBeGreaterThanOrEqual(2);
+    expect(derived.fuellstaebeTotal).toBeGreaterThan(0);
+
+    const geo = buildRailingGeometry(d, derived, {
+      pfosten: profil(d.pfostenProfilId),
+      handlauf: profil(d.handlaufProfilId),
+      fuellstab: profil(d.fuellstabProfilId),
+      untergurt: profilesForUse(PROFILES, 'gelaender', 'rahmen')[0],
+    });
+    expect(geo.posts.length).toBe(derived.pfostenTotal);
+    expect(geo.bars.length).toBe(derived.fuellstaebeTotal);
+    expect(geo.plates.length).toBeGreaterThan(0);
+    expect(geo.dimensions.length).toBeGreaterThan(0);
+
+    const selected = [d.pfostenProfilId, d.handlaufProfilId, d.fuellstabProfilId]
+      .map(profil)
+      .filter((p) => p !== undefined);
+    const result = validateGelaender(d, selected, PARAMS);
+    expect(result.errors).toEqual([]);
+    expect(result.level).not.toBe('red');
+    expect(materialAuszug(d, derived).length).toBeGreaterThan(0);
   });
 });

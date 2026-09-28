@@ -2,6 +2,7 @@ import { lazy, Suspense, useMemo, useState } from 'react';
 import type { RailingGeometry } from '../products/gelaender/geometry';
 import { ElevationSvg } from './ElevationSvg';
 import type { ViewPreset } from './RailingScene';
+import { tr } from '../i18n';
 
 const RailingSceneLazy = lazy(() =>
   import('./RailingScene').then((m) => ({ default: m.RailingScene }))
@@ -48,9 +49,9 @@ export function RailingViewer({
 
   if (empty) {
     return (
-      <div className="viewer-shell" role="img" aria-label="Produktvorschau">
+      <div className="viewer-shell" role="img" aria-label={tr('Produktvorschau')}>
         <p className="viewer-empty">
-          Die 3D-Vorschau erscheint, sobald Form und Masse gewählt sind.
+          {tr('Die 3D-Vorschau erscheint, sobald Form und Masse gewählt sind.')}
         </p>
       </div>
     );
@@ -60,7 +61,7 @@ export function RailingViewer({
 
   return (
     <div className="viewer-block">
-      <div className="viewer-toolbar" role="toolbar" aria-label="Ansicht wählen">
+      <div className="viewer-toolbar" role="toolbar" aria-label={tr('Ansicht wählen')}>
         {VIEWS.filter((v) => webgl || v.id === '2d').map((v) => (
           <button
             key={v.id}
@@ -68,7 +69,7 @@ export function RailingViewer({
             className={view === v.id ? 'active' : ''}
             onClick={() => setView(v.id)}
           >
-            {v.label}
+            {tr(v.label)}
           </button>
         ))}
         <label className="dims-toggle">
@@ -77,12 +78,12 @@ export function RailingViewer({
             checked={showDims}
             onChange={(e) => setShowDims(e.target.checked)}
           />
-          Masslinien
+          {tr('Masslinien')}
         </label>
       </div>
       <div className="viewer-shell">
         {show3d ? (
-          <Suspense fallback={<p className="viewer-empty">3D-Vorschau wird geladen …</p>}>
+          <Suspense fallback={<p className="viewer-empty">{tr('3D-Vorschau wird geladen …')}</p>}>
             <RailingSceneLazy
               geometry={geometry}
               color={color}
@@ -97,8 +98,9 @@ export function RailingViewer({
       </div>
       {!webgl && (
         <p className="field-hint">
-          Ihr Gerät unterstützt kein 3D – die Zeichnung zeigt Ihre Konfiguration
-          massstäblich. Die Konfiguration funktioniert vollständig.
+          {tr(
+            'Ihr Gerät unterstützt kein 3D – die Zeichnung zeigt Ihre Konfiguration massstäblich. Die Konfiguration funktioniert vollständig.'
+          )}
         </p>
       )}
     </div>

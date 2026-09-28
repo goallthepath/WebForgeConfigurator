@@ -5,9 +5,19 @@ import {
 } from '../products/gartentor/derive';
 import { buildTorGeometry } from '../products/gartentor/geometry';
 import {
+  DEFAULT_GARTENTOR_INPUTS,
   EMPTY_GARTENTOR_INPUTS,
   type GartentorInputs,
 } from '../products/gartentor/types';
+import {
+  FINISHES,
+  getProfile,
+  MATERIALS,
+  PROFILES,
+  profilBreiteMm,
+} from '../products/profile-catalog';
+import { profilesForUse } from '../rules/profiles';
+import { FARBEN, MONTAGE_SERVICES } from '../products/gelaender/options';
 import {
   GARTENTOR_RULES_V0,
   validateGartentor,
@@ -160,4 +170,51 @@ describe('Gartentor-Geometrie', () => {
     expect(namen.some((n) => n.includes('Torpfosten'))).toBe(true);
     expect(namen.some((n) => n.includes('Einsteckschloss'))).toBe(true);
   });
+});
+
+describe('Gartentor-Startkonfiguration', () => {
+  const d = DEFAULT_GARTENTOR_INPUTS;
+  const profile = {
+    rahmen: getProfile(d.rahmenProfilId!),
+    stab: getProfile(d.fuellstabProfilId!),
+    pfosten: getProfile(d.pfostenProfilId!),
+  };
+
+  it('verwendet nur existierende Katalog- und Options-IDs', () => {
+    expect(MATERIALS.some((m) => m.materialId === d.materialId && m.active)).toBe(true);
+    expect(profilesForUse(PROFILES, 'gartentor', 'torrahmen').map((p) => p.profileId)).toContain(d.rahmenProfilId);
+    expect(profilesForUse(PROFILES, 'gartentor', 'torfuellung').map((p) => p.profileId)).toContain(d.fuellstabProfilId);
+    expect(profilesForUse(PROFILES, 'gartentor', 'torpfosten').map((p) => p.profileId)).toContain(d.pfostenProfilId);
+    for (const p of [profile.rahmen, profile.stab, profile.pfosten]) {
+      expect(p?.material).toBe(d.materialId);
+    }
+    const finish = FINISHES.find((f) => f.finishId === d.finishId);
+    expect(finish?.allowedMaterials).toContain(d.materialId);
+    expect(FARBEN.some((f) => f.id === d.farbe && f.hex)).toBe(true);
+    expect(MONTAGE_SERVICES.some((m) => m.id === d.montageService)).toBe(true);
+  });
+
+  it('liefert gültige Ableitung, vollständige Geometrie und keine rote Ampel', () => {
+    const derived = deriveGartentor(d, profilBreiteMm(profile.stab!));
+    expect(derived.fluegelBreitenMm).toEqual([1000 - 2 * P.spaltMm]);
+    expect(derived.staebeProFluegel).toBeGreaterThan(0);
+    expect(derived.pfostenAnzahl).toBe(2);
+
+    const geo = buildTorGeometry(d, derived, profile);
+    expect(geo.oeffnungM).toBeGreaterThan(0);
+    expect(geo.hoeheM).toBeGreaterThan(0);
+    expect(geo.fluegel).toHaveLength(1);
+    expect(geo.fluegel[0].stabOffsetsM.length).toBe(derived.staebeProFluegel);
+    expect(geo.fluegel[0].mitSchloss).toBe(true);
+    expect(geo.seiten).toHaveLength(2);
+    expect(torMaterialAuszug(d, derived).length).toBeGreaterThan(0);
+
+    const result = validateGartentor(
+      d,
+      [profile.rahmen!, profile.stab!, profile.pfosten!]
+    );
+    expect(result.level).not.toBe('red');
+    expect(result.errors).toHaveLength(0);
+  });
+
 });

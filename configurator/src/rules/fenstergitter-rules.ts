@@ -2,6 +2,7 @@ import type { FenstergitterInputs } from '../products/fenstergitter/types';
 import type { Profile, ValidationResult } from '../products/types';
 import { isProductionReady } from './profiles';
 import { BFU_RICHTWERTE, RULE_APPROVAL_WARNING } from './gelaender-rules';
+import { tr } from '../i18n';
 
 /**
  * Regelkatalog Fenstergitter, ruleVersion 0.0.1.
@@ -47,76 +48,97 @@ export function validateFenstergitter(
   // Fluchtweg: fest montierte Gitter sind dort nicht zulässig.
   if (inputs.fluchtweg === 'ja') {
     errors.push(
-      'Fluchtweg-Fenster dürfen nicht fest vergittert werden – dafür braucht es eine öffenbare Sonderlösung. Bitte als individuelle Ausführung anfragen.'
+      tr(
+        'Fluchtweg-Fenster dürfen nicht fest vergittert werden – dafür braucht es eine öffenbare Sonderlösung. Bitte als individuelle Ausführung anfragen.'
+      )
     );
   } else if (inputs.fluchtweg === 'unbekannt') {
     warnings.push(
-      'Ob das Fenster ein Fluchtweg ist, wird vor der Ausführung verbindlich geklärt (Baurecht/Brandschutz).'
+      tr(
+        'Ob das Fenster ein Fluchtweg ist, wird vor der Ausführung verbindlich geklärt (Baurecht/Brandschutz).'
+      )
     );
   }
 
   if (inputs.breiteMm !== null) {
     if (inputs.breiteMm < params.minBreiteMm || inputs.breiteMm > params.maxBreiteMm) {
       errors.push(
-        `Breite ${inputs.breiteMm} mm liegt ausserhalb des Bereichs ${params.minBreiteMm}–${params.maxBreiteMm} mm – bitte individuell anfragen.`
+        tr('Breite {b} mm liegt ausserhalb des Bereichs {min}–{max} mm – bitte individuell anfragen.', {
+          b: inputs.breiteMm,
+          min: params.minBreiteMm,
+          max: params.maxBreiteMm,
+        })
       );
     }
   }
   if (inputs.hoeheMm !== null) {
     if (inputs.hoeheMm < params.minHoeheMm || inputs.hoeheMm > params.maxHoeheMm) {
       errors.push(
-        `Höhe ${inputs.hoeheMm} mm liegt ausserhalb des Bereichs ${params.minHoeheMm}–${params.maxHoeheMm} mm – bitte individuell anfragen.`
+        tr('Höhe {h} mm liegt ausserhalb des Bereichs {min}–{max} mm – bitte individuell anfragen.', {
+          h: inputs.hoeheMm,
+          min: params.minHoeheMm,
+          max: params.maxHoeheMm,
+        })
       );
     }
   }
 
   if (inputs.masseUngefaehr) {
     warnings.push(
-      'Ungefähre Masse: Vor der Fertigung wird am Fenster ausgemessen (Aufmass).'
+      tr('Ungefähre Masse: Vor der Fertigung wird am Fenster ausgemessen (Aufmass).')
     );
   }
 
   if (inputs.untergrund === 'unbekannt') {
-    warnings.push('Befestigungsuntergrund wird vor Ort geprüft.');
+    warnings.push(tr('Befestigungsuntergrund wird vor Ort geprüft.'));
   }
   if (inputs.untergrund === 'backstein') {
     warnings.push(
-      'Backstein/Mauerwerk: Dübelwahl und Randabstände werden fachlich bestimmt.'
+      tr('Backstein/Mauerwerk: Dübelwahl und Randabstände werden fachlich bestimmt.')
     );
   }
 
   if (inputs.einbauort === 'aussen') {
-    warnings.push('Ausseneinsatz: Korrosionsschutz wird entsprechend ausgelegt.');
+    warnings.push(tr('Ausseneinsatz: Korrosionsschutz wird entsprechend ausgelegt.'));
   }
 
   if (inputs.stabWunschDm !== null) {
     warnings.push(
-      `Sonderprofil Stab Ø ${inputs.stabWunschDm} mm: kein Katalogprofil – Machbarkeit wird fachlich geprüft.`
+      tr('Sonderprofil Stab Ø {d} mm: kein Katalogprofil – Machbarkeit wird fachlich geprüft.', {
+        d: inputs.stabWunschDm,
+      })
     );
   }
 
   if (inputs.ornamentTyp) {
     warnings.push(
-      'Zierelemente: Grundauswahl – die handwerkliche Ausarbeitung plant unser Meister persönlich (Manufaktur).'
+      tr(
+        'Zierelemente: Grundauswahl – die handwerkliche Ausarbeitung plant unser Meister persönlich (Manufaktur).'
+      )
     );
   }
 
   warnings.push(
-    `Stabteilung wird einbruchhemmend und kindersicher geprüft (BFU-Richtwert ${BFU_RICHTWERTE.kugelDurchmesserMm}-mm-Kugel).`
+    tr('Stabteilung wird einbruchhemmend und kindersicher geprüft (BFU-Richtwert {d}-mm-Kugel).', {
+      d: BFU_RICHTWERTE.kugelDurchmesserMm,
+    })
   );
 
   for (const profile of selectedProfiles) {
     if (!profile.active) {
-      errors.push(`Profil «${profile.name}» ist nicht mehr verfügbar.`);
+      errors.push(tr('Profil «{name}» ist nicht mehr verfügbar.', { name: tr(profile.name) }));
     } else if (!isProductionReady(profile)) {
       warnings.push(
-        `Profil «${profile.name}» ist noch nicht fachlich freigegeben (${profile.approval}).`
+        tr('Profil «{name}» ist noch nicht fachlich freigegeben ({approval}).', {
+          name: tr(profile.name),
+          approval: tr(profile.approval),
+        })
       );
     }
   }
 
   if (params.approval !== 'freigegeben') {
-    warnings.push(RULE_APPROVAL_WARNING);
+    warnings.push(tr(RULE_APPROVAL_WARNING));
   }
 
   if (errors.length > 0) {

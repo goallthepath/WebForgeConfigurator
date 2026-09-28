@@ -2,6 +2,7 @@ import type { GartentorInputs } from '../products/gartentor/types';
 import type { Profile, ValidationResult } from '../products/types';
 import { isProductionReady } from './profiles';
 import { RULE_APPROVAL_WARNING } from './gelaender-rules';
+import { tr } from '../i18n';
 
 /**
  * Regelkatalog Gartentor, ruleVersion 0.0.1.
@@ -52,17 +53,26 @@ export function validateGartentor(
   if (b !== null) {
     if (b < params.minOeffnungMm) {
       errors.push(
-        `Öffnung ${b} mm ist schmaler als das Minimum von ${params.minOeffnungMm} mm.`
+        tr('Öffnung {b} mm ist schmaler als das Minimum von {min} mm.', {
+          b,
+          min: params.minOeffnungMm,
+        })
       );
     }
     if (inputs.fluegelart === 'ein' && b > params.maxOeffnungEinMm) {
       errors.push(
-        `Einflügelig bis ${params.maxOeffnungEinMm} mm Öffnung – bitte zweiflügelig wählen oder individuell anfragen.`
+        tr(
+          'Einflügelig bis {max} mm Öffnung – bitte zweiflügelig wählen oder individuell anfragen.',
+          { max: params.maxOeffnungEinMm }
+        )
       );
     }
     if (inputs.fluegelart === 'zwei' && b > params.maxOeffnungZweiMm) {
       errors.push(
-        `Öffnung ${b} mm überschreitet das Maximum von ${params.maxOeffnungZweiMm} mm – bitte als Toranlage individuell anfragen.`
+        tr(
+          'Öffnung {b} mm überschreitet das Maximum von {max} mm – bitte als Toranlage individuell anfragen.',
+          { b, max: params.maxOeffnungZweiMm }
+        )
       );
     }
   }
@@ -70,7 +80,11 @@ export function validateGartentor(
   if (inputs.hoeheMm !== null) {
     if (inputs.hoeheMm < params.minHoeheMm || inputs.hoeheMm > params.maxHoeheMm) {
       errors.push(
-        `Torhöhe ${inputs.hoeheMm} mm liegt ausserhalb des Bereichs ${params.minHoeheMm}–${params.maxHoeheMm} mm.`
+        tr('Torhöhe {h} mm liegt ausserhalb des Bereichs {min}–{max} mm.', {
+          h: inputs.hoeheMm,
+          min: params.minHoeheMm,
+          max: params.maxHoeheMm,
+        })
       );
     }
   }
@@ -80,58 +94,55 @@ export function validateGartentor(
     inputs.bodenfreiheitMm > params.maxBodenfreiheitMm
   ) {
     errors.push(
-      `Bodenfreiheit ${inputs.bodenfreiheitMm} mm liegt ausserhalb des Bereichs ${params.minBodenfreiheitMm}–${params.maxBodenfreiheitMm} mm.`
+      tr('Bodenfreiheit {b} mm liegt ausserhalb des Bereichs {min}–{max} mm.', {
+        b: inputs.bodenfreiheitMm,
+        min: params.minBodenfreiheitMm,
+        max: params.maxBodenfreiheitMm,
+      })
     );
   }
 
   if (inputs.masseUngefaehr) {
-    warnings.push('Ungefähre Masse: Vor der Fertigung wird vor Ort ausgemessen.');
+    warnings.push(tr('Ungefähre Masse: Vor der Fertigung wird vor Ort ausgemessen.'));
   }
 
   if (inputs.untergrund === 'unbekannt') {
-    warnings.push('Untergrund/Fundamente werden beim Aufmass geprüft.');
+    warnings.push(tr('Untergrund/Fundamente werden beim Aufmass geprüft.'));
   } else if (inputs.untergrund && inputs.untergrund !== 'beton') {
-    warnings.push(
-      'Für Torpfosten in weichem Untergrund werden Fundamente fachlich dimensioniert.'
-    );
+    warnings.push(tr('Für Torpfosten in weichem Untergrund werden Fundamente fachlich dimensioniert.'));
   }
 
   if (inputs.seitenbau === 'mauer') {
-    warnings.push(
-      'Befestigung an bestehender Mauer: Zustand und Tragfähigkeit werden vor Ort geprüft.'
-    );
+    warnings.push(tr('Befestigung an bestehender Mauer: Zustand und Tragfähigkeit werden vor Ort geprüft.'));
   }
 
   if (inputs.antriebVorbereitung) {
-    warnings.push(
-      'Antriebs-Vorbereitung (Leerrohr): Die konkrete Motorisierung wird persönlich geprüft und offeriert.'
-    );
+    warnings.push(tr('Antriebs-Vorbereitung (Leerrohr): Die konkrete Motorisierung wird persönlich geprüft und offeriert.'));
   }
 
   if (inputs.fuellung === 'geschmiedet') {
-    warnings.push(
-      'Charakter-Füllung: Ornament-Grundauswahl – die handwerkliche Ausarbeitung plant unser Meister persönlich.'
-    );
+    warnings.push(tr('Charakter-Füllung: Ornament-Grundauswahl – die handwerkliche Ausarbeitung plant unser Meister persönlich.'));
   }
 
   if (inputs.hoeheMm !== null && inputs.hoeheMm > 1400) {
-    warnings.push(
-      'Hohe Torflügel: Windlast und Bandbelastung werden statisch geprüft.'
-    );
+    warnings.push(tr('Hohe Torflügel: Windlast und Bandbelastung werden statisch geprüft.'));
   }
 
   for (const profile of selectedProfiles) {
     if (!profile.active) {
-      errors.push(`Profil «${profile.name}» ist nicht mehr verfügbar.`);
+      errors.push(tr('Profil «{name}» ist nicht mehr verfügbar.', { name: tr(profile.name) }));
     } else if (!isProductionReady(profile)) {
       warnings.push(
-        `Profil «${profile.name}» ist noch nicht fachlich freigegeben (${profile.approval}).`
+        tr('Profil «{name}» ist noch nicht fachlich freigegeben ({approval}).', {
+          name: tr(profile.name),
+          approval: tr(profile.approval),
+        })
       );
     }
   }
 
   if (params.approval !== 'freigegeben') {
-    warnings.push(RULE_APPROVAL_WARNING);
+    warnings.push(tr(RULE_APPROVAL_WARNING));
   }
 
   if (errors.length > 0) {

@@ -1,3 +1,4 @@
+import { tr } from '../i18n';
 import type { ProductId, Profile, ProfileRole } from '../products/types';
 
 /**
@@ -21,4 +22,9 @@ export function profilesForUse(
 /** Nur fachlich freigegebene Profile dürfen produktiv wirksam werden. */
 export function isProductionReady(profile: Profile): boolean {
   return profile.approval === 'freigegeben' && profile.active;
+}
+
+/** Anzeigetext eines Freigabestatus in der aktuellen Sprache. */
+export function approvalLabel(approval: string): string {
+  return tr(approval);
 }

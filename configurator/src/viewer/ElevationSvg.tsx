@@ -1,3 +1,4 @@
+import { tr } from '../i18n';
 import type { RailingGeometry } from '../products/gelaender/geometry';
 
 /**
@@ -21,7 +22,7 @@ export function ElevationSvg({ geometry }: { geometry: RailingGeometry }) {
       viewBox={view}
       className="elevation-svg"
       role="img"
-      aria-label="Masszeichnung des Geländers (abgewickelte Frontansicht)"
+      aria-label={tr('Masszeichnung des Geländers (abgewickelte Frontansicht)')}
       preserveAspectRatio="xMidYMid meet"
     >
       {/* Boden */}

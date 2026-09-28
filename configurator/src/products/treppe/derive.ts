@@ -8,6 +8,13 @@ import {
   querstabLagen,
   type MaterialPosition,
 } from '../gelaender/derive';
+import { tr } from '../../i18n';
+
+const STUFENTYP_LABEL: Record<string, string> = {
+  gitterrost: 'Gitterrost',
+  traenenblech: 'Tränenblech',
+  'blech-glatt': 'Glattblech',
+};
 
 /**
  * Abgeleitete Werte Treppe (reine Funktionen, provisorisch bis zur
@@ -103,25 +110,27 @@ export function treppeMaterialAuszug(
   if (mitTreppe) {
     if (inputs.konstruktion === 'mittelholm') {
       positionen.push({
-        bezeichnung: 'Mittelholm',
+        bezeichnung: tr('Mittelholm'),
         anzahl: 1,
         laengeMm: derived.schraegeLaengeMm,
       });
     } else {
       positionen.push({
-        bezeichnung: 'Wangen',
+        bezeichnung: tr('Wangen'),
         anzahl: 2,
         laengeMm: derived.schraegeLaengeMm,
       });
     }
     positionen.push({
-      bezeichnung: `Trittstufen (${inputs.stufentyp ?? 'Typ offen'})`,
+      bezeichnung: tr('Trittstufen ({typ})', {
+        typ: tr(inputs.stufentyp ? STUFENTYP_LABEL[inputs.stufentyp] : 'Typ offen'),
+      }),
       anzahl: derived.stufenAnzahl,
       laengeMm: inputs.laufbreiteMm,
     });
     if (inputs.setzstufen === 'geschlossen') {
       positionen.push({
-        bezeichnung: 'Setzstufen (geschlossen)',
+        bezeichnung: tr('Setzstufen (geschlossen)'),
         anzahl: derived.steigungenAnzahl,
         laengeMm: inputs.laufbreiteMm,
       });
@@ -130,26 +139,29 @@ export function treppeMaterialAuszug(
   if (mitGelaender && derived.gelaenderSeiten > 0) {
     positionen.push(
       {
-        bezeichnung: `Handlauf (${derived.gelaenderSeiten} Seite${derived.gelaenderSeiten > 1 ? 'n' : ''})`,
+        bezeichnung:
+          derived.gelaenderSeiten > 1
+            ? tr('Handlauf ({n} Seiten)', { n: derived.gelaenderSeiten })
+            : tr('Handlauf (1 Seite)'),
         anzahl: derived.gelaenderSeiten,
         laengeMm: derived.schraegeLaengeMm,
       },
       {
-        bezeichnung: 'Geländerpfosten',
+        bezeichnung: tr('Geländerpfosten'),
         anzahl: derived.pfostenProSeite * derived.gelaenderSeiten,
         laengeMm: inputs.gelaenderHoeheMm,
       }
     );
     if (derived.staebeProSeite > 0) {
       positionen.push({
-        bezeichnung: 'Füllstäbe',
+        bezeichnung: tr('Füllstäbe'),
         anzahl: derived.staebeProSeite * derived.gelaenderSeiten,
         laengeMm: null,
       });
     }
     if (derived.querstabLagen > 0) {
       positionen.push({
-        bezeichnung: 'Querstäbe',
+        bezeichnung: tr('Querstäbe'),
         anzahl: derived.querstabLagen * derived.gelaenderSeiten,
         laengeMm: derived.schraegeLaengeMm,
       });

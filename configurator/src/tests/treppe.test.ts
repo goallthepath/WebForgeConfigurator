@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { deriveTreppe, treppeMaterialAuszug } from '../products/treppe/derive';
 import { buildTreppeGeometry } from '../products/treppe/geometry';
 import {
+  DEFAULT_TREPPE_INPUTS,
   EMPTY_TREPPE_INPUTS,
   type TreppeInputs,
 } from '../products/treppe/types';
+import { getProfile, profilBreiteMm } from '../products/profile-catalog';
 import {
   BFU_TREPPENLAUF_MIN_MM,
   TREPPE_RULES_V0,
@@ -229,5 +231,53 @@ describe('Treppen-Regeln', () => {
     });
     const result = validateTreppe(inputs, deriveTreppe(inputs, 16), []);
     expect(result.warnings.some((w) => w.includes('Leiter'))).toBe(true);
+  });
+});
+
+describe('Startwerte (DEFAULT_TREPPE_INPUTS)', () => {
+  const inputs = DEFAULT_TREPPE_INPUTS;
+  const ids = [
+    inputs.wangenProfilId,
+    inputs.pfostenProfilId,
+    inputs.handlaufProfilId,
+    inputs.fuellstabProfilId,
+    inputs.querstabProfilId,
+  ];
+
+  it('verweist nur auf vorhandene Katalogprofile', () => {
+    for (const id of ids) {
+      expect(id && getProfile(id)).toBeTruthy();
+    }
+  });
+
+  it('ergibt gültige Ableitung, nicht-leere Geometrie und keine rote Ampel', () => {
+    const stab = profilBreiteMm(getProfile(inputs.fuellstabProfilId!)!);
+    const d = deriveTreppe(inputs, stab);
+    expect(d.steigungenAnzahl).toBeGreaterThan(0);
+    expect(d.steigungMm).toBeGreaterThanOrEqual(P.minSteigungMm);
+    expect(d.steigungMm).toBeLessThanOrEqual(P.maxSteigungMm);
+    expect(d.schrittmassMm).toBeGreaterThanOrEqual(P.minSchrittmassMm);
+    expect(d.schrittmassMm).toBeLessThanOrEqual(P.maxSchrittmassMm);
+    expect(d.gelaenderSeiten).toBe(1);
+
+    const geo = buildTreppeGeometry(inputs, d, {
+      wange: getProfile(inputs.wangenProfilId!),
+      pfosten: getProfile(inputs.pfostenProfilId!),
+      handlauf: getProfile(inputs.handlaufProfilId!),
+      fuellstab: getProfile(inputs.fuellstabProfilId!),
+    });
+    expect(geo.hoeheM).toBeGreaterThan(0);
+    expect(geo.stufen.length).toBe(d.stufenAnzahl);
+    expect(geo.traeger).toHaveLength(2);
+    expect(geo.pfosten.length).toBeGreaterThan(0);
+    expect(geo.staebe.length).toBeGreaterThan(0);
+    expect(geo.endCaps).toHaveLength(2);
+
+    const profiles = ids
+      .slice(0, 4)
+      .map((id) => getProfile(id!)!);
+    const result = validateTreppe(inputs, d, profiles);
+    expect(result.errors).toEqual([]);
+    expect(result.level).not.toBe('red');
   });
 });
