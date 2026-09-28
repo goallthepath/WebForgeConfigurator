@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { tr } from '../../i18n';
 
 /**
  * Nummerierter Schritt mit progressiver Freischaltung
@@ -29,14 +30,14 @@ export function StepSection({
         <span className="step-number" aria-hidden="true">
           {done ? '✓' : number}
         </span>
-        {title}
+        {tr(title)}
       </h2>
-      {hint && <p className="step-hint">{hint}</p>}
+      {hint && <p className="step-hint">{tr(hint)}</p>}
       {unlocked ? (
         <div className="step-body">{children}</div>
       ) : (
         <p className="step-locked-note">
-          Wird freigeschaltet, sobald der vorherige Schritt beantwortet ist.
+          {tr('Wird freigeschaltet, sobald der vorherige Schritt beantwortet ist.')}
         </p>
       )}
     </section>

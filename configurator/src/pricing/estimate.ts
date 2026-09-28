@@ -1,4 +1,5 @@
 import type { Estimate } from '../products/types';
+import { tr } from '../i18n';
 
 /**
  * Preisvorschau im Browser – niemals autoritativ (ADR-003).
@@ -21,10 +22,15 @@ export function estimateFor(priceVersion: string | null): Estimate {
 export function describeEstimate(estimate: Estimate): string {
   switch (estimate.type) {
     case 'individual-review':
-      return 'Individuelle Prüfung: Unser Meister prüft Ihre Anfrage persönlich und erstellt eine Offerte.';
+      return tr('Individuelle Prüfung: Unser Meister prüft Ihre Anfrage persönlich und erstellt eine Offerte.');
     case 'range':
-      return `Preisspanne: CHF ${estimate.minimum} – ${estimate.maximum} (Richtwert, Offerte nach persönlicher Prüfung).`;
+      return tr('Preisspanne: CHF {min} – {max} (Richtwert, Offerte nach persönlicher Prüfung).', {
+        min: String(estimate.minimum),
+        max: String(estimate.maximum),
+      });
     case 'guide-price':
-      return `Richtpreis: CHF ${estimate.minimum} (Richtwert, Offerte nach persönlicher Prüfung).`;
+      return tr('Richtpreis: CHF {min} (Richtwert, Offerte nach persönlicher Prüfung).', {
+        min: String(estimate.minimum),
+      });
   }
 }

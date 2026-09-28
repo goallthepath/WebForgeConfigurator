@@ -4,14 +4,18 @@ import { GelaenderConfigurator } from '../products/gelaender/GelaenderConfigurat
 import { FenstergitterConfigurator } from '../products/fenstergitter/FenstergitterConfigurator';
 import { GartentorConfigurator } from '../products/gartentor/GartentorConfigurator';
 import { TreppeConfigurator } from '../products/treppe/TreppeConfigurator';
+import { LanguageSwitch, tr, useLang } from '../i18n';
 
 export default function App() {
+  const { lang } = useLang();
   return (
     <>
       <header className="app-header">
-        <Link to="/">Musterschlosserei – Konfigurator</Link>
+        <Link to="/">{tr('Musterschlosserei – Konfigurator')}</Link>
+        <LanguageSwitch />
       </header>
-      <main className="app-main">
+      {/* key={lang}: Sprachwechsel baut die Ansicht neu auf; Entwürfe bleiben im localStorage. */}
+      <main className="app-main" key={lang}>
         <Routes>
           <Route path="/" element={<ProductSelection />} />
           <Route path="/gelaender/" element={<GelaenderConfigurator />} />
@@ -22,9 +26,9 @@ export default function App() {
             path="*"
             element={
               <>
-                <h1>Seite nicht gefunden</h1>
+                <h1>{tr('Seite nicht gefunden')}</h1>
                 <p>
-                  <Link to="/">Zur Produktauswahl</Link>
+                  <Link to="/">{tr('Zur Produktauswahl')}</Link>
                 </p>
               </>
             }

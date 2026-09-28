@@ -1,4 +1,5 @@
 import type { OptionDef } from '../../products/gelaender/options';
+import { tr } from '../../i18n';
 
 /**
  * Bildkarten-Auswahl (Radiogruppe). Native Radio-Inputs bleiben im DOM –
@@ -22,7 +23,7 @@ export function OptionCardGroup<T extends string>({
 }) {
   return (
     <fieldset className="option-group">
-      <legend>{legend}</legend>
+      <legend>{tr(legend)}</legend>
       <div className="option-cards">
         {options.map((option) => {
           const badgeText = badge?.(option) ?? null;
@@ -46,9 +47,9 @@ export function OptionCardGroup<T extends string>({
                   dangerouslySetInnerHTML={{ __html: option.icon }}
                 />
               )}
-              <span className="option-label">{option.label}</span>
-              <span className="option-description">{option.description}</span>
-              {badgeText && <span className="option-badge">{badgeText}</span>}
+              <span className="option-label">{tr(option.label)}</span>
+              <span className="option-description">{tr(option.description)}</span>
+              {badgeText && <span className="option-badge">{tr(badgeText)}</span>}
             </label>
           );
         })}

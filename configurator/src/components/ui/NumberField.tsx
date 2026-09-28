@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { tr } from '../../i18n';
 
 /** Zahlenfeld mit Einheit und Inline-Messhilfe. */
 export function NumberField({
@@ -23,7 +24,7 @@ export function NumberField({
   const id = useId();
   return (
     <div className="number-field">
-      <label htmlFor={id}>{label}</label>
+      <label htmlFor={id}>{tr(label)}</label>
       <div className="number-input">
         <input
           id={id}
@@ -40,7 +41,7 @@ export function NumberField({
         />
         <span className="unit">{unit}</span>
       </div>
-      {hint && <p className="field-hint">{hint}</p>}
+      {hint && <p className="field-hint">{tr(hint)}</p>}
     </div>
   );
 }

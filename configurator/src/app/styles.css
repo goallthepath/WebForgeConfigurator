@@ -26,6 +26,10 @@ h3 {
   background: var(--webforge-color-ink);
   color: var(--webforge-color-paper);
   padding: var(--webforge-space-md) var(--webforge-space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--webforge-space-md);
 }
 
 .app-header a {
@@ -33,6 +37,31 @@ h3 {
   text-decoration: none;
   font-family: var(--webforge-font-heading);
   font-size: 1.15rem;
+}
+
+/* Sprachumschaltung DE/EN */
+.lang-switch {
+  display: flex;
+  flex-shrink: 0;
+  border: 1px solid var(--webforge-color-steel);
+  border-radius: var(--webforge-radius-sm);
+  overflow: hidden;
+}
+
+.lang-switch button {
+  background: transparent;
+  color: var(--webforge-color-paper);
+  border: 0;
+  padding: 0.3rem 0.7rem;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.lang-switch button.active {
+  background: var(--webforge-color-brass);
+  color: var(--webforge-color-ink);
+  font-weight: 600;
 }
 
 .app-main {
