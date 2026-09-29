@@ -13,7 +13,7 @@ und React-Konfigurator für **Geländer, Gartentore und Fenstergitter**.
 | Produktdaten | Versionierte JSON-Kataloge und Schemas | `product-data/` |
 | Design-Tokens | Gemeinsame Farben/Typografie für Website und Konfigurator | `design-tokens/` |
 
-Verbindliche Grundlage ist der **Bauplan für den WebForge Build Agent**
+Verbindliche Grundlage ist der **Bauplan für die WebForge-Plattform**
 (siehe [docs/project-vision.md](project-vision.md) und die ADRs unter [docs/decisions/](decisions/)).
 
 ## Lokale Entwicklung

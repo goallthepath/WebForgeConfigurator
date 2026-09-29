@@ -40,5 +40,5 @@ führen aber ausschliesslich in die persönliche Projektanfrage.
 
 ## Quelle
 
-Dieses Dokument fasst den verbindlichen „Bauplan für den WebForge Build Agent“
+Dieses Dokument fasst den verbindlichen „Bauplan für die WebForge-Plattform“
 zusammen. Bei Widersprüchen gilt der Bauplan bzw. die dort definierten Gates.

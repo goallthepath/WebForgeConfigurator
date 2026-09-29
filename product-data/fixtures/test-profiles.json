@@ -2,7 +2,7 @@
   "$meta": {
     "catalogVersion": "0.0.4-TESTDATEN",
     "status": "TESTDATEN – ausschliesslich für lokale Entwicklung und Tests. Enthält KEINE freigegebenen Masse. Produktivnutzung ist gesperrt (approval != freigegeben).",
-    "source": "Vom Build Agent zusammengestellte, marktübliche Platzhalterformen ohne fachliche Gültigkeit. Der reale Profilkatalog benötigt die Freigabe an Gate C (docs/assumptions.md A-002)."
+    "source": "Marktübliche Platzhalterformen ohne fachliche Gültigkeit. Der reale Profilkatalog benötigt die Freigabe an Gate C (docs/assumptions.md A-002)."
   },
   "profiles": [
     {

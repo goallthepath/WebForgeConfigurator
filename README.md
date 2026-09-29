@@ -2,6 +2,8 @@
 
 # ⚒️ WebForge Configurator
 
+**KNECHTSCHAFT**
+
 ### Design railings, garden gates, window grilles and stairs in the browser, in live 3D.
 
 *A web configurator for the art-metalwork trade. It turns "I'd like a railing for my balcony" into a complete, dimensioned request the workshop can quote.*
